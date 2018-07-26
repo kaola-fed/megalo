@@ -9,6 +9,8 @@
   ],
   "globals": {
     "__WEEX__": true,
-    "WXEnvironment": true
+    "WXEnvironment": true,
+    "Page": true,
+    "App": true
   }
 }
