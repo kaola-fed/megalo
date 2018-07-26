@@ -16,6 +16,7 @@
     "dev": "rollup -w -c scripts/config.js --environment TARGET:web-full-dev",
     "dev:cjs": "rollup -w -c scripts/config.js --environment TARGET:web-runtime-cjs",
     "dev:esm": "rollup -w -c scripts/config.js --environment TARGET:web-runtime-esm",
+    "dev:mp": "rollup -w -c scripts/config.js --environment TARGET:mp-runtime-esm",
     "dev:test": "karma start test/unit/karma.dev.config.js",
     "dev:ssr": "rollup -w -c scripts/config.js --environment TARGET:web-server-renderer",
     "dev:compiler": "rollup -w -c scripts/config.js --environment TARGET:web-compiler ",

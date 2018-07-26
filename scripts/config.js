@@ -15,6 +15,18 @@ const banner =
   ' * Released under the MIT License.\n' +
   ' */'
 
+const mpBanner = `// fix env
+try {
+  if (!global) global = {};
+  global.process = global.process || {};
+  global.process.env = global.process.env || {};
+  global.App = global.App || App;
+  global.Page = global.Page || Page;
+  global.Component = global.Component || Component;
+  global.getApp = global.getApp || getApp;
+} catch (e) {}
+`
+
 const weexFactoryPlugin = {
   intro () {
     return 'module.exports = function weexFactory (exports, document) {'
@@ -57,6 +69,14 @@ const builds = {
     dest: resolve('dist/vue.runtime.esm.js'),
     format: 'es',
     banner
+  },
+  'mp-runtime-esm': {
+    entry: resolve('mp/index.js'),
+    dest: resolve('dist/vue.mp.esm.js'),
+    // format: 'es',
+    format: 'umd',
+    env: 'production',
+    banner: mpBanner
   },
   // Runtime+compiler CommonJS build (ES Modules)
   'web-full-esm': {
