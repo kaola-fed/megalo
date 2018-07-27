@@ -1,5 +1,11 @@
 import { isDef } from 'core/util/index'
 import { getVMMarker, getVMId, getVMParentId, getHid } from './helper'
+import { throttle } from 'mp/util/throttle'
+import { Buffer } from 'mp/util/buffer'
+
+function isEmptyObj (obj = {}) {
+  return Object.keys(obj).length === 0
+}
 
 export function initVMToMP (vm) {
   vm = vm || this
@@ -28,5 +34,22 @@ export function updateMPData (type = 't', data, vnode) {
     vm.$mp.update({
       [`$root.${vmId}._h.${hid}.${type}`]: data
     })
+  }
+}
+
+export function createUpdateFn (page) {
+  const buffer = new Buffer()
+  const throttleSetData = throttle(function () {
+    const data = buffer.pop()
+
+    if (!isEmptyObj(data)) {
+      console.log('setData', data)
+      page.setData(data)
+    }
+  }, 50, { leadingDelay: 0 })
+
+  return function update (data) {
+    buffer.push(data)
+    throttleSetData()
   }
 }
