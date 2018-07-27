@@ -5,14 +5,20 @@ export * from './events'
 export * from './update'
 export * from './helper'
 
+function isEmptyObj (obj = {}) {
+  return Object.keys(obj).length === 0
+}
+
 export function initRootVM (mpVM, opt = {}) {
   const { Component, options } = opt
   const buffer = new Buffer()
   const throttleSetData = throttle(function () {
     const data = buffer.pop()
 
-    console.log('setData', data)
-    mpVM.setData(data)
+    if (!isEmptyObj(data)) {
+      // console.log('setData', data)
+      mpVM.setData(data)
+    }
   }, 50, { leadingDelay: 0 })
 
   const _options = Object.assign({}, options, {
