@@ -16,8 +16,18 @@ export function getVM (vm = {}, id) {
   }
 }
 
-export function getVMId (vm) {
+export function getVMMarker (vm) {
   return vm && vm.$attrs && vm.$attrs['mpcomid'] ? vm.$attrs['mpcomid'] : '0'
+}
+
+export function getVMId (vm) {
+  const res = []
+  let cursor = vm
+  while (cursor) {
+    res.push(getVMMarker(cursor))
+    cursor = cursor.$parent
+  }
+  return res.join(',')
 }
 
 export function getVMParentId (vm) {

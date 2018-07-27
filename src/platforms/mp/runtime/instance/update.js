@@ -1,10 +1,10 @@
 import { isDef } from 'core/util/index'
-import { getVMId, getVMParentId, getHid } from './helper'
+import { getVMMarker, getVMId, getVMParentId, getHid } from './helper'
 
 export function initVMToMP (vm) {
   vm = vm || this
   const $p = getVMParentId(vm)
-  const vmKey = getVMId(vm)
+  const vmKey = getVMMarker(vm)
   const $k = [$p, vmKey].filter(e => e).join(',')
   const info = {
     $k,

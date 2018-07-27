@@ -41,13 +41,14 @@ Vue.prototype._v = createTextVNode
 
 const oInit = Vue.prototype._init
 Vue.prototype._init = function (options) {
-  const { $mp } = options
-
+  let { $mp } = options
+  const { parent = {}} = options
+  $mp = $mp || parent.$mp
   if (!$mp) {
     initMP(this, options)
   } else {
     const self = this
-    this.$mp = options.$mp
+    this.$mp = $mp
     oInit.call(this, options)
 
     this._c = aop(this._c, {
