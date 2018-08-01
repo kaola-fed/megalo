@@ -70,14 +70,6 @@ const builds = {
     format: 'es',
     banner
   },
-  'mp-runtime-esm': {
-    entry: resolve('mp/index.js'),
-    dest: resolve('dist/vue.mp.esm.js'),
-    // format: 'es',
-    format: 'umd',
-    env: 'production',
-    banner: mpBanner
-  },
   // Runtime+compiler CommonJS build (ES Modules)
   'web-full-esm': {
     entry: resolve('web/entry-runtime-with-compiler.js'),
@@ -185,6 +177,22 @@ const builds = {
     dest: resolve('packages/weex-template-compiler/build.js'),
     format: 'cjs',
     external: Object.keys(require('../packages/weex-template-compiler/package.json').dependencies)
+  },
+  // mp runtime
+  'mp-runtime': {
+    entry: resolve('mp/entry-runtime.js'),
+    dest: resolve('dist/vue.mp.esm.js'),
+    format: 'umd',
+    env: 'production',
+    banner: mpBanner
+  },
+  // mp compiler (CommonJS)
+  'mp-template-compiler': {
+    mp: true,
+    entry: resolve('mp/entry-compiler.js'),
+    dest: resolve('packages/megalo-template-compiler/build.js'),
+    format: 'cjs',
+    external: Object.keys(require('../packages/megalo-template-compiler/package.json').dependencies)
   }
 }
 
