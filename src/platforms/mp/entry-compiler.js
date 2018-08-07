@@ -1,4 +1,4 @@
 /* @flow */
 
 export { parseComponent } from 'sfc/parser'
-export { compile, compileToFunctions } from './compiler/index'
+export { compile, compileToFunctions, generateWXML } from './compiler/index'
