@@ -9,19 +9,19 @@ function isEmptyObj (obj = {}) {
 
 export function initVMToMP (vm) {
   vm = vm || this
-  const $p = getVMParentId(vm)
+  const pid = getVMParentId(vm)
   const vmKey = getVMMarker(vm)
-  const $k = [$p, vmKey].filter(e => e).join(',')
+  const cid = [pid, vmKey].filter(e => e).join(',')
   const info = {
-    $k,
-    $p,
-    $kk: `${$k},`
+    cid,
+    pid,
+    cpath: `${cid},`
   }
 
   vm.$mp.update({
-    [`$root.${$k}.$k`]: info.$k,
-    [`$root.${$k}.$p`]: info.$p,
-    [`$root.${$k}.$kk`]: info.$kk
+    [`$root.${cid}.cid`]: info.cid,
+    [`$root.${cid}.pid`]: info.pid,
+    [`$root.${cid}.cpath`]: info.cpath
   })
 }
 
