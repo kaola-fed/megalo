@@ -2,7 +2,8 @@ import TAG_MAP from './tag-map'
 
 const TYPE = {
   ELEMENT: 1,
-  TEXT: 2
+  TEXT: 2,
+  STATIC_TEXT: 3
 }
 
 export function mpify (node) {
@@ -14,16 +15,17 @@ export function mpify (node) {
 }
 
 function walk (node, state) {
-  if (node.for && !node.forWalked) {
-    return walkFor(node, state)
+  if (node._hid === undefined) {
+    state.assignHId(node)
+    addAttr(node, '_hid', node._hid)
   }
+
   if (node.ifConditions && !node.ifWalked) {
     return walkIf(node, state)
   }
 
-  if (node._hid === undefined) {
-    state.assignHId(node)
-    addAttr(node, '_hid', node._hid)
+  if (node.for && !node.forWalked) {
+    return walkFor(node, state)
   }
 
   if (node.type === TYPE.ELEMENT) {
@@ -36,15 +38,21 @@ function walk (node, state) {
 }
 
 function walkFor (node, state) {
-  const { iterator1: iterator, for: _for, key } = node
-
-  node.forWalked = true
+  const { for: _for, key, alias } = node
+  // create a default iterator1 for wxml listing,
+  // which is needed for _hid generating
+  const { iterator1 = `${alias}_index$0` } = node
+  Object.assign(node, {
+    forWalked: true,
+    iterator1
+  })
 
   state.pushListState({
-    iterator,
+    iterator1,
     _for,
     key,
-    node
+    node,
+    alias
   })
 
   walk(node, state)
@@ -61,10 +69,11 @@ function walkElem (node, state) {
 }
 
 function walkComponent (node, state) {
-  // current component index
+  // enter a component
   state.pushComp()
-  const _cid = state.getCurrentCompIndex()
+  const _cid = state.getCId()
 
+  Object.assign(node, { _cid })
   addAttr(node, '_cid', _cid)
 
   walkChildren(node, state)
@@ -168,7 +177,7 @@ class Stack {
 class State {
   constructor (options = {}) {
     this.rootNode = options.rootNode || null
-    this.compCount = 0
+    this.compCount = -1
     this.compStack = new Stack()
     this.listStates = new Stack()
   }
@@ -200,7 +209,7 @@ class State {
   }
   getCurrentCompIndex () {
     const currentComponent = this.compStack.top
-    return currentComponent.id
+    return `${currentComponent.id}`
   }
   getCurrentElemIndex () {
     const currentComponent = this.compStack.top
@@ -218,11 +227,20 @@ class State {
     const currentListState = this.getCurrentListState()
     let _hid = `${this.getCurrentElemIndex()}`
     if (currentListState) {
-      const listTail = currentListState.map(s => s.iterator).join(` + "-" + `)
-      _hid = `"${_hid}" + ${listTail}`
+      const listTail = currentListState.map(s => s.iterator1).join(` + '-' + `)
+      _hid = `${_hid} + '-' + ${listTail}`
     }
-
     return `${_hid}`
+  }
+  getCId (node) {
+    this.pushElem()
+    const currentListState = this.getCurrentListState()
+    let _cid = `${this.getCurrentCompIndex()}`
+    if (currentListState) {
+      const listTail = currentListState.map(s => s.iterator1).join(` + '-' + `)
+      _cid = `${_cid} + '-' + ${listTail}`
+    }
+    return `${_cid}`
   }
   assignHId (node) {
     const _hid = this.getHId(node)

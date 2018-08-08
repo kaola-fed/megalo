@@ -1,4 +1,5 @@
 export default {
+  'template': 'block',
   'br': 'view',
   'hr': 'view',
 

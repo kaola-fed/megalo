@@ -2,8 +2,8 @@
 
 import { baseOptions } from './options'
 import { createCompiler } from './create-compiler'
-import { generateWXML } from './codegen/compile-wxml'
+import { generateTemplate } from './codegen/generate-template'
 
 const { compile, compileToFunctions } = createCompiler(baseOptions)
 
-export { compile, compileToFunctions, generateWXML }
+export { compile, compileToFunctions, generateTemplate }
