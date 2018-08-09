@@ -17,7 +17,7 @@ export function getVM (vm = {}, id) {
 }
 
 export function getVMMarker (vm) {
-  return vm && vm.$attrs && vm.$attrs['mpcomid'] ? vm.$attrs['mpcomid'] : '0'
+  return vm && vm.$attrs && vm.$attrs['_cid'] ? vm.$attrs['_cid'] : '0'
 }
 
 export function getVMId (vm) {

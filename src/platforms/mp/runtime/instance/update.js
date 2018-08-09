@@ -19,9 +19,9 @@ export function initVMToMP (vm) {
   }
 
   vm.$mp.update({
-    [`$root.${cid}.cid`]: info.cid,
-    [`$root.${cid}.pid`]: info.pid,
-    [`$root.${cid}.cpath`]: info.cpath
+    [`$root.${cid}.c`]: info.cid,
+    [`$root.${cid}.p`]: info.pid,
+    [`$root.${cid}.cp`]: info.cpath
   })
 }
 

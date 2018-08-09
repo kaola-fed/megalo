@@ -10,7 +10,7 @@ export function createElementNS (namespace: string, tagName: string): Element {
 
 export function createTextNode (text: string, vnode: VNode): Text {
   const { context } = vnode
-  context.$updateMPData('t', text, vnode)
+  context && context.$updateMPData('t', text, vnode)
   return {}
 }
 
