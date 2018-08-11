@@ -1,39 +1,43 @@
 /* @flow */
 
 import TAG_MAP from '../tag-map'
+import { cloneAST, removeQuotes, uid } from '../util'
+import presets from './presets/index'
 // import { eventTypeMap } from 'mp/util/index'
 
 const vbindReg = /^(v-bind)?:/
 const vonReg = /^v-on:|@/
 
-export function generateTemplate (ast, options = {}): string {
-  const templateGenerator = new TemplateGenerator(ast, options)
-  return templateGenerator.generate()
+export function compileToTemplate (ast, options = {}): string {
+  const templateGenerator = new TemplateGenerator(options)
+  return templateGenerator.generate(ast)
 }
 
 export class TemplateGenerator {
-  constructor (ast, options = {}) {
+  constructor (options = {}) {
     const {
-      // platform = 'wechat',
+      target = 'wechat',
       name = 'defaultName',
       imports = [],
-      slots = [],
-      importSlots = []
+      slots = []
     } = options
 
+    const preset = presets[target]
+
     Object.assign(this, {
-      ast,
       name,
       imports,
-      importSlots,
-      slots
+      slots,
+      preset,
+      drt: preset.directives
     })
   }
 
-  generate () {
+  generate (ast) {
     try {
+      const clonedAST = cloneAST(ast)
       const importsCode = this.genImports()
-      const code = this.genElement(this.ast)
+      const code = this.genElement(clonedAST)
       const template = [
         importsCode,
         `<template name="${this.name}">${code}</template>`
@@ -44,7 +48,10 @@ export class TemplateGenerator {
         slots: this.slots
       }
     } catch (err) {
-      return this.genError(err)
+      return {
+        template: this.genError(err),
+        slots: this.slots
+      }
     }
   }
 
@@ -69,17 +76,12 @@ export class TemplateGenerator {
     }
   }
 
-  isComponent (el): boolean {
-    return el._cid && !!this.imports[el.tag]
-  }
-
   genComponent (el): string {
     const { _cid, tag } = el
     const compInfo = this.imports[tag]
-    const { hash } = compInfo
-    const compName = `${tag}$${hash}`
-    const slots = this.parseSlots(el)
-    const slotsNames = slots.map(sl => `_s_${sl.name}: '${sl.name}'`)
+    const { name: compName } = compInfo
+    const slots = this.resolveSlotDefinition(el)
+    const slotsNames = slots.map(slot => `sl${slot.name}: '${slots.slotName}'`)
     const data = [
       `...$root[ cp + ${_cid} ]`,
       `$root`,
@@ -91,84 +93,99 @@ export class TemplateGenerator {
     return `<template is="${compName}" data="{{${data}}}"/>`
   }
 
-  parseSlots (el): any {
+  // TODO: deprecate the namedSlots inside a nameSlots
+  resolveSlotDefinition (el): any {
     const self = this
     const root = el
-    const slots = {
-      default: []
-    }
-    const slotsTemplate = {}
+    const slots = {}
 
     walk(root)
 
-    Object.keys(slots).forEach(name => {
-      slotsTemplate[name] = slots[name].map(el => this.genElement(el)).join('')
-    })
+    return Object.keys(slots).map(name => {
+      const slot = slots[name]
+      const { ast, dependencies } = slot
+      const parts = slot.ast.map(el => this.genElement(el))
+      const slotName = `${name}_${uid()}`
+      const template = [
+        `<template name="${slotName}" parent="${this.name}">`,
+        ...parts,
+        `</template>`
+      ].join('')
 
-    return Object.keys(slots).map((name) => {
       return {
         name,
-        template: slotsTemplate[name],
-        ast: slots[name]
+        slotName,
+        dependencies,
+        template,
+        ast
       }
     })
 
     function walk (el, parent) {
-      if (isNamedSlot(el)) {
-        const { name } = el.attrsMap
-        if (!slots[name]) {
-          slots[name] = []
-        }
-        slots[name].push(el)
+      if (self.isNamedSlotDefinition(el)) {
+        const name = removeQuotes(el.slotTarget)
+        addSlotAst(name, el)
+        // extract the slot wrapper
         if (parent) {
-          parent.children = parent.children.filter(e => e === el)
+          parent.children = parent.children.filter(e => e !== el)
         }
         return
       }
       if (el.children) {
         el.children.forEach(e => {
-          if (parent && !self.isComponent(el)) {
+          if (self.isComponent(e)) {
             return
           }
           walk(e, el)
         })
       }
-      if (el.parent === parent) {
-        slots.default.push(el)
+      if (el.parent === root) {
+        addSlotAst('default', el)
       }
+    }
+
+    function addSlotAst (name, ...ast) {
+      if (!slots[name]) {
+        slots[name] = {
+          ast: [],
+          dependencies: [],
+          template: ''
+        }
+      }
+      const slot = slots[name]
+      slot.ast = slot.ast.concat(ast)
     }
   }
 
   genTag (el): string {
+    const children = this.genChildren(el)
+    if (this.isPlainTemplate(el)) {
+      return children
+    }
+
     const { tag } = el
     const mpTag = TAG_MAP[tag] || tag
-    const klass = this.genClass(el)
-    const style = this.genStyle(el)
-    const attrs = this.genAttrs(el)
-    const events = this.genEvents(el)
-    const _if = this.genIf(el)
-    const _for = this.genFor(el)
 
     const startTag = `<${[
       mpTag,
-      _if,
-      _for,
-      klass,
-      style,
-      attrs,
-      events
+      this.genIf(el),
+      this.genFor(el),
+      this.genClass(el),
+      this.genStyle(el),
+      this.genAttrs(el),
+      this.genEvents(el)
     ].join('')}>`
 
     const endTag = `</${mpTag}>`
 
-    return [startTag, this.genChildren(el), endTag].join('')
+    return [startTag, children, endTag].join('')
   }
 
   genClass (el): string {
     const { tag, classBinding, _hid } = el
     let { staticClass = '' } = el
     let klass = [`_${tag}`]
-    staticClass = staticClass.replace(/"/g, '')
+    staticClass = removeQuotes(staticClass)
     if (staticClass) {
       klass.push(staticClass)
     }
@@ -254,7 +271,6 @@ export class TemplateGenerator {
 
   genIf (el): string {
     const { _hid } = el
-
     if (el.if) {
       return ` wx:if="{{ _h[ ${_hid} ]._if }}"`
     } else if (el.elseif) {
@@ -281,14 +297,13 @@ export class TemplateGenerator {
 
   genText (el): string {
     const { text = '' } = el
-    if (el.static) {
+    if (el.expression) {
+      return `{{ _h[ ${el._hid} ].t }}`
+    }
+    if (el.text) {
       return text
     }
     return `{{ _h[ ${el._hid} ].t }}`
-  }
-
-  isSlot (el): boolean {
-    return el && el.tag === 'slot'
   }
 
   genSlot (el): string {
@@ -307,10 +322,25 @@ export class TemplateGenerator {
   genError (err: Error) {
     return `<template name="${this.name}">compile error: ${err.toString()}\n${err.stack}</template>`
   }
+
+  isPlainTemplate (el): boolean {
+    return el &&
+      el.tag === 'template' &&
+      !el.iterator1 &&
+      !el.if && !el.elseif && !el.else
+  }
+
+  isSlot (el): boolean {
+    return el && el.tag === 'slot'
+  }
+
+  isNamedSlotDefinition (el): boolean {
+    const { tag, slotTarget } = el
+    return tag === 'template' && slotTarget
+  }
+
+  isComponent (el): boolean {
+    return el._cid && !!this.imports[el.tag]
+  }
 }
 
-function isNamedSlot (el): boolean {
-  const { tag, attrsMap = {}} = el
-  const { name } = attrsMap
-  return tag === 'template' && name
-}

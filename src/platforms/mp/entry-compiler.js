@@ -1,4 +1,4 @@
 /* @flow */
 
 export { parseComponent } from 'sfc/parser'
-export { compile, compileToFunctions, generateTemplate } from './compiler/index'
+export { compile, compileToFunctions, compileToTemplate } from './compiler/index'

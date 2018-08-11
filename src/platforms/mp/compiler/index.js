@@ -2,8 +2,8 @@
 
 import { baseOptions } from './options'
 import { createCompiler } from './create-compiler'
-import { generateTemplate } from './codegen/generate-template'
+import { compileToTemplate } from './codegen/compile-to-template'
 
 const { compile, compileToFunctions } = createCompiler(baseOptions)
 
-export { compile, compileToFunctions, generateTemplate }
+export { compile, compileToFunctions, compileToTemplate }

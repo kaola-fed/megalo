@@ -22,3 +22,57 @@ export const isNonPhrasingTag = makeMap(
   'optgroup,option,param,rp,rt,source,style,summary,tbody,td,tfoot,th,thead,' +
   'title,tr,track'
 )
+
+export const removeQuotes = (t = '') => t.replace(/"/g, '')
+
+export function cloneAST (ast) {
+  const walked = []
+  const newAst = doClone(ast)
+  return newAst
+  function doClone (old) {
+    const walkedVal = walked.find(v => v.old === old)
+    if (walkedVal) {
+      return walkedVal._new
+    }
+    if (Array.isArray(old)) {
+      const _new = []
+      walked.push({ _new, old })
+      for (let i = 0, len = old.length; i < len; ++i) {
+        _new.push(doClone(old[i]))
+      }
+      return _new
+    } else if (typeof old === 'object') {
+      const _new = {}
+      walked.push({ _new, old })
+      for (const key in old) {
+        const newVal = doClone(old[key])
+        _new[key] = newVal
+      }
+      return _new
+    } else {
+      return old
+    }
+  }
+}
+
+export class Stack {
+  constructor () {
+    this.stack = []
+  }
+  push (data) {
+    return this.stack.push(data)
+  }
+  pop () {
+    return this.stack.pop()
+  }
+  get top () {
+    return this.stack[this.stack.length - 1] || null
+  }
+}
+
+export const uid = (() => {
+  let id = 0
+  return () => {
+    return id++
+  }
+})()

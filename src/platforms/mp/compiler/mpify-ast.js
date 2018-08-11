@@ -1,4 +1,5 @@
 import TAG_MAP from './tag-map'
+import { Stack } from './util'
 
 const TYPE = {
   ELEMENT: 1,
@@ -10,7 +11,6 @@ export function mpify (node) {
   const state = new State({
     rootNode: node
   })
-  state.pushComp()
   walk(node, state)
 }
 
@@ -20,11 +20,11 @@ function walk (node, state) {
     addAttr(node, '_hid', node._hid)
   }
 
-  if (node.ifConditions && !node.ifWalked) {
+  if (node.ifConditions && !node.mpIfWalked) {
     return walkIf(node, state)
   }
 
-  if (node.for && !node.forWalked) {
+  if (node.for && !node.mpForWalked) {
     return walkFor(node, state)
   }
 
@@ -43,7 +43,7 @@ function walkFor (node, state) {
   // which is needed for _hid generating
   const { iterator1 = `${alias}_index$0` } = node
   Object.assign(node, {
-    forWalked: true,
+    mpForWalked: true,
     iterator1
   })
 
@@ -90,7 +90,7 @@ function walkIf (node, state) {
   const conditions = node.ifConditions
   const scopeNode = state.getCurrentListNode() || state.rootNode
 
-  node.ifWalked = true
+  node.mpIfWalked = true
 
   conditions.forEach(condition => {
     const { block, exp } = condition
@@ -159,27 +159,14 @@ function isTag (node) {
   return !!TAG_MAP[node.tag] || node.tag === 'template'
 }
 
-class Stack {
-  constructor () {
-    this.stack = []
-  }
-  push (data) {
-    return this.stack.push(data)
-  }
-  pop () {
-    return this.stack.pop()
-  }
-  get top () {
-    return this.stack[this.stack.length - 1] || null
-  }
-}
-
 class State {
   constructor (options = {}) {
     this.rootNode = options.rootNode || null
     this.compCount = -1
     this.compStack = new Stack()
     this.listStates = new Stack()
+    // init a root component state, like page
+    this.pushComp()
   }
   pushComp () {
     this.compStack.push({
