@@ -81,7 +81,7 @@ export class TemplateGenerator {
     const compInfo = this.imports[tag]
     const { name: compName } = compInfo
     const slots = this.resolveSlotDefinition(el)
-    const slotsNames = slots.map(slot => `sl${slot.name}: '${slots.slotName}'`)
+    const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
     const data = [
       `...$root[ cp + ${_cid} ]`,
       `$root`,
@@ -103,8 +103,9 @@ export class TemplateGenerator {
 
     return Object.keys(slots).map(name => {
       const slot = slots[name]
-      const { ast, dependencies } = slot
-      const parts = slot.ast.map(el => this.genElement(el))
+      const { ast } = slot
+      const parts = slot.ast.map(e => this.genElement(e))
+      const dependencies = slot.ast.reduce((res, e) => res.concat(this.collectDependencies(e)), [])
       const slotName = `${name}_${uid()}`
       const template = [
         `<template name="${slotName}" parent="${this.name}">`,
@@ -132,14 +133,15 @@ export class TemplateGenerator {
         return
       }
       if (el.children) {
-        el.children.forEach(e => {
-          if (self.isComponent(e)) {
-            return
-          }
-          walk(e, el)
-        })
+        if (!parent ||
+          (parent !== root && !self.isComponent(el))
+        ) {
+          el.children.forEach(e => {
+            walk(e, el)
+          })
+        }
       }
-      if (el.parent === root) {
+      if (parent === root) {
         addSlotAst('default', el)
       }
     }
@@ -309,7 +311,10 @@ export class TemplateGenerator {
   genSlot (el): string {
     let { slotName = 'default' } = el
     slotName = slotName.replace(/"/g, '')
-    return `<template is="{{ _s_${slotName} || ${slotName} }}" data="{ ...$root[ p ], $root }"/>`
+    const defaultSlotName = `${slotName}$${uid()}`
+    const defaultSlotBody = this.genChildren(el)
+    const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : ''
+    return `${defaultSlot}<template is="{{ s_${slotName} || '${defaultSlotName}' }}" data="{ ...$root[ p ], $root }"/>`
   }
 
   genChildren (el): string {
@@ -321,6 +326,24 @@ export class TemplateGenerator {
 
   genError (err: Error) {
     return `<template name="${this.name}">compile error: ${err.toString()}\n${err.stack}</template>`
+  }
+
+  collectDependencies (el): Array {
+    let deps = []
+    const { tag, children } = el
+    if (this.isComponent(el)) {
+      deps.push(this.getComponentSrc(tag))
+    }
+    if (children) {
+      children.forEach(c => {
+        deps = deps.concat(this.collectDependencies(c))
+      })
+    }
+    return deps
+  }
+
+  getComponentSrc (name): string {
+    return (this.imports[name] || {}).src || ''
   }
 
   isPlainTemplate (el): boolean {
