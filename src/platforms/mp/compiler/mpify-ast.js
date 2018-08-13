@@ -161,6 +161,7 @@ class State {
   constructor (options = {}) {
     this.rootNode = options.rootNode || null
     this.compCount = -1
+    this.elemCount = -1
     this.compStack = new Stack()
     this.listStates = new Stack()
     // init a root component state, like page
@@ -176,8 +177,7 @@ class State {
     this.compStack.pop()
   }
   pushElem () {
-    const currentComponent = this.compStack.top
-    currentComponent.elems++
+    this.elemCount++
   }
   popListState () {
     return this.listStates.pop()
@@ -197,8 +197,7 @@ class State {
     return `${currentComponent.id}`
   }
   getCurrentElemIndex () {
-    const currentComponent = this.compStack.top
-    return currentComponent.elems - 1
+    return this.elemCount
   }
   getCurrentListState () {
     return this.listStates.top
