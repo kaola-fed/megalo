@@ -81,7 +81,10 @@ page.init = function init (opt) {
 
       callHook(rootVM, 'onTabItemTap', options)
     },
-    handleProxy (e) {
+    _pe (e) {
+      this.proxyEvent(e)
+    },
+    proxyEvent (e) {
       const rootVM = this.rootVM
       proxyEvent(rootVM, e)
     }

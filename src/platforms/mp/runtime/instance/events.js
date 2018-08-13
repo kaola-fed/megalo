@@ -2,29 +2,45 @@ import { getVM } from './helper'
 import { eventTypeMap } from 'mp/util/index'
 
 export function proxyEvent (rootVM, event) {
-  const { type } = event
+  const { type, detail = {}} = event
   const target = event.currentTarget || event.target
   const { dataset = {}} = target
-  const { comkey, eventid } = dataset
+  const { cid, hid } = dataset
 
-  const vm = getVM(rootVM, comkey)
-  const hanlders = getHandlers(vm, type, eventid)
+  const vm = getVM(rootVM, cid)
+  const hanlders = getHandlers(vm, type, hid)
+  const $event = Object.assign({}, event)
+  Object.assign(event.target, {
+    value: detail.value
+  })
 
   hanlders.forEach(hanlder => {
-    hanlder(event)
+    hanlder($event)
   })
 }
 
-function getHandlers (vm, type, eventId) {
-  const eventTypes = eventTypeMap[type]
-  const vnode = vm._vnode
-  const { data } = vnode
-  const { attrs, on } = data
+function getVnode (vnode = {}, hid) {
+  const { children = [], data = {}} = vnode
+  const { attrs = {}} = data
+  if (`${attrs._hid}` === `${hid}`) {
+    return vnode
+  }
+  return children.find(v => getVnode(v, hid))
+}
+
+function getHandlers (vm, type, hid) {
   let res = []
 
-  if (attrs.eventid !== eventId) {
-    return res
-  }
+  const eventTypes = eventTypeMap[type]
+  if (!vm) return res
+
+  const vnode = getVnode(vm._vnode, hid)
+  if (!vnode) return res
+
+  const { data } = vnode
+  const { attrs, on } = data
+
+  if (('' + attrs._hid) !== ('' + hid)) return res
 
   res = eventTypes.reduce((buf, event) => {
     const hanlder = on[event]

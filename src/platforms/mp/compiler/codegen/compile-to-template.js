@@ -3,6 +3,7 @@
 import TAG_MAP from '../tag-map'
 import { cloneAST, removeQuotes, uid } from '../util'
 import presets from './presets/index'
+import { baseWarn } from 'compiler/helpers'
 // import { eventTypeMap } from 'mp/util/index'
 
 const vbindReg = /^(v-bind)?:/
@@ -18,18 +19,22 @@ export class TemplateGenerator {
     const {
       target = 'wechat',
       name = 'defaultName',
+      moduleId = '',
       imports = [],
-      slots = []
+      slots = [],
+      warn = baseWarn
     } = options
 
     const preset = presets[target]
 
     Object.assign(this, {
       name,
+      moduleId,
       imports,
       slots,
       preset,
-      drt: preset.directives
+      drt: preset.directives,
+      warn
     })
   }
 
@@ -65,6 +70,8 @@ export class TemplateGenerator {
   genElement (el): string {
     if (el.ifConditions && !el.ifConditionsGenerated) {
       return this.genIfConditions(el)
+    } else if (this.isVHtml(el)) {
+      return this.genVHtml(el)
     } else if (this.isSlot(el)) {
       return this.genSlot(el)
     } else if (this.isComponent(el)) {
@@ -193,6 +200,8 @@ export class TemplateGenerator {
     staticClass = removeQuotes(staticClass)
     if (staticClass) {
       klass.push(staticClass)
+      // scoped id class
+      klass.push(this.moduleId)
     }
     if (classBinding) {
       klass.push(`{{ _h[ ${_hid} ].cl }}`)
@@ -217,14 +226,18 @@ export class TemplateGenerator {
   }
 
   genAttrs (el): string {
-    const { attrsList = [], _hid } = el
+    const { attrsList = [], _hid, attrsMap = {}} = el
+    const hasVModel = !!attrsMap['v-model']
+
     let attrs = attrsList.map((attr) => {
       const { name, value } = attr
-      if (vonReg.test(name)) {
+      if (vonReg.test(name) || (name === 'value' && hasVModel)) {
         return ''
       } else if (vbindReg.test(name)) {
         const realName = name.replace(vbindReg, '')
         return `${realName}="{{ _hid[ ${_hid} ][ '${realName}' ] }}"`
+      } else if (name === 'v-model') {
+        return `value="{{ _h[${_hid}].value }}"`
       } else {
         return `${name}="${value}"`
       }
@@ -238,9 +251,10 @@ export class TemplateGenerator {
     if (!events) {
       return ''
     }
+
     let eventAttrs = Object.keys(events).map(type => {
       const event = events[type]
-      const { modifiers } = event
+      const { modifiers = {}} = event
       const { stop, capture } = modifiers
       let mpType = type
       let binder = 'bind'
@@ -254,10 +268,10 @@ export class TemplateGenerator {
       } else {
         mpType = type === 'click' ? 'tap' : mpType
       }
-      return `${binder}${mpType}="proxyEvent"`
+      return `${binder}${mpType}="_pe"`
     })
     eventAttrs = eventAttrs.join(' ')
-    return ` data-cid="{{ cid }}" data-hid="{{ ${_hid} }}" ${eventAttrs}`
+    return ` data-cid="{{ c }}" data-hid="{{ ${_hid} }}" ${eventAttrs}`
   }
 
   genIfConditions (el): string {
@@ -344,6 +358,19 @@ export class TemplateGenerator {
 
   getComponentSrc (name): string {
     return (this.imports[name] || {}).src || ''
+  }
+
+  genVHtml (el): string {
+    const { _hid } = el
+    return `<view class="_vhtml" ${[
+      this.genIf(el),
+      this.genFor(el)
+    ].join('')}>{{ _h[${_hid}].html }}</view>`
+  }
+
+  isVHtml (el = {}): boolean {
+    const { attrsMap = {}} = el
+    return attrsMap['v-html'] !== undefined
   }
 
   isPlainTemplate (el): boolean {

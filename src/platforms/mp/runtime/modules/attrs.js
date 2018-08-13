@@ -25,6 +25,9 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   const { context } = vnode
 
   for (key in attrs) {
+    if (key === '_hid') {
+      continue
+    }
     cur = attrs[key]
     old = oldAttrs[key]
     if (old !== cur) {

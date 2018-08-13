@@ -1,10 +1,11 @@
-export function getHid (vm, vnode) {
-  return vnode && vnode.data && vnode.data.hid
+export function getHid (vm, vnode = {}) {
+  const { data = {}} = vnode
+  return data._hid || (data.attrs && data.attrs._hid)
 }
 
 export function getVM (vm = {}, id) {
   let res
-  if (getVMId(vm) === id) {
+  if (getVMId(vm) === `${id}`) {
     return vm
   }
   const { $children } = vm

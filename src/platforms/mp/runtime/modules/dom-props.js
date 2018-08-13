@@ -30,8 +30,11 @@ function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
       if (cur === oldProps[key]) continue
       // #6601 work around Chrome version <= 55 bug where single textNode
       // replaced by innerHTML/textContent retains its parentNode property
-      if (elm.childNodes.length === 1) {
-        elm.removeChild(elm.childNodes[0])
+      // if (elm.childNodes.length === 1) {
+      //   elm.removeChild(elm.childNodes[0])
+      // }
+      if (key === 'innerHTML') {
+        updateToMP('html', cur, vnode)
       }
     }
 
@@ -43,11 +46,18 @@ function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
       const strCur = isUndef(cur) ? '' : String(cur)
       if (shouldUpdateValue(elm, strCur)) {
         elm.value = strCur
+        updateToMP(key, strCur, vnode)
       }
     } else {
       elm[key] = cur
+      updateToMP(key, cur, vnode)
     }
   }
+}
+
+function updateToMP (key, val, vnode) {
+  const { context } = vnode
+  context.$updateMPData(key, val, vnode)
 }
 
 // check platforms/web/util/attrs.js acceptValue
