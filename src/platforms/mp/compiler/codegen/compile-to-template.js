@@ -167,15 +167,18 @@ export class TemplateGenerator {
 
     const { tag } = el
     const mpTag = TAG_MAP[tag] || tag
+    const attrs = this.isTemplate(el) ? [] : [
+      this.genClass(el),
+      this.genStyle(el),
+      this.genAttrs(el),
+      this.genEvents(el)
+    ]
 
     const startTag = `<${[
       mpTag,
       this.genIf(el),
       this.genFor(el),
-      this.genClass(el),
-      this.genStyle(el),
-      this.genAttrs(el),
-      this.genEvents(el)
+      ...attrs
     ].join('')}>`
 
     const endTag = `</${mpTag}>`
@@ -302,10 +305,7 @@ export class TemplateGenerator {
     if (el.expression) {
       return `{{ _h[ ${el._hid} ].t }}`
     }
-    if (el.text) {
-      return text
-    }
-    return `{{ _h[ ${el._hid} ].t }}`
+    return text || ''
   }
 
   genSlot (el): string {
@@ -348,9 +348,13 @@ export class TemplateGenerator {
 
   isPlainTemplate (el): boolean {
     return el &&
-      el.tag === 'template' &&
+      this.isTemplate(el) &&
       !el.iterator1 &&
       !el.if && !el.elseif && !el.else
+  }
+
+  isTemplate (el): boolean {
+    return el && el.tag === 'template'
   }
 
   isSlot (el): boolean {

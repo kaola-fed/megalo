@@ -30,10 +30,8 @@ function walk (node, state) {
 
   if (node.type === TYPE.ELEMENT) {
     walkElem(node, state)
-  } else if (node.type === TYPE.TEXT) {
+  } else if (node.type === TYPE.TEXT || node.type === TYPE.STATIC_TEXT) {
     walkText(node, state)
-  } else {
-    walkOther(node, state)
   }
 }
 
@@ -81,8 +79,11 @@ function walkComponent (node, state) {
 }
 
 function walkText (node, state) {
-  if (node.expression) {
-    node.expression = `${node.expression}, ${node._hid}`
+  const { expression, type, _hid } = node
+  if (type === TYPE.STATIC_TEXT) {
+    node.mpNotGenRenderFn = true
+  } else {
+    node.expression = `${expression}, ${_hid}`
   }
 }
 
@@ -135,9 +136,6 @@ function walkChildren (node, state) {
       walk(n, state)
     })
   }
-}
-
-function walkOther (node, state) {
 }
 
 function addAttr (node, name, value) {

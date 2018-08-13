@@ -396,7 +396,7 @@ export function genChildren (
       ? getNormalizationType(children, state.maybeComponent)
       : 0
     const gen = altGenNode || genNode
-    return `[${children.map(c => gen(c, state)).join(',')}]${
+    return `[${children.map(c => gen(c, state)).filter(c => c).join(',')}]${
       normalizationType ? `,${normalizationType}` : ''
     }`
   }
@@ -434,7 +434,9 @@ function needsNormalization (el: ASTElement): boolean {
 }
 
 function genNode (node: ASTNode, state: CodegenState): string {
-  if (node.type === 1) {
+  if (node.mpNotGenRenderFn) {
+    return ''
+  } else if (node.type === 1) {
     return genElement(node, state)
   } if (node.type === 3 && node.isComment) {
     return genComment(node)
