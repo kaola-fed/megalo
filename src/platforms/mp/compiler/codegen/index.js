@@ -520,6 +520,6 @@ function genIfScope (ifConditions: Array<any>): string {
   if (!ifConditions || !ifConditions.length) {
     return ''
   }
-  const conds = ifConditions.map(c => `var ${c.cond}  = (${c.exp});`)
+  const conds = ifConditions.map(c => `var ${c.cond}  = !!(${c.exp});`)
   return conds.join('\n')
 }
