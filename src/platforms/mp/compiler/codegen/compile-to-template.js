@@ -43,18 +43,18 @@ export class TemplateGenerator {
       const clonedAST = cloneAST(ast)
       const importsCode = this.genImports()
       const code = this.genElement(clonedAST)
-      const template = [
+      const body = [
         importsCode,
         `<template name="${this.name}">${code}</template>`
       ].join('')
 
       return {
-        template,
+        body,
         slots: this.slots
       }
     } catch (err) {
       return {
-        template: this.genError(err),
+        body: this.genError(err),
         slots: this.slots
       }
     }
@@ -97,7 +97,7 @@ export class TemplateGenerator {
 
     this.slots = this.slots.concat(slots)
 
-    return `<template is="${compName}" data="{{${data}}}"/>`
+    return `<template${this.genIf(el)} is="${compName}" data="{{${data}}}"/>`
   }
 
   // TODO: deprecate the namedSlots inside a nameSlots
@@ -114,7 +114,7 @@ export class TemplateGenerator {
       const parts = slot.ast.map(e => this.genElement(e))
       const dependencies = slot.ast.reduce((res, e) => res.concat(this.collectDependencies(e)), [])
       const slotName = `${name}_${uid()}`
-      const template = [
+      const body = [
         `<template name="${slotName}" parent="${this.name}">`,
         ...parts,
         `</template>`
@@ -124,7 +124,7 @@ export class TemplateGenerator {
         name,
         slotName,
         dependencies,
-        template,
+        body,
         ast
       }
     })
