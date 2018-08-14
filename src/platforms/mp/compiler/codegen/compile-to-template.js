@@ -19,7 +19,7 @@ export class TemplateGenerator {
     const {
       target = 'wechat',
       name = 'defaultName',
-      moduleId = '',
+      scopeId = '',
       imports = [],
       slots = [],
       warn = baseWarn
@@ -29,7 +29,7 @@ export class TemplateGenerator {
 
     Object.assign(this, {
       name,
-      moduleId,
+      scopeId,
       imports,
       slots,
       preset,
@@ -201,7 +201,7 @@ export class TemplateGenerator {
     if (staticClass) {
       klass.push(staticClass)
       // scoped id class
-      klass.push(this.moduleId)
+      klass.push(this.scopeId)
     }
     if (classBinding) {
       klass.push(`{{ _h[ ${_hid} ].cl }}`)
@@ -221,7 +221,7 @@ export class TemplateGenerator {
     if (styleBinding) {
       style.push(`{{ _h[ ${_hid} ].st }}`)
     }
-    style = style.filter(e => e).join(' ')
+    style = style.filter(e => e).join('; ')
     return style ? ` style="${style}"` : ''
   }
 

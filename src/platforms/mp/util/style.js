@@ -20,9 +20,12 @@ function normalizeStyleData (data: VNodeData): ?Object {
   const style = normalizeStyleBinding(data.style)
   // static style is pre-processed into an object during compilation
   // and is always a fresh object, so it's safe to merge into it
-  return data.staticStyle
-    ? extend(data.staticStyle, style)
-    : style
+  // return data.staticStyle
+  //   ? extend(data.staticStyle, style)
+  //   : style
+
+  // mp: no need to update staticStyle
+  return style
 }
 
 // normalize possible array / string values into Object
