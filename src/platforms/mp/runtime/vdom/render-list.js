@@ -36,13 +36,66 @@ export function renderList (
     (ret: any)._isVList = true
   }
 
-  const list = val.map((e, i) => i)
-  const forId = ret[0].data.hid.replace(/-\d+$/, '')
-  this.$updateMPData('li', list, {
-    data: {
-      hid: forId
+  updateListToMP(ret, val)
+  return ret
+}
+
+function updateListToMP (vnodeList, val) {
+  let firstItem = vnodeList[0]
+  let forId, forKeys
+
+  if (Array.isArray(firstItem)) {
+    forKeys = firstItem.map(e => {
+      const { attrs = {}} = e.data || {}
+      const { _fk = '' } = attrs
+      return _fk
+    })
+  } else {
+    const { attrs = {}} = firstItem.data || {}
+    const { _fk = '' } = attrs
+    forKeys = [_fk]
+  }
+
+  forKeys = forKeys.filter(e => e)
+
+  const list = val.map((e, i) => {
+    if (forKeys.length === 0) {
+      return i
     }
+    return forKeys.reduce((res, k) => {
+      res[k.replace(/\./g, '_')] = getValue(val[i], k)
+      return res
+    }, {})
   })
 
-  return ret
+  // <template v-for></template>
+  // won't create VDOM for template
+  // using parent holder to store listing data
+  if (Array.isArray(firstItem)) {
+    firstItem = firstItem[0]
+    const { attrs = {}} = firstItem.data || {}
+    const { _hid = '' } = attrs
+    const parentIndex = +(_hid.match(/(^\d*)(?=-)/)[0]) - 1
+    forId = _hid.replace(/-\d+$/, '').replace(/^\d*/, parentIndex)
+  // <div v-for></div> => <div wx:for></div>
+  // using itself to store listing data
+  } else {
+    const { attrs = {}} = firstItem.data || {}
+    const { _hid = '' } = attrs
+    forId = _hid.replace(/-\d+$/, '')
+  }
+  const { context } = firstItem
+  context.$updateMPData('li', list, {
+    data: { _hid: forId }
+  })
+}
+
+function getValue (obj = {}, path = '') {
+  const paths = path.split('.')
+  return paths.reduce((prev, k) => {
+    if (prev && isDef(prev)) {
+      prev = prev[k]
+    }
+    return prev
+  }, obj)
 }

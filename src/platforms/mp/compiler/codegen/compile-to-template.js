@@ -302,16 +302,28 @@ export class TemplateGenerator {
 
   genFor (el): string {
     if (!el.for) {
-      return ''
+      return this.genForKey(el)
     }
-    const { _hid, iterator1, key = '' } = el
-    const keyName = key.replace(/^\w*\./, '')
+    const { _hid = '', iterator1, alias } = el
+    // remove the last index
+    const forId = `${_hid}`.split(`+ '-' +`).slice(0, -1).join(`+ '-' +`).trim()
     const _for = [
-      ` wx:for="{{ _h[ ${_hid} ].li }}"`
+      ` wx:for="{{ _h[ ${forId} ].li }}"`,
+      this.genForKey(el),
+      alias ? ` wx:for-item="${alias}"` : ''
     ]
     iterator1 && _for.push(` wx:for-index="${iterator1}"`)
-    keyName && _for.push(` wx:key="${keyName}"`)
-    return _for.join('')
+
+    return _for.filter(e => e).join('')
+  }
+
+  genForKey (el): string {
+    if (!el.key) {
+      return ''
+    }
+
+    const keyName = el.key.replace(/^\w*\./, '').replace(/\./g, '_')
+    return keyName ? ` wx:key="${keyName}"` : ''
   }
 
   genText (el): string {

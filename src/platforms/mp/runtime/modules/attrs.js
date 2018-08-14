@@ -6,6 +6,8 @@ import {
   isUndef
 } from 'shared/util'
 
+const ignoreKeys = ['_hid', '_fk']
+
 function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   const opts = vnode.componentOptions
   if (isDef(opts) && opts.Ctor.options.inheritAttrs === false) {
@@ -25,7 +27,7 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   const { context } = vnode
 
   for (key in attrs) {
-    if (key === '_hid') {
+    if (ignoreKeys.indexOf(key) > -1) {
       continue
     }
     cur = attrs[key]

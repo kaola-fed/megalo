@@ -15,6 +15,10 @@ export function mpify (node) {
 }
 
 function walk (node, state) {
+  if (node.for && !node.mpForWalked) {
+    return walkFor(node, state)
+  }
+
   if (node._hid === undefined) {
     state.assignHId(node)
     addAttr(node, '_hid', node._hid)
@@ -22,10 +26,6 @@ function walk (node, state) {
 
   if (node.ifConditions && !node.mpIfWalked) {
     return walkIf(node, state)
-  }
-
-  if (node.for && !node.mpForWalked) {
-    return walkFor(node, state)
   }
 
   if (node.type === TYPE.ELEMENT) {
@@ -59,6 +59,11 @@ function walkFor (node, state) {
 }
 
 function walkElem (node, state) {
+  if (node.key) {
+    const key = node.key.replace(/^\w*\./, '')
+    addAttr(node, '_fk', `"${key}"`)
+  }
+
   if (!isTag(node)) {
     return walkComponent(node, state)
   }
@@ -141,7 +146,7 @@ function walkChildren (node, state) {
 function addAttr (node, name, value) {
   // generate attr code when plain is false
   node.plain = false
-  const { attrs = [] } = node
+  const { attrs = [], attrsMap = {}} = node
 
   let attrIndex = attrs.findIndex(attr => attr.name === name)
   attrIndex = attrIndex !== -1 ? attrIndex : attrs.length
@@ -149,8 +154,9 @@ function addAttr (node, name, value) {
     name,
     value: `${value}`
   }
+  attrsMap[name] = `${value}`
 
-  Object.assign(node, { attrs })
+  Object.assign(node, { attrs, attrsMap })
 }
 
 function isTag (node) {
