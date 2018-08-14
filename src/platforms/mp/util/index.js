@@ -2,6 +2,7 @@
 
 import { makeMap } from 'shared/util'
 
+export * from './class'
 export * from './throttle'
 export * from './aop'
 

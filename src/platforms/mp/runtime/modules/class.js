@@ -7,11 +7,12 @@ import {
 
 import {
   genClassForVnode
-} from 'web/util/index'
+} from 'mp/util/index'
 
 function updateClass (oldVnode: any, vnode: any) {
   const data: VNodeData = vnode.data
   const oldData: VNodeData = oldVnode.data
+
   if (
     isUndef(data.staticClass) &&
     isUndef(data.class) && (
@@ -26,8 +27,10 @@ function updateClass (oldVnode: any, vnode: any) {
 
   const cls = genClassForVnode(vnode)
 
-  const { context } = vnode
-  context.$updateMPData('cl', cls, vnode)
+  if (cls) {
+    const { context } = vnode
+    context.$updateMPData('cl', cls, vnode)
+  }
 }
 
 export default {
