@@ -1,13 +1,16 @@
 export function afterCreateElement (vnode) {
-  const { data = {}, context } = vnode
+  updateIfConditionsToMP(vnode)
+}
 
-  if (data._if) {
-    data._if.forEach(e => {
-      context.$updateMPData('if', e.v, {
-        data: {
-          hid: e.id
-        }
-      })
-    })
+function updateIfConditionsToMP (vnode) {
+  const { data = {}, context } = vnode
+  const { attrs = {}} = data
+  for (const key in attrs) {
+    if (/^_if_id/.test(key)) {
+      const ifIndex = key.split('$')[1]
+      const _hid = attrs[key]
+      const cond = attrs[`_if_v$${ifIndex}`]
+      context.$updateMPData('_if', cond, { data: { attrs: { _hid }}})
+    }
   }
 }
