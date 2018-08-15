@@ -25,7 +25,7 @@ export function getVMId (vm) {
   const res = []
   let cursor = vm
   while (cursor) {
-    res.push(getVMMarker(cursor))
+    res.unshift(getVMMarker(cursor))
     cursor = cursor.$parent
   }
   return res.join(',')

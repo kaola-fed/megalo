@@ -6,7 +6,7 @@ import Vue from 'core/index'
 import { mountComponent } from 'core/instance/lifecycle'
 
 import { initMP } from 'mp/runtime/lifecycle/index'
-import { updateMPData, initVMToMP } from 'mp/runtime/instance/index'
+import { updateMPData, initVMToMP, afterRenderSlot } from 'mp/runtime/instance/index'
 import { renderList, createTextVNode, afterCreateElement } from 'mp/runtime/vdom/index'
 import { aop } from 'mp/util/index'
 
@@ -56,6 +56,11 @@ Vue.prototype._init = function (options) {
       after (a, b, c, d, vnode) {
         afterCreateElement.call(self, vnode)
       }
+    })
+
+    this._t = aop(this._t, {
+      argsCount: 4,
+      after: afterRenderSlot
     })
     return this
   }

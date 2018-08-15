@@ -1,4 +1,5 @@
 /* @flow */
+import { updateVnodeToMP } from './instance/index'
 
 export function createElement (tagName: string, vnode: VNode): Element {
   return {}
@@ -9,8 +10,7 @@ export function createElementNS (namespace: string, tagName: string): Element {
 }
 
 export function createTextNode (text: string, vnode: VNode): Text {
-  const { context } = vnode
-  context && context.$updateMPData('t', text, vnode)
+  updateVnodeToMP(vnode, 't', text)
   return {}
 }
 
@@ -40,8 +40,7 @@ export function tagName (node: Element): string {
 }
 
 export function setTextContent (node: Node, text: string, vnode: VNode) {
-  const { context } = vnode
-  context.$updateMPData('t', text, vnode)
+  updateVnodeToMP(vnode, 't', text)
   return {}
 }
 

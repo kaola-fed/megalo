@@ -9,6 +9,8 @@ import {
   isUndef
 } from 'shared/util'
 
+import { updateVnodeToMP } from '../instance/index'
+
 const cssVarRE = /^--/
 const importantRE = /\s*!important$/
 // const setProp = (el, name, val) => {
@@ -109,8 +111,7 @@ function updateStyle (oldVnode: VNodeWithData, vnode: VNodeWithData) {
     .join('; ')
 
   if (cur) {
-    const { context } = vnode
-    context.$updateMPData('st', cur, vnode)
+    updateVnodeToMP(vnode, 'st', cur)
   }
 }
 

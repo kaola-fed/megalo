@@ -17,6 +17,7 @@ export function genClassForVnode (vnode: VNodeWithData): string {
       data = mergeClassData(data, parentNode.data)
     }
   }
+  // mp: no need to update static class
   return renderClass(data.class)
 }
 

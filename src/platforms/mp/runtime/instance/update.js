@@ -53,3 +53,13 @@ export function createUpdateFn (page) {
     throttleSetData()
   }
 }
+
+export function updateVnodeToMP (vnode, key = 't', value) {
+  const { context, slotContext } = vnode
+  const realContext = slotContext || context
+  realContext && realContext.$updateMPData(key, value, vnode)
+
+  if (!realContext) {
+    console.warn('update text with no context', key, value, vnode)
+  }
+}

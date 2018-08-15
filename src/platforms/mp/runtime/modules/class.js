@@ -9,6 +9,8 @@ import {
   genClassForVnode
 } from 'mp/util/index'
 
+import { updateVnodeToMP } from '../instance/index'
+
 function updateClass (oldVnode: any, vnode: any) {
   const data: VNodeData = vnode.data
   const oldData: VNodeData = oldVnode.data
@@ -28,8 +30,7 @@ function updateClass (oldVnode: any, vnode: any) {
   const cls = genClassForVnode(vnode)
 
   if (cls) {
-    const { context } = vnode
-    context.$updateMPData('cl', cls, vnode)
+    updateVnodeToMP(vnode, 'cl', cls)
   }
 }
 

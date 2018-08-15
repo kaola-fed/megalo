@@ -1,6 +1,7 @@
 /* @flow */
 
 import { isDef, isUndef, extend, toNumber } from 'shared/util'
+import { updateVnodeToMP } from '../instance/index'
 
 function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   if (isUndef(oldVnode.data.domProps) && isUndef(vnode.data.domProps)) {
@@ -34,7 +35,7 @@ function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
       //   elm.removeChild(elm.childNodes[0])
       // }
       if (key === 'innerHTML') {
-        updateToMP('html', cur, vnode)
+        updateVnodeToMP(vnode, 'html', cur)
       }
     }
 
@@ -46,18 +47,13 @@ function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
       const strCur = isUndef(cur) ? '' : String(cur)
       if (shouldUpdateValue(elm, strCur)) {
         elm.value = strCur
-        updateToMP(key, strCur, vnode)
+        updateVnodeToMP(vnode, key, strCur)
       }
     } else {
       elm[key] = cur
-      updateToMP(key, cur, vnode)
+      updateVnodeToMP(vnode, key, cur)
     }
   }
-}
-
-function updateToMP (key, val, vnode) {
-  const { context } = vnode
-  context.$updateMPData(key, val, vnode)
 }
 
 // check platforms/web/util/attrs.js acceptValue

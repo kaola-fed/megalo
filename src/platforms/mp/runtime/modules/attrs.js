@@ -5,8 +5,14 @@ import {
   isDef,
   isUndef
 } from 'shared/util'
+import { updateVnodeToMP } from '../instance/index'
 
-const ignoreKeys = ['_hid', '_fk']
+const ignoreKeys = ['_hid', '_fk', '_cid']
+
+function isIgnoreKey (key) {
+  return ignoreKeys.indexOf(key) > -1 ||
+  /^_if_/.test(key)
+}
 
 function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   const opts = vnode.componentOptions
@@ -24,16 +30,14 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
     attrs = vnode.data.attrs = extend({}, attrs)
   }
 
-  const { context } = vnode
-
   for (key in attrs) {
-    if (ignoreKeys.indexOf(key) > -1) {
+    if (isIgnoreKey(key)) {
       continue
     }
     cur = attrs[key]
     old = oldAttrs[key]
     if (old !== cur) {
-      context.$updateMPData(key, cur, vnode)
+      updateVnodeToMP(vnode, key, cur)
     }
   }
 }

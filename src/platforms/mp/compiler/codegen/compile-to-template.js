@@ -9,8 +9,11 @@ import { baseWarn } from 'compiler/helpers'
 const vbindReg = /^(v-bind)?:/
 const vonReg = /^v-on:|@/
 
+const notEmpty = e => e
+
 export function compileToTemplate (ast, options = {}): string {
   const templateGenerator = new TemplateGenerator(options)
+
   return templateGenerator.generate(ast)
 }
 
@@ -95,9 +98,14 @@ export class TemplateGenerator {
       ...slotsNames
     ].join(', ')
 
-    this.slots = this.slots.concat(slots)
+    const attrs = [
+      ` is="${compName}"`,
+      ` data="{{${data}}}"`,
+      this.genIf(el),
+      this.genFor(el)
+    ].filter(notEmpty).join('')
 
-    return `<template${this.genIf(el)} is="${compName}" data="{{${data}}}"/>`
+    return `<template ${attrs}/>`
   }
 
   // TODO: deprecate the namedSlots inside a nameSlots
@@ -108,7 +116,7 @@ export class TemplateGenerator {
 
     walk(root)
 
-    return Object.keys(slots).map(name => {
+    const slotsArr = Object.keys(slots).map(name => {
       const slot = slots[name]
       const { ast } = slot
       const parts = slot.ast.map(e => this.genElement(e))
@@ -128,6 +136,10 @@ export class TemplateGenerator {
         ast
       }
     })
+
+    this.slots = this.slots.concat(slotsArr)
+
+    return slotsArr
 
     function walk (el, parent) {
       if (self.isNamedSlotDefinition(el)) {
@@ -340,7 +352,7 @@ export class TemplateGenerator {
     const defaultSlotName = `${slotName}$${uid()}`
     const defaultSlotBody = this.genChildren(el)
     const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : ''
-    return `${defaultSlot}<template is="{{ s_${slotName} || '${defaultSlotName}' }}" data="{ ...$root[ p ], $root }"/>`
+    return `${defaultSlot}<template is="{{ s_${slotName} || '${defaultSlotName}' }}" data="{{ ...$root[ c ], $root }}"/>`
   }
 
   genChildren (el): string {

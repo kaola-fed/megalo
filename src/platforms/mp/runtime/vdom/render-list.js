@@ -1,6 +1,7 @@
 /* @flow */
 
 import { isObject, isDef } from 'core/util/index'
+import { updateVnodeToMP } from '../instance/index'
 
 /**
  * Runtime helper for rendering v-for lists.
@@ -84,10 +85,16 @@ function updateListToMP (vnodeList, val) {
     const { _hid = '' } = attrs
     forId = _hid.replace(/-\d+$/, '')
   }
-  const { context } = firstItem
-  context.$updateMPData('li', list, {
-    data: { _hid: forId }
-  })
+
+  const { context, slotContext } = firstItem
+  const cloneVnode = {
+    context,
+    slotContext,
+    data: {
+      attrs: { _hid: forId }
+    }
+  }
+  updateVnodeToMP(cloneVnode, 'li', list)
 }
 
 function getValue (obj = {}, path = '') {
