@@ -1,3 +1,5 @@
+import { isDef } from 'core/util/index'
+
 export function getHid (vm, vnode = {}) {
   const { data = {}} = vnode
   return data._hid || (data.attrs && data.attrs._hid)
@@ -24,11 +26,21 @@ export function getVMMarker (vm) {
 export function getVMId (vm) {
   const res = []
   let cursor = vm
+  let prev
   while (cursor) {
-    res.unshift(getVMMarker(cursor))
+    if (cursor === vm || !isSlotParent(cursor, prev)) {
+      res.unshift(getVMMarker(cursor))
+    }
+    prev = cursor
     cursor = cursor.$parent
   }
   return res.join(',')
+}
+
+function isSlotParent (parent, child) {
+  const { $vnode = {}} = child || {}
+  const childSlotParentUId = $vnode._mpSlotParentUId
+  return isDef(childSlotParentUId) && childSlotParentUId === parent._uid
 }
 
 export function getVMParentId (vm) {

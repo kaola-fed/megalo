@@ -20,12 +20,31 @@ export function proxyEvent (rootVM, event) {
 }
 
 function getVnode (vnode = {}, hid) {
-  const { children = [], data = {}} = vnode
+  const { data = {}, componentInstance } = vnode
+  let { children = [] } = vnode
   const { attrs = {}} = data
   if (`${attrs._hid}` === `${hid}`) {
     return vnode
   }
-  return children.find(v => getVnode(v, hid))
+
+  // if vnode is component
+  // find vnode in its slots
+  if (componentInstance) {
+    const { $slots = {}} = componentInstance
+    children = Object.keys($slots)
+      .reduce((res, k) => {
+        const nodes = $slots[k]
+        if (nodes._rendered) {
+          res = res.concat(nodes)
+        }
+        return res
+      }, [])
+  }
+
+  for (let i = 0, len = children.length; i < len; ++i) {
+    const res = getVnode(children[i], hid)
+    if (res) return res
+  }
 }
 
 function getHandlers (vm, type, hid) {

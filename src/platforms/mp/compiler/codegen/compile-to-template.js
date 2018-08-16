@@ -113,6 +113,18 @@ export class TemplateGenerator {
     const self = this
     const root = el
     const slots = {}
+    const { scopedSlots } = el
+
+    if (scopedSlots) {
+      Object.keys(scopedSlots)
+        .forEach(k => {
+          const slot = scopedSlots[k] || {}
+          const { children = [] } = slot
+          const slotName = removeQuotes(k)
+          addSlotAst(slotName, ...children)
+          slots[slotName].scoped = true
+        })
+    }
 
     walk(root)
 
@@ -174,6 +186,7 @@ export class TemplateGenerator {
         }
       }
       const slot = slots[name]
+      if (slot.scoped) return
       slot.ast = slot.ast.concat(ast)
     }
   }
@@ -264,6 +277,8 @@ export class TemplateGenerator {
       return ''
     }
 
+    const cid = 'c'
+
     let eventAttrs = Object.keys(events).map(type => {
       const event = events[type]
       const { modifiers = {}} = event
@@ -283,7 +298,7 @@ export class TemplateGenerator {
       return `${binder}${mpType}="_pe"`
     })
     eventAttrs = eventAttrs.join(' ')
-    return ` data-cid="{{ c }}" data-hid="{{ ${_hid} }}" ${eventAttrs}`
+    return ` data-cid="{{ ${cid} }}" data-hid="{{ ${_hid} }}" ${eventAttrs}`
   }
 
   genIfConditions (el): string {
@@ -352,7 +367,7 @@ export class TemplateGenerator {
     const defaultSlotName = `${slotName}$${uid()}`
     const defaultSlotBody = this.genChildren(el)
     const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : ''
-    return `${defaultSlot}<template is="{{ s_${slotName} || '${defaultSlotName}' }}" data="{{ ...$root[ c ], $root }}"/>`
+    return `${defaultSlot}<template is="{{ s_${slotName} || '${defaultSlotName}' }}" data="{{ ...$root[ s ], $root }}"/>`
   }
 
   genChildren (el): string {

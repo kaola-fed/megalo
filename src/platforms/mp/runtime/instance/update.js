@@ -1,5 +1,5 @@
 import { isDef } from 'core/util/index'
-import { getVMMarker, getVMId, getVMParentId, getHid } from './helper'
+import { getVMId, getHid } from './helper'
 import { throttle } from 'mp/util/throttle'
 import { Buffer } from 'mp/util/buffer'
 
@@ -9,20 +9,27 @@ function isEmptyObj (obj = {}) {
 
 export function initVMToMP (vm) {
   vm = vm || this
-  const pid = getVMParentId(vm)
-  const vmKey = getVMMarker(vm)
-  const cid = [pid, vmKey].filter(e => e).join(',')
+  const cid = getVMId(vm)
   const info = {
     cid,
-    pid,
     cpath: `${cid},`
   }
 
   vm.$mp.update({
     [`$root.${cid}.c`]: info.cid,
-    [`$root.${cid}.p`]: info.pid,
     [`$root.${cid}.cp`]: info.cpath
   })
+}
+
+export function updateSlotId (vm, sid) {
+  vm = vm || this
+  const vmId = getVMId(vm)
+
+  if (isDef(sid)) {
+    vm.$mp.update({
+      [`$root.${vmId}.s`]: sid
+    })
+  }
 }
 
 export function updateMPData (type = 't', data, vnode) {

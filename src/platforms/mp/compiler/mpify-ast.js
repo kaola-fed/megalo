@@ -136,9 +136,20 @@ function walkIf (node, state) {
 }
 
 function walkChildren (node, state) {
-  if (node.children) {
-    node.children.forEach(n => {
+  const { children, scopedSlots } = node
+  if (children) {
+    children.forEach(n => {
       walk(n, state)
+    })
+  }
+
+  if (scopedSlots) {
+    Object.keys(scopedSlots).forEach(k => {
+      const slot = scopedSlots[k] || {}
+      const { children = [] } = slot
+      children.forEach(n => {
+        walk(n, state)
+      })
     })
   }
 }
