@@ -100,12 +100,12 @@ export class TemplateGenerator {
 
     const attrs = [
       ` is="${compName}"`,
-      ` data="{{${data}}}"`,
+      ` data="{{ ${data} }}"`,
       this.genIf(el),
       this.genFor(el)
     ].filter(notEmpty).join('')
 
-    return `<template ${attrs}/>`
+    return `<template${attrs} />`
   }
 
   // TODO: deprecate the namedSlots inside a nameSlots
@@ -200,10 +200,10 @@ export class TemplateGenerator {
     const { tag } = el
     const mpTag = TAG_MAP[tag] || tag
     const attrs = this.isTemplate(el) ? [] : [
+      this.genVShow(el),
       this.genClass(el),
       this.genStyle(el),
       this.genAttrs(el),
-      this.genVShow(el),
       this.genEvents(el)
     ]
 
@@ -235,7 +235,7 @@ export class TemplateGenerator {
       klass.push(this.scopeId)
     }
     klass.unshift(`_${tag}`)
-    klass = klass.join(' ')
+    klass = klass.filter(notEmpty).join(' ')
     return ` class="${klass}"`
   }
 
@@ -259,7 +259,7 @@ export class TemplateGenerator {
     if (!attrsMap['v-show']) {
       return ''
     }
-    return `hidden="{{ _h[ ${_hid} ].vs }}"`
+    return ` hidden="{{ _h[ ${_hid} ].vs }}"`
   }
 
   genAttrs (el): string {
@@ -272,9 +272,9 @@ export class TemplateGenerator {
         return ''
       } else if (vbindReg.test(name)) {
         const realName = name.replace(vbindReg, '')
-        return `${realName}="{{ _hid[ ${_hid} ][ '${realName}' ] }}"`
+        return `${realName}="{{ _h[ ${_hid} ][ '${realName}' ] }}"`
       } else if (name === 'v-model') {
-        return `value="{{ _h[${_hid}].value }}"`
+        return `value="{{ _h[ ${_hid} ].value }}"`
       } else {
         return `${name}="${value}"`
       }
