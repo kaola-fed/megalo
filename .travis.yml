@@ -6,6 +6,7 @@ node_js:
 branches:
     only:
     - master
+    - feature_megalo
 
 install:
 - npm install --only=dev
