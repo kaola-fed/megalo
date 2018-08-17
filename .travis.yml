@@ -1,0 +1,15 @@
+language: node_js
+
+node_js:
+    - 8
+
+branches:
+    only:
+    - master
+
+install:
+- npm install --only=dev
+
+script:
+- npm run test:megalo
+# - npm run coveralls
