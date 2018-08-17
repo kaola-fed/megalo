@@ -181,7 +181,7 @@ const builds = {
   // mp runtime
   'mp-runtime': {
     entry: resolve('mp/entry-runtime.js'),
-    dest: resolve('dist/vue.mp.esm.js'),
+    dest: resolve('dist/megalo.mp.esm.js'),
     format: 'umd',
     env: 'production',
     banner: mpBanner
