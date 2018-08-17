@@ -50,7 +50,6 @@ export function createUpdateFn (page) {
     const data = buffer.pop()
 
     if (!isEmptyObj(data)) {
-      console.log('setData', data)
       page.setData(data)
     }
   }, 50, { leadingDelay: 0 })
