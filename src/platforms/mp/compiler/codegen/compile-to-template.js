@@ -222,16 +222,19 @@ export class TemplateGenerator {
   genClass (el): string {
     const { tag, classBinding, _hid } = el
     let { staticClass = '' } = el
-    let klass = [`_${tag}`]
+    let klass = []
     staticClass = removeQuotes(staticClass)
     if (staticClass) {
       klass.push(staticClass)
-      // scoped id class
-      klass.push(this.scopeId)
     }
     if (classBinding) {
       klass.push(`{{ _h[ ${_hid} ].cl }}`)
     }
+    // scoped id class
+    if (klass.length) {
+      klass.push(this.scopeId)
+    }
+    klass.unshift(`_${tag}`)
     klass = klass.join(' ')
     return ` class="${klass}"`
   }
