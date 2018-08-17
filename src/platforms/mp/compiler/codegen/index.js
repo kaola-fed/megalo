@@ -188,13 +188,14 @@ export function genFor (
       true /* tip */
     )
   }
+  const { _forId } = el
 
   el.forProcessed = true // avoid recursion
   return `${altHelper || '_l'}((${exp}),` +
     `function(${alias}${iterator1}${iterator2}){` +
       `${genIfScope(el._if)}` +
       `return ${(altGen || genElement)(el, state)}` +
-    '})'
+    `}, ${_forId}, _self)`
 }
 
 export function genData (el: ASTElement, state: CodegenState): string {

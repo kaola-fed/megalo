@@ -53,6 +53,16 @@ function walkFor (node, state) {
     alias
   })
 
+  if (node._hid === undefined) {
+    state.assignHId(node)
+    addAttr(node, '_hid', node._hid)
+  }
+
+  const { _hid } = node
+  // extract last index
+  const forId = `${_hid}`.split(`+ '-' +`).slice(0, -1).join(`+ '-' +`).trim()
+  node._forId = forId
+
   walk(node, state)
 
   state.popListState()

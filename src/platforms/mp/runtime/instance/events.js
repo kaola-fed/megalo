@@ -50,7 +50,7 @@ function getVnode (vnode = {}, hid) {
 function getHandlers (vm, type, hid) {
   let res = []
 
-  const eventTypes = eventTypeMap[type]
+  const eventTypes = eventTypeMap[type] || [type]
   if (!vm) return res
 
   const vnode = getVnode(vm._vnode, hid)

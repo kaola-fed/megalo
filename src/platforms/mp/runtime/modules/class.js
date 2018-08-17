@@ -29,9 +29,7 @@ function updateClass (oldVnode: any, vnode: any) {
 
   const cls = genClassForVnode(vnode)
 
-  if (cls) {
-    updateVnodeToMP(vnode, 'cl', cls)
-  }
+  updateVnodeToMP(vnode, 'cl', cls)
 }
 
 export default {

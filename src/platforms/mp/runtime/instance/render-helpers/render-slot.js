@@ -14,13 +14,21 @@ export function afterRenderSlot (
   nodes: ?Array<VNode>
 ): ?Array<VNode> {
   if (nodes && nodes.length) {
-    const firstNode = nodes[0]
+    const firstNode = getFirstNode(nodes)
     const { context } = firstNode
     const sid = getVMId(context)
     updateSlotId(this, sid)
     markComponents(nodes, this._uid)
   }
   return nodes
+}
+
+function getFirstNode (nodes) {
+  let firstNode = nodes
+  while (firstNode && Array.isArray(firstNode)) {
+    firstNode = firstNode[0]
+  }
+  return firstNode
 }
 
 function markComponents (nodes, parentUId) {

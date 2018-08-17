@@ -2,7 +2,10 @@
 
 import Vue from 'core/index'
 // import config from 'core/config'
-// import { extend, noop } from 'shared/util'
+import {
+  extend
+  // noop
+} from 'shared/util'
 import { mountComponent } from 'core/instance/lifecycle'
 
 import { initMP } from 'mp/runtime/lifecycle/index'
@@ -20,7 +23,7 @@ import { aop } from 'mp/util/index'
 // } from 'web/util/index'
 
 import { patch } from './patch'
-// import platformDirectives from './directives/index'
+import platformDirectives from './directives/index'
 // import platformComponents from './components/index'
 
 // install platform specific utils
@@ -31,7 +34,7 @@ import { patch } from './patch'
 // Vue.config.isUnknownElement = isUnknownElement
 
 // install platform runtime directives & components
-// extend(Vue.options.directives, platformDirectives)
+extend(Vue.options.directives, platformDirectives)
 // extend(Vue.options.components, platformComponents)
 
 // install platform patch function

@@ -12,7 +12,9 @@ export function renderList (
     val: any,
     keyOrIndex: string | number,
     index?: number
-  ) => VNode
+  ) => VNode,
+  forId: string | number,
+  context: Vue
 ): ?Array<VNode> {
   let ret: ?Array<VNode>, i, l, keys, key
   if (Array.isArray(val) || typeof val === 'string') {
@@ -37,63 +39,47 @@ export function renderList (
     (ret: any)._isVList = true
   }
 
-  updateListToMP(ret, val)
+  updateListToMP(ret, val, forId, context)
   return ret
 }
 
-function updateListToMP (vnodeList, val) {
-  let firstItem = vnodeList[0]
-  let forId, forKeys
-
-  if (Array.isArray(firstItem)) {
-    forKeys = firstItem.map(e => {
-      const { attrs = {}} = e.data || {}
+function updateListToMP (vnodeList, val, forId, context) {
+  const firstItem = vnodeList[0]
+  let forKeys
+  let list = []
+  if (firstItem) {
+    if (Array.isArray(firstItem)) {
+      forKeys = firstItem.map(e => {
+        const { attrs = {}} = e.data || {}
+        const { _fk = '' } = attrs
+        return _fk
+      })
+    } else {
+      const { attrs = {}} = firstItem.data || {}
       const { _fk = '' } = attrs
-      return _fk
-    })
-  } else {
-    const { attrs = {}} = firstItem.data || {}
-    const { _fk = '' } = attrs
-    forKeys = [_fk]
-  }
-
-  forKeys = forKeys.filter(e => e)
-
-  const list = val.map((e, i) => {
-    if (forKeys.length === 0) {
-      return i
+      forKeys = [_fk]
     }
-    return forKeys.reduce((res, k) => {
-      res[k.replace(/\./g, '_')] = getValue(val[i], k)
-      return res
-    }, {})
-  })
 
-  // <template v-for></template>
-  // won't create VDOM for template
-  // using parent holder to store listing data
-  if (Array.isArray(firstItem)) {
-    firstItem = firstItem[0]
-    const { attrs = {}} = firstItem.data || {}
-    const { _hid = '' } = attrs
-    const parentIndex = +(_hid.match(/(^\d*)(?=-)/)[0]) - 1
-    forId = _hid.replace(/-\d+$/, '').replace(/^\d*/, parentIndex)
-  // <div v-for></div> => <div wx:for></div>
-  // using itself to store listing data
-  } else {
-    const { attrs = {}} = firstItem.data || {}
-    const { _hid = '' } = attrs
-    forId = _hid.replace(/-\d+$/, '')
+    forKeys = forKeys.filter(e => e)
+
+    list = val.map((e, i) => {
+      if (forKeys.length === 0) {
+        return i
+      }
+      return forKeys.reduce((res, k) => {
+        res[k.replace(/\./g, '_')] = getValue(val[i], k)
+        return res
+      }, {})
+    })
   }
 
-  const { context, slotContext } = firstItem
   const cloneVnode = {
     context,
-    slotContext,
     data: {
       attrs: { _hid: forId }
     }
   }
+
   updateVnodeToMP(cloneVnode, 'li', list)
 }
 

@@ -203,6 +203,7 @@ export class TemplateGenerator {
       this.genClass(el),
       this.genStyle(el),
       this.genAttrs(el),
+      this.genVShow(el),
       this.genEvents(el)
     ]
 
@@ -250,13 +251,21 @@ export class TemplateGenerator {
     return style ? ` style="${style}"` : ''
   }
 
+  genVShow (el): string {
+    const { attrsMap = {}, _hid } = el
+    if (!attrsMap['v-show']) {
+      return ''
+    }
+    return `hidden="{{ _h[ ${_hid} ].vs }}"`
+  }
+
   genAttrs (el): string {
     const { attrsList = [], _hid, attrsMap = {}} = el
     const hasVModel = !!attrsMap['v-model']
 
     let attrs = attrsList.map((attr) => {
       const { name, value } = attr
-      if (vonReg.test(name) || (name === 'value' && hasVModel)) {
+      if (vonReg.test(name) || (name === 'value' && hasVModel) || name === 'v-show') {
         return ''
       } else if (vbindReg.test(name)) {
         const realName = name.replace(vbindReg, '')
@@ -331,11 +340,9 @@ export class TemplateGenerator {
     if (!el.for) {
       return this.genForKey(el)
     }
-    const { _hid = '', iterator1, alias } = el
-    // remove the last index
-    const forId = `${_hid}`.split(`+ '-' +`).slice(0, -1).join(`+ '-' +`).trim()
+    const { iterator1, alias, _forId } = el
     const _for = [
-      ` wx:for="{{ _h[ ${forId} ].li }}"`,
+      ` wx:for="{{ _h[ ${_forId} ].li }}"`,
       this.genForKey(el),
       alias ? ` wx:for-item="${alias}"` : ''
     ]
