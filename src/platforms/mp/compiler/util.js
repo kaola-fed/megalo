@@ -76,3 +76,7 @@ export const uid = (() => {
     return id++
   }
 })()
+
+export const escapeText = (str = '') => {
+  return str.replace(/\</g, `{{"<"}}`)
+}

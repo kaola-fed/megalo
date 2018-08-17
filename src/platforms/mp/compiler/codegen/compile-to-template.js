@@ -1,7 +1,7 @@
 /* @flow */
 
 import TAG_MAP from '../tag-map'
-import { cloneAST, removeQuotes, uid } from '../util'
+import { cloneAST, removeQuotes, uid, escapeText } from '../util'
 import presets from './presets/index'
 import { baseWarn } from 'compiler/helpers'
 // import { eventTypeMap } from 'mp/util/index'
@@ -365,7 +365,7 @@ export class TemplateGenerator {
     if (el.expression) {
       return `{{ _h[ ${el._hid} ].t }}`
     }
-    return text || ''
+    return escapeText(text) || ''
   }
 
   genSlot (el): string {
