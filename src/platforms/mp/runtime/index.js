@@ -20,7 +20,7 @@ import { aop } from 'mp/util/index'
 //   isReservedAttr,
 //   getTagNamespace,
 //   isUnknownElement
-// } from 'web/util/index'
+// } from 'mp/util/index'
 
 import { patch } from './patch'
 import platformDirectives from './directives/index'

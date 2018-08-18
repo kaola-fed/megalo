@@ -1,7 +1,7 @@
 /* @flow */
 
 import { parseText } from 'compiler/parser/text-parser'
-import { parseStyleText } from 'web/util/style'
+import { parseStyleText } from 'mp/util/style'
 import {
   getAndRemoveAttr,
   getBindingAttr,

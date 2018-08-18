@@ -1,4 +1,4 @@
-const { compileToTemplate } = require('../../../packages/megalo-template-compiler')
+const { compileToTemplate } = require('mp/compiler')
 const tagMap = require('../helpers/tag-map')
 
 const CompA = {

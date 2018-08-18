@@ -168,8 +168,8 @@ function addAttr (node, name, value) {
   // generate attr code when plain is false
   node.plain = false
   const { attrs = [], attrsMap = {}} = node
-
-  let attrIndex = attrs.findIndex(attr => attr.name === name)
+  const attr = attrs.filter(attr => attr.name === name)[0]
+  let attrIndex = attrs.indexOf(attr)
   attrIndex = attrIndex !== -1 ? attrIndex : attrs.length
   attrs[attrIndex] = {
     name,
