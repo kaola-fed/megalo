@@ -12,5 +12,5 @@ install:
 - npm install --only=dev
 
 script:
-- npm run test:megalo
+- npm run test:megalo:ci
 # - npm run coveralls
