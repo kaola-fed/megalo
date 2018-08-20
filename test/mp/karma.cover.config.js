@@ -12,7 +12,7 @@ module.exports = function (config) {
       ]
     },
     logLevel: config.LOG_DEBUG,
-    // singleRun: true,
+    singleRun: true,
     plugins: base.plugins.concat([
       'karma-coverage',
       'karma-phantomjs-launcher'
