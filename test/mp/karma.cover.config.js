@@ -12,7 +12,7 @@ module.exports = function (config) {
       ]
     },
     logLevel: config.LOG_DEBUG,
-    singleRun: true,
+    // singleRun: true,
     plugins: base.plugins.concat([
       'karma-coverage',
       'karma-phantomjs-launcher'
@@ -27,11 +27,14 @@ module.exports = function (config) {
         'src/sfc/deindent.js',
         'src/core',
         'src/compiler',
-        'src/platforms/weex/'
+        'src/platforms/weex/',
+        'src/platforms/web/',
+        'src/platforms/mp/compiler/util.js',
+        'src/web/compiler/util.js',
+        'src/shared'
       ]
     }]]
   }
 
-  console.log(options)
   config.set(options)
 }
