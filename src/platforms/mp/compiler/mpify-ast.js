@@ -28,9 +28,12 @@ function walk (node, state) {
     return walkIf(node, state)
   }
 
+  /* istanbul ignore else */
   if (node.type === TYPE.ELEMENT) {
     walkElem(node, state)
-  } else if (node.type === TYPE.TEXT || node.type === TYPE.STATIC_TEXT) {
+  } else if (
+    node.type === TYPE.TEXT || node.type === TYPE.STATIC_TEXT
+  ) {
     walkText(node, state)
   }
 }
@@ -53,6 +56,7 @@ function walkFor (node, state) {
     alias
   })
 
+  /* istanbul ignore if */
   if (node._hid === undefined) {
     state.assignHId(node)
     addAttr(node, '_hid', node._hid)
@@ -98,7 +102,7 @@ function walkText (node, state) {
   if (type === TYPE.STATIC_TEXT) {
     node.mpNotGenRenderFn = true
   } else {
-    node.expression = `${expression}, ${_hid}`
+    node.expression = `${expression},${_hid}`
   }
 }
 
@@ -147,7 +151,7 @@ function walkIf (node, state) {
 
 function walkChildren (node, state) {
   const { children, scopedSlots } = node
-  if (children) {
+  if (children && children.length) {
     children.forEach(n => {
       walk(n, state)
     })
@@ -155,7 +159,7 @@ function walkChildren (node, state) {
 
   if (scopedSlots) {
     Object.keys(scopedSlots).forEach(k => {
-      const slot = scopedSlots[k] || {}
+      const slot = scopedSlots[k]
       const { children = [] } = slot
       children.forEach(n => {
         walk(n, state)
@@ -170,6 +174,7 @@ function addAttr (node, name, value) {
   const { attrs = [], attrsMap = {}} = node
   const attr = attrs.filter(attr => attr.name === name)[0]
   let attrIndex = attrs.indexOf(attr)
+  /* istanbul ignore next */
   attrIndex = attrIndex !== -1 ? attrIndex : attrs.length
   attrs[attrIndex] = {
     name,
@@ -186,7 +191,7 @@ function isTag (node) {
 
 class State {
   constructor (options = {}) {
-    this.rootNode = options.rootNode || null
+    this.rootNode = options.rootNode
     this.compCount = -1
     this.elemCount = -1
     this.compStack = new Stack()

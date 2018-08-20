@@ -43,6 +43,9 @@ export function renderList (
   return ret
 }
 
+// TODO: aop
+// TODO: support v-for="(item, key, i) in object"
+// TODO: support for destructuring
 function updateListToMP (vnodeList, val, forId, context) {
   const firstItem = vnodeList[0]
   let forKeys

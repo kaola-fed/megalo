@@ -52,7 +52,9 @@ export function generate (
 export function genElement (el: ASTElement, state: CodegenState): string {
   if (el.staticRoot && !el.staticProcessed) {
     return genStatic(el, state)
+    /* istanbul ignore if */
   } else if (el.once && !el.onceProcessed) {
+    /* istanbul ignore next */
     return genOnce(el, state)
   } else if (el.for && !el.forProcessed) {
     return genFor(el, state)
@@ -65,7 +67,9 @@ export function genElement (el: ASTElement, state: CodegenState): string {
   } else {
     // component or element
     let code
+    /* istanbul ignore if */
     if (el.component) {
+      /* istanbul ignore next */
       code = genComponent(el.component, el, state)
     } else {
       const data = el.plain ? undefined : genData(el, state)
@@ -78,6 +82,7 @@ export function genElement (el: ASTElement, state: CodegenState): string {
       })`
     }
     // module transforms
+    /* istanbul ignore next */
     for (let i = 0; i < state.transforms.length; i++) {
       code = state.transforms[i](el, code)
     }
@@ -97,6 +102,7 @@ function genStatic (el: ASTElement, state: CodegenState): string {
 }
 
 // v-once
+/* istanbul ignore next */
 function genOnce (el: ASTElement, state: CodegenState): string {
   el.onceProcessed = true
   if (el.if && !el.ifProcessed) {
@@ -195,7 +201,7 @@ export function genFor (
     `function(${alias}${iterator1}${iterator2}){` +
       `${genIfScope(el._if)}` +
       `return ${(altGen || genElement)(el, state)}` +
-    `}, ${_forId}, _self)`
+    `},${_forId},_self)`
 }
 
 export function genData (el: ASTElement, state: CodegenState): string {
@@ -264,6 +270,7 @@ export function genData (el: ASTElement, state: CodegenState): string {
     }},`
   }
   // inline-template
+  /* istanbul ignore if */
   if (el.inlineTemplate) {
     const inlineTemplate = genInlineTemplate(el, state)
     if (inlineTemplate) {
@@ -313,6 +320,7 @@ function genDirectives (el: ASTElement, state: CodegenState): string | void {
   }
 }
 
+/* istanbul ignore next */
 function genInlineTemplate (el: ASTElement, state: CodegenState): ?string {
   const ast = el.children[0]
   if (process.env.NODE_ENV !== 'production' && (
@@ -440,6 +448,7 @@ function genNode (node: ASTNode, state: CodegenState): string {
   } else if (node.type === 1) {
     return genElement(node, state)
   } if (node.type === 3 && node.isComment) {
+    /* istanbul ignore next */
     return genComment(node)
   } else {
     return genText(node)
@@ -454,6 +463,7 @@ export function genText (text: ASTText | ASTExpression): string {
 }
 
 export function genComment (comment: ASTText): string {
+  /* istanbul ignore next */
   return `_e(${JSON.stringify(comment.text)})`
 }
 
@@ -476,6 +486,7 @@ function genSlot (el: ASTElement, state: CodegenState): string {
 }
 
 // componentName is el.component, take it as argument to shun flow's pessimistic refinement
+/* istanbul ignore next */
 function genComponent (
   componentName: string,
   el: ASTElement,
@@ -523,6 +534,6 @@ function genIfScope (ifConditions: Array<any>): string {
   if (!ifConditions || !ifConditions.length) {
     return ''
   }
-  const conds = ifConditions.map(c => `var ${c.cond}  = !!(${c.exp});`)
-  return conds.join('\n')
+  const conds = ifConditions.map(c => `var ${c.cond} = !!(${c.exp});`)
+  return conds.join('')
 }

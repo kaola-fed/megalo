@@ -56,6 +56,7 @@ export class TemplateGenerator {
         slots: this.slots
       }
     } catch (err) {
+      /* istanbul ignore next */
       return {
         body: this.genError(err),
         slots: this.slots
@@ -118,7 +119,8 @@ export class TemplateGenerator {
     if (scopedSlots) {
       Object.keys(scopedSlots)
         .forEach(k => {
-          const slot = scopedSlots[k] || {}
+          const slot = scopedSlots[k] ||
+          /* istanbul ignore next */ {}
           const { children = [] } = slot
           const slotName = removeQuotes(k)
           addSlotAst(slotName, ...children)
@@ -158,13 +160,15 @@ export class TemplateGenerator {
         const name = removeQuotes(el.slotTarget)
         addSlotAst(name, el)
         // extract the slot wrapper
-        if (parent) {
+        /* istanbul ignore else */
+        if (parent && parent.children && parent.children.length) {
           parent.children = parent.children.filter(e => e !== el)
         }
         return
       }
       if (el.children) {
         if (!parent ||
+          /* istanbul ignore next */
           (parent !== root && !self.isComponent(el))
         ) {
           el.children.forEach(e => {
@@ -294,14 +298,18 @@ export class TemplateGenerator {
     let eventAttrs = Object.keys(events).map(type => {
       const event = events[type]
       const { modifiers = {}} = event
-      const { stop, capture } = modifiers
+      // TODO: support more modifiers
+      // include capture
+      const { stop } = modifiers
       let mpType = type
       let binder = 'bind'
       if (stop) {
         binder = 'catchbind'
-      } else if (capture) {
-        binder = 'capturebind'
       }
+      // else if (capture) {
+      //   binder = 'capturebind'
+      // }
+
       if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
         mpType = 'blur'
       } else {
@@ -315,6 +323,7 @@ export class TemplateGenerator {
 
   genIfConditions (el): string {
     el.ifConditionsGenerated = true
+    /* istanbul ignore if */
     if (!el.ifConditions) {
       return ''
     }
@@ -347,7 +356,7 @@ export class TemplateGenerator {
     const _for = [
       ` wx:for="{{ _h[ ${_forId} ].li }}"`,
       this.genForKey(el),
-      alias ? ` wx:for-item="${alias}"` : ''
+      alias ? ` wx:for-item="${alias}"` : /* istanbul ignore next */ ''
     ]
     iterator1 && _for.push(` wx:for-index="${iterator1}"`)
 
@@ -360,7 +369,7 @@ export class TemplateGenerator {
     }
 
     const keyName = el.key.replace(/^\w*\./, '').replace(/\./g, '_')
-    return keyName ? ` wx:key="${keyName}"` : ''
+    return keyName ? ` wx:key="${keyName}"` : /* istanbul ignore next */ ''
   }
 
   genText (el): string {
@@ -368,7 +377,7 @@ export class TemplateGenerator {
     if (el.expression) {
       return `{{ _h[ ${el._hid} ].t }}`
     }
-    return escapeText(text) || ''
+    return escapeText(text) || /* istanbul ignore next */ ''
   }
 
   genSlot (el): string {
@@ -376,7 +385,7 @@ export class TemplateGenerator {
     slotName = slotName.replace(/"/g, '')
     const defaultSlotName = `${slotName}$${uid()}`
     const defaultSlotBody = this.genChildren(el)
-    const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : ''
+    const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : /* istanbul ignore next */ ''
     return `${defaultSlot}<template is="{{ s_${slotName} || '${defaultSlotName}' }}" data="{{ ...$root[ s ], $root }}"/>`
   }
 
@@ -387,6 +396,7 @@ export class TemplateGenerator {
     return el.children.map(child => this.genElement(child)).join('')
   }
 
+  /* istanbul ignore next */
   genError (err: Error) {
     return `<template name="${this.name}">compile error: ${err.toString()}\n${err.stack}</template>`
   }
@@ -406,15 +416,16 @@ export class TemplateGenerator {
   }
 
   getComponentSrc (name): string {
-    return (this.imports[name] || {}).src || ''
+    return (this.imports[name] || /* istanbul ignore next */ {}).src /* istanbul ignore next */ ||
+      ''
   }
 
   genVHtml (el): string {
     const { _hid } = el
-    return `<view class="_vhtml" ${[
+    return `<view class="_vhtml"${[
       this.genIf(el),
       this.genFor(el)
-    ].join('')}>{{ _h[${_hid}].html }}</view>`
+    ].join('')}>{{ _h[ ${_hid} ].html }}</view>`
   }
 
   isVHtml (el = {}): boolean {
