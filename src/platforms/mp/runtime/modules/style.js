@@ -90,6 +90,9 @@ function updateStyle (oldVnode: VNodeWithData, vnode: VNodeWithData) {
     .reduce((res, name) => {
       const val = newStyle[name]
       const normalizedName = normalize(name)
+      if (val === undefined || val === null || val === false) {
+        return res
+      }
       if (cssVarRE.test(name)) {
         res.push(`${name}: ${val}`)
       } else if (importantRE.test(val)) {
@@ -108,11 +111,10 @@ function updateStyle (oldVnode: VNodeWithData, vnode: VNodeWithData) {
       }
       return res
     }, res)
+    .filter(e => e)
     .join('; ')
 
-  if (cur) {
-    updateVnodeToMP(vnode, 'st', cur)
-  }
+  updateVnodeToMP(vnode, 'st', cur)
 }
 
 export default {
