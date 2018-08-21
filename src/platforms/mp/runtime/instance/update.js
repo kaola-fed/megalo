@@ -49,7 +49,7 @@ export function createUpdateFn (page) {
   const throttleSetData = throttle(function () {
     const data = buffer.pop()
 
-    if (!isEmptyObj(data)) {
+    if (!isEmptyObj(data) && page.setData) {
       page.setData(data)
     }
   }, 50, { leadingDelay: 0 })
