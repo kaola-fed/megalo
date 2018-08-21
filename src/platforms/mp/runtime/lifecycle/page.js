@@ -12,7 +12,6 @@ page.init = function init (opt) {
     onLoad (options) {
       const rootVM = this.rootVM = initRootVM(this, opt)
 
-      // wxParse.install(rootVM);
       callHook(rootVM, 'onLoad', options)
     },
     // 生命周期函数--监听页面初次渲染完成
@@ -32,8 +31,6 @@ page.init = function init (opt) {
 
       mp.status = 'show'
       callHook(rootVM, 'onShow', options)
-
-      // rootVM.$update();
     },
     // 生命周期函数--监听页面隐藏
     onHide (options) {

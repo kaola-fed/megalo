@@ -9,6 +9,7 @@ export {
 export function initMP (vm, options) {
   const { mpType } = options
 
+  /* istanbul ignore else */
   if (mpType === 'app') {
     app.init({
       Component: vm.constructor,

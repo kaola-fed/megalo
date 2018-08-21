@@ -6,7 +6,8 @@ function walkInTree (vm, fn, options = {}) {
     result = fn(vm)
   }
 
-  if (vm._children) {
+  /* istanbul ignore else */
+  if (vm.$children) {
     for (let i = vm.$children.length - 1; i >= 0; i--) {
       const child = vm.$children[i]
       result = walkInTree(child, fn, options) || result
@@ -21,6 +22,7 @@ function walkInTree (vm, fn, options = {}) {
 }
 
 export function callHook (vm, hook, options) {
+  /* istanbul ignore if */
   if (!vm) {
     return
   }
