@@ -1,6 +1,6 @@
-import { createPage } from '../../helpers'
+import { createPage, getPageData } from '../../helpers'
 
-describe(':class', () => {
+describe(':style', () => {
   let page
   let vm
   beforeEach(() => {
@@ -15,9 +15,8 @@ describe(':class', () => {
         }
       }
     }
-
-    page = createPage(pageOptions, false)
-    jasmine.clock().tick(1000)
+    const _page = createPage(pageOptions).page
+    page = _page
     vm = page.rootVM
   })
 
@@ -26,13 +25,12 @@ describe(':class', () => {
   })
 
   function expectStyle (expected) {
-    return expect(page.data.$root['0']._h['0'].st).toEqual(expected)
+    return expect(getPageData(page, '0')._h['0'].st).toEqual(expected)
   }
 
   it('string', done => {
     vm.styles = 'color:red;'
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('color: red')
     }).then(done)
   })
@@ -40,7 +38,6 @@ describe(':class', () => {
   it('falsy number', done => {
     vm.styles = { opacity: 0 }
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('opacity: 0')
     }).then(done)
   })
@@ -48,7 +45,6 @@ describe(':class', () => {
   it('plain object', done => {
     vm.styles = { color: 'red' }
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('color: red')
     }).then(done)
   })
@@ -56,7 +52,6 @@ describe(':class', () => {
   it('camelCase', done => {
     vm.styles = { marginRight: '10px' }
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('margin-right: 10px')
     }).then(done)
   })
@@ -64,11 +59,9 @@ describe(':class', () => {
   it('remove if falsy value', done => {
     vm.styles = { color: 'red' }
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('color: red')
       vm.styles = { color: null }
     }).then(() => {
-      jasmine.clock().tick(1000)
       expectStyle('')
     }).then(done)
   })
@@ -78,7 +71,6 @@ describe(':class', () => {
     pending()
     vm.styles = { foo: 'bar' }
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('')
     }).then(done)
   })
@@ -86,7 +78,6 @@ describe(':class', () => {
   it('auto-prefixed style value as array', done => {
     vm.styles = { display: ['-webkit-box', '-ms-flexbox', 'flex'] }
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('display: -webkit-box; display: -ms-flexbox; display: flex')
     }).then(done)
   })
@@ -94,7 +85,6 @@ describe(':class', () => {
   it('!important', done => {
     vm.styles = { display: 'block !important' }
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('display: block !important')
     }).then(done)
   })
@@ -106,18 +96,15 @@ describe(':class', () => {
       marginRight: '15px'
     }
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('color: red; margin-left: 10px; margin-right: 15px')
       vm.styles = {
         color: 'blue',
         padding: null
       }
     }).then(() => {
-      jasmine.clock().tick(1000)
       expectStyle('color: blue')
       vm.styles = null
     }).then(() => {
-      jasmine.clock().tick(1000)
       expectStyle('')
     }).then(done)
   })
@@ -130,11 +117,9 @@ describe(':class', () => {
     ]
 
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('padding: 10px; color: red; margin-right: 20px')
       vm.styles = [{ color: 'blue' }, { padding: null }]
     }).then(() => {
-      jasmine.clock().tick(1000)
       expectStyle('color: blue')
     }).then(done)
   })
@@ -142,11 +127,9 @@ describe(':class', () => {
   it('updates objects deeply', done => {
     vm.styles = { display: 'none' }
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('display: none')
       vm.styles.display = 'block'
     }).then(() => {
-      jasmine.clock().tick(1000)
       expectStyle('display: block')
     }).then(done)
   })
@@ -154,7 +137,6 @@ describe(':class', () => {
   it('background size with only one value', done => {
     vm.styles = { backgroundSize: '100%' }
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('background-size: 100%')
     }).then(done)
   })
@@ -162,7 +144,6 @@ describe(':class', () => {
   it('should work with interpolation', done => {
     vm.styles = { fontSize: `${vm.fontSize}px` }
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('font-size: 16px')
     }).then(done)
   })
@@ -171,7 +152,6 @@ describe(':class', () => {
   it('CSS variables', done => {
     vm.styles = { '--color': 'red' }
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectStyle('--color: red')
     }).then(done)
   })
@@ -180,7 +160,7 @@ describe(':class', () => {
 describe('style other', () => {
   let page
   function expectStyle (expected) {
-    return expect(page.data.$root['0']._h['0'].st).toEqual(expected)
+    return expect(getPageData(page, '0')._h['0'].st).toEqual(expected)
   }
 
   beforeEach(() => {
@@ -199,8 +179,7 @@ describe('style other', () => {
       }
     }
 
-    page = createPage(pageOptions, false)
-    jasmine.clock().tick(1000)
+    page = createPage(pageOptions).page
 
     // static style is generated in template
     expectStyle('color: red; font-size: 12px')
@@ -222,13 +201,10 @@ describe('style other', () => {
       }
     }
 
-    page = createPage(pageOptions, false)
-    jasmine.clock().tick(1000)
-
+    page = createPage(pageOptions).page
     // const { rootVM: vm } = page
-
     // const child = vm.$children[0]
-    const style = page.data.$root['0,0']._h['0'].st
+    const style = getPageData(page, '0,0')._h['0'].st
     const css = style.replace(/\s/g, '')
     expect(css).toContain('margin-right:20px;')
     expect(css).toContain('margin-left:16px;')

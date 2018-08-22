@@ -18,8 +18,16 @@ export function spyFn (...args) {
   return jasmine.createSpy(...args)
 }
 
-export function createPage (options, delay = 1000) {
-  delay && jasmine.clock().install()
+export function getPageData (page, id) {
+  return page.data.$root[id]
+}
+
+export function createPage (options, delay) {
+  let shouldCloseOnEnd
+  try {
+    jasmine.clock().install()
+    shouldCloseOnEnd = true
+  } catch (e) {}
 
   options = Object.assign({}, options, { mpType: 'page' })
 
@@ -28,10 +36,19 @@ export function createPage (options, delay = 1000) {
   page._init()
 
   // setData with throttle with leading delay
-  delay && jasmine.clock().tick(delay)
+  try {
+    jasmine.clock().tick(delay || 1000)
+  } catch (e) {}
 
-  delay && jasmine.clock().uninstall()
-  return page
+  try {
+    shouldCloseOnEnd && jasmine.clock().uninstall()
+  } catch (e) {
+    console.error(e)
+  }
+  return {
+    page,
+    vm: page.rootVM
+  }
 }
 
 export {

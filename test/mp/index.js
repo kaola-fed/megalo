@@ -3,7 +3,7 @@ require('es6-promise/auto')
 // import all helpers
 // const helpersContext = require.context('../helpers', true)
 // helpersContext.keys().forEach(helpersContext)
-require('../helpers/wait-for-update')
+require('./helpers/wait-for-update')
 
 // require all test files
 const testsContext = require.context('./', true, /\.spec$/)

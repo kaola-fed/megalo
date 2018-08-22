@@ -1,4 +1,4 @@
-import { createPage } from '../../helpers'
+import { createPage, getPageData } from '../../helpers'
 
 function assertClass (assertions) {
   const pageOptions = {
@@ -21,12 +21,16 @@ function assertClass (assertions) {
         value: _value
       }
     })
-    const page = createPage(options, 1000)
-    expect(page.data.$root['0']._h['0'].cl).toEqual(expected)
+    const { page } = createPage(options)
+    expect(getPageData(page, '0')._h['0'].cl).toEqual(expected)
   })
 }
 
 describe(':class', () => {
+  afterEach(() => {
+    jasmine.clock().uninstall()
+  })
+
   it('with plain string', () => {
     assertClass([
       ['foo megalo', 'foo megalo'],
@@ -70,34 +74,29 @@ describe(':class', () => {
       }
     }
 
-    const page = createPage(pageOptions, false)
-    jasmine.clock().tick(1000)
+    const { page, vm } = createPage(pageOptions)
 
-    const { rootVM } = page
-    const child = rootVM.$children[0]
+    const child = vm.$children[0]
 
     expectClass(page).toEqual('d b')
 
-    rootVM.value = 'e'
+    vm.value = 'e'
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectClass(page).toEqual('d e')
     }).then(() => {
       child.value = 'f'
     }).then(() => {
-      jasmine.clock().tick(1000)
       expectClass(page).toEqual('f e')
     }).then(() => {
-      rootVM.value = { foo: true }
+      vm.value = { foo: true }
       child.value = ['bar', 'baz']
     }).then(() => {
-      jasmine.clock().tick(1000)
       expectClass(page).toEqual('bar baz foo')
       jasmine.clock().uninstall()
     }).then(done)
 
     function expectClass (page) {
-      return expect(page.data.$root['0,0']._h['0'].cl)
+      return expect(getPageData(page, '0,0')._h['0'].cl)
     }
   })
 
@@ -138,21 +137,18 @@ describe(':class', () => {
       }
     }
 
-    const page = createPage(pageOptions, false)
-    jasmine.clock().tick(1000)
+    const { page } = createPage(pageOptions)
 
     const { rootVM: vm } = page
     expectClass(page).toBe('componentClass3 componentClass2 componentClass1')
 
     vm.componentClass1 = 'c1'
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectClass(page).toBe('componentClass3 componentClass2 c1')
     }).then(() => {
       vm.componentClass2 = 'c2'
     }).then(() => {
-      jasmine.clock().tick(1000)
-      expect(page.data.$root['0']._h['0']).toEqual(1)
+      expect(getPageData(page, '0')._h['0']).toEqual(1)
     }).then(() => {
       // expectClass(page).toBe('componentClass3 c2 c1')
       // vm.componentClass3 = 'c3'
@@ -163,7 +159,7 @@ describe(':class', () => {
     }).then(done)
 
     function expectClass (page) {
-      return expect(page.data.$root['0']._h['0'].cl)
+      return expect(getPageData(page, '0')._h['0'].cl)
     }
   })
 
@@ -177,20 +173,17 @@ describe(':class', () => {
       }
     }
 
-    const page = createPage(pageOptions, false)
-    jasmine.clock().tick(1000)
-    const { rootVM: vm } = page
+    const { page, vm } = createPage(pageOptions)
 
     expectClass(page).toBe('a')
     vm.test.b = true
     waitForUpdate(() => {
-      jasmine.clock().tick(1000)
       expectClass(page).toBe('a b')
       jasmine.clock().uninstall()
     }).then(done)
 
     function expectClass (page) {
-      return expect(page.data.$root['0']._h['0'].cl)
+      return expect(getPageData(page, '0')._h['0'].cl)
     }
   })
 })
