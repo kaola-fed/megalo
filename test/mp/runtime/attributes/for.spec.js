@@ -306,7 +306,7 @@ describe('Directive v-for', () => {
     expect(pageData._h['1-1']._if).toBeTruthy()
     expect(pageData._h['2-1'].t).toBe('2')
 
-    expect(pageData._h['1-2']).toBeUndefined()
+    expect(pageData._h['1-2']._if).toBe(false)
   })
 
   it('check priorities: v-if after v-for', function () {
@@ -326,7 +326,7 @@ describe('Directive v-for', () => {
     expect(pageData._h['1-1']._if).toBeTruthy()
     expect(pageData._h['2-1'].t).toBe('2')
 
-    expect(pageData._h['1-2']).toBeUndefined()
+    expect(pageData._h['1-2']._if).toBe(false)
   })
 
   it('range v-for', () => {
@@ -623,7 +623,7 @@ describe('Directive v-for', () => {
       new Function('var { foo } = bar')
       return true
     } catch (e) {
-      console.log('sss')
+      console.log('not supprt destructuring')
     }
   })()
 

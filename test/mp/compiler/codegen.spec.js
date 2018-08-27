@@ -150,35 +150,35 @@ describe('codegen', () => {
   it('generate v-if directive', () => {
     assertCodegen(
       '<p v-if="show">hello</p>',
-      `with(this){var __cond$0 = !!(show);return (__cond$0)?_c('p',{attrs:{"_hid":0,"_if_id$0":0,"_if_v$0":__cond$0}},[]):_e()}`
+      `with(this){var __cond$0 = !!(show);_ri(__cond$0,0);return (__cond$0)?_c('p',{attrs:{"_hid":0}},[]):_e()}`
     )
   })
 
   it('generate v-else directive', () => {
     assertCodegen(
       '<div><p v-if="show">hello</p><p v-else>world</p></div>',
-      `with(this){var __cond$0 = !!(show);return _c('div',{attrs:{"_hid":0,"_if_id$0":1,"_if_v$0":__cond$0}},[(__cond$0)?_c('p',{attrs:{"_hid":1}},[]):_c('p',{attrs:{"_hid":3}},[])],1)}`
+      `with(this){var __cond$0 = !!(show);_ri(__cond$0,1);return _c('div',{attrs:{"_hid":0}},[(__cond$0)?_c('p',{attrs:{"_hid":1}},[]):_c('p',{attrs:{"_hid":3}},[])],1)}`
     )
   })
 
   it('generate v-else-if directive', () => {
     assertCodegen(
       '<div><p v-if="show">hello</p><p v-else-if="hide">world</p></div>',
-      `with(this){var __cond$0 = !!(show);var __cond$1 = !!(hide);return _c('div',{attrs:{"_hid":0,"_if_id$0":1,"_if_v$0":__cond$0,"_if_id$1":3,"_if_v$1":__cond$1}},[(__cond$0)?_c('p',{attrs:{"_hid":1}},[]):(__cond$1)?_c('p',{attrs:{"_hid":3}},[]):_e()],1)}`
+      `with(this){var __cond$0 = !!(show);var __cond$1 = !!(hide);_ri(__cond$0,1,__cond$1,3);return _c('div',{attrs:{"_hid":0}},[(__cond$0)?_c('p',{attrs:{"_hid":1}},[]):(__cond$1)?_c('p',{attrs:{"_hid":3}},[]):_e()],1)}`
     )
   })
 
   it('generate v-else-if with v-else directive', () => {
     assertCodegen(
       '<div><p v-if="show">hello</p><p v-else-if="hide">world</p><p v-else>bye</p></div>',
-      `with(this){var __cond$0 = !!(show);var __cond$1 = !!(hide);return _c('div',{attrs:{"_hid":0,"_if_id$0":1,"_if_v$0":__cond$0,"_if_id$1":3,"_if_v$1":__cond$1}},[(__cond$0)?_c('p',{attrs:{"_hid":1}},[]):(__cond$1)?_c('p',{attrs:{"_hid":3}},[]):_c('p',{attrs:{"_hid":5}},[])],1)}`
+      `with(this){var __cond$0 = !!(show);var __cond$1 = !!(hide);_ri(__cond$0,1,__cond$1,3);return _c('div',{attrs:{"_hid":0}},[(__cond$0)?_c('p',{attrs:{"_hid":1}},[]):(__cond$1)?_c('p',{attrs:{"_hid":3}},[]):_c('p',{attrs:{"_hid":5}},[])],1)}`
     )
   })
 
   it('generate multi v-else-if with v-else directive', () => {
     assertCodegen(
       '<div><p v-if="show">hello</p><p v-else-if="hide">world</p><p v-else-if="3">elseif</p><p v-else>bye</p></div>',
-      `with(this){var __cond$0 = !!(show);var __cond$1 = !!(hide);var __cond$2 = !!(3);return _c('div',{attrs:{"_hid":0,"_if_id$0":1,"_if_v$0":__cond$0,"_if_id$1":3,"_if_v$1":__cond$1,"_if_id$2":5,"_if_v$2":__cond$2}},[(__cond$0)?_c('p',{attrs:{"_hid":1}},[]):(__cond$1)?_c('p',{attrs:{"_hid":3}},[]):(__cond$2)?_c('p',{attrs:{"_hid":5}},[]):_c('p',{attrs:{"_hid":7}},[])],1)}`
+      `with(this){var __cond$0 = !!(show);var __cond$1 = !!(hide);var __cond$2 = !!(3);_ri(__cond$0,1,__cond$1,3,__cond$2,5);return _c('div',{attrs:{"_hid":0}},[(__cond$0)?_c('p',{attrs:{"_hid":1}},[]):(__cond$1)?_c('p',{attrs:{"_hid":3}},[]):(__cond$2)?_c('p',{attrs:{"_hid":5}},[]):_c('p',{attrs:{"_hid":7}},[])],1)}`
     )
   })
 
