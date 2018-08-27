@@ -144,14 +144,6 @@ function walkIf (node, state) {
       _if[currIdxInIf]._hid = block._hid
     }
   })
-
-  const { _if } = scopeNode
-  _if.forEach((c, i) => {
-    addAttr(scopeNode, `_if_id$${i}`, c._hid)
-    addAttr(scopeNode, `_if_v$${i}`, c.cond)
-  })
-
-  Object.assign(scopeNode, { _if })
 }
 
 function walkChildren (node, state) {

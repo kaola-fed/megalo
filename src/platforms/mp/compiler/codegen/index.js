@@ -148,7 +148,6 @@ function genIfConditions (
   if (!conditions.length) {
     return altEmpty || '_e()'
   }
-
   const condition = conditions.shift()
   if (condition.exp) {
     return `(${condition.exp})?${
@@ -535,5 +534,8 @@ function genIfScope (ifConditions: Array<any>): string {
     return ''
   }
   const conds = ifConditions.map(c => `var ${c.cond} = !!(${c.exp});`)
-  return conds.join('')
+  const _ifs = `_ri(${
+    ifConditions.map(c => `${c.cond},${c._hid}`).join(',')
+  });`
+  return conds.join('') + _ifs
 }
