@@ -1,5 +1,7 @@
 import TAG_MAP from './tag-map'
-import { Stack } from './util'
+import { Stack, createUidFn } from './util'
+
+const iteratorUid = createUidFn('item')
 
 const TYPE = {
   ELEMENT: 1,
@@ -40,16 +42,19 @@ function walk (node, state) {
 
 function walkFor (node, state) {
   const { for: _for, key, alias } = node
-  // create a default iterator1 for wxml listing,
+  const prefix = /{/.test(alias) ? `${iteratorUid()}` : alias
+  // create default iterator1, iterator2 for xml listing,
   // which is needed for _hid generating
-  const { iterator1 = `${alias}_index$0` } = node
+  const { iterator1 = `${prefix}_i$1`, iterator2 = `${prefix}_i$2` } = node
   Object.assign(node, {
     mpForWalked: true,
-    iterator1
+    iterator1,
+    iterator2
   })
 
   state.pushListState({
     iterator1,
+    iterator2,
     _for,
     key,
     node,
@@ -243,7 +248,7 @@ class State {
     const currentListState = this.getCurrentListState()
     let _hid = `${this.getCurrentElemIndex()}`
     if (currentListState) {
-      const listTail = currentListState.map(s => s.iterator1).join(` + '-' + `)
+      const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + '-' + `)
       _hid = `${_hid} + '-' + ${listTail}`
     }
     return `${_hid}`
@@ -253,7 +258,7 @@ class State {
     const currentListState = this.getCurrentListState()
     let _cid = `${this.getCurrentCompIndex()}`
     if (currentListState) {
-      const listTail = currentListState.map(s => s.iterator1).join(` + '-' + `)
+      const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + '-' + `)
       _cid = `${_cid} + '-' + ${listTail}`
     }
     return `${_cid}`

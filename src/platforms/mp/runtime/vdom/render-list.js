@@ -65,7 +65,23 @@ function updateListToMP (vnodeList, val, forId, context) {
 
     forKeys = forKeys.filter(e => e)
 
-    list = val.map((e, i) => {
+    let valToList = []
+
+    if (Array.isArray(val) || typeof val === 'string') {
+      valToList = new Array(val.length)
+      for (let i = 0, l = val.length; i < l; i++) {
+        valToList[i] = val[i]
+      }
+    } else if (typeof val === 'number') {
+      valToList = new Array(val)
+      for (let i = 0; i < val; i++) {
+        valToList[i] = i
+      }
+    } else if (isObject(val)) {
+      valToList = Object.keys(val).map((e, i) => i)
+    }
+
+    list = valToList.map((e, i) => {
       if (forKeys.length === 0) {
         return i
       }
@@ -82,6 +98,14 @@ function updateListToMP (vnodeList, val, forId, context) {
       attrs: { _hid: forId }
     }
   }
+
+  // TODO: try not disable key diff in patching process
+  // key will reuse existing vnode which won't update the vnode content
+  // see unit test: with key
+  // list won't update after this.list.reverse() if it's not disable
+  vnodeList.forEach(vnode => {
+    vnode.key = undefined
+  })
 
   updateVnodeToMP(cloneVnode, 'li', list)
 }

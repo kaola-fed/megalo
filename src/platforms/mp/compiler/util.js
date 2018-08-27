@@ -70,12 +70,14 @@ export class Stack {
   }
 }
 
-export const uid = (() => {
+export const createUidFn = (prefix = '') => {
   let id = 0
   return () => {
-    return id++
+    return `${prefix}${id++}`
   }
-})()
+}
+
+export const uid = createUidFn()
 
 export const escapeText = (str = '') => {
   return str.replace(/\</g, `{{"<"}}`)
