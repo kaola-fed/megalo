@@ -256,8 +256,8 @@ describe('compilteToTemplate: wechat', () => {
         `</div>`
       ),
       (
-        `<view wx:for="{{ _h[ 1 ].li }}" wx:for-item="item" wx:for-index="item_index$0" class="_div">` +
-          `<view class="_div">{{ _h[ 3 + '-' + item_index$0 ].t }}</view>` +
+        `<view wx:for="{{ _h[ 1 ].li }}" wx:for-item="item" wx:for-index="item_i$1" class="_div">` +
+          `<view class="_div">{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ].t }}</view>` +
         `</view>`
       )
     )
@@ -269,7 +269,7 @@ describe('compilteToTemplate: wechat', () => {
       ),
       (
         `<view wx:for="{{ _h[ 1 ].li }}" wx:for-item="item" wx:for-index="index" class="_div">` +
-          `<view class="_div">{{ _h[ 3 + '-' + index ].t }}</view>` +
+          `<view class="_div">{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : index) ].t }}</view>` +
         `</view>`
       )
     )
@@ -281,7 +281,7 @@ describe('compilteToTemplate: wechat', () => {
       ),
       (
         `<view wx:for="{{ _h[ 1 ].li }}" wx:key="id" wx:for-item="item" wx:for-index="index" class="_div">` +
-          `<view class="_div">{{ _h[ 3 + '-' + index ].t }}</view>` +
+          `<view class="_div">{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : index) ].t }}</view>` +
         `</view>`
       )
     )
@@ -295,8 +295,8 @@ describe('compilteToTemplate: wechat', () => {
       ),
       (
         `<view wx:for="{{ _h[ 1 ].li }}" wx:key="id" wx:for-item="item" wx:for-index="index" class="_div">` +
-          `<view wx:for="{{ _h[ 2 + '-' + index ].li }}" wx:key="id" wx:for-item="e" wx:for-index="i" class="_div">` +
-            `{{ _h[ 3 + '-' + index + '-' + i ].t }}` +
+          `<view wx:for="{{ _h[ 2 + '-' + (item_i$2 !== undefined ? item_i$2 : index) ].li }}" wx:key="id" wx:for-item="e" wx:for-index="i" class="_div">` +
+            `{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : index) + '-' + (e_i$2 !== undefined ? e_i$2 : i) ].t }}` +
           `</view>` +
         `</view>`
       )
@@ -310,9 +310,9 @@ describe('compilteToTemplate: wechat', () => {
         `</div>`
       ),
       (
-        `<view wx:for="{{ _h[ 1 ].li }}" wx:key="id" wx:for-item="item" wx:for-index="item_index$0" class="_div">` +
-          `<view wx:for="{{ _h[ 2 + '-' + item_index$0 ].li }}" wx:key="id" wx:for-item="e" wx:for-index="e_index$0" class="_div">` +
-            `{{ _h[ 3 + '-' + item_index$0 + '-' + e_index$0 ].t }}` +
+        `<view wx:for="{{ _h[ 1 ].li }}" wx:key="id" wx:for-item="item" wx:for-index="item_i$1" class="_div">` +
+          `<view wx:for="{{ _h[ 2 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ].li }}" wx:key="id" wx:for-item="e" wx:for-index="e_i$1" class="_div">` +
+            `{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) + '-' + (e_i$2 !== undefined ? e_i$2 : e_i$1) ].t }}` +
           `</view>` +
         `</view>`
       )
@@ -324,8 +324,8 @@ describe('compilteToTemplate: wechat', () => {
         `</template>`
       ),
       (
-        `<block wx:for="{{ _h[ 1 ].li }}" wx:for-item="item" wx:for-index="item_index$0">` +
-          `<view wx:key="id" class="_div">{{ _h[ 3 + '-' + item_index$0 ].t }}</view>` +
+        `<block wx:for="{{ _h[ 1 ].li }}" wx:for-item="item" wx:for-index="item_i$1">` +
+          `<view wx:key="id" class="_div">{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ].t }}</view>` +
         `</block>`
       )
     )
@@ -360,8 +360,8 @@ describe('compilteToTemplate: wechat', () => {
         `<CompA v-for="item in list" :message="count"></CompA>`
       ),
       (
-        `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + '-' + item_index$0 ], $root }}"` +
-          ` wx:for="{{ _h[ 1 ].li }}" wx:for-item="item" wx:for-index="item_index$0"` +
+        `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ], $root }}"` +
+          ` wx:for="{{ _h[ 1 ].li }}" wx:for-item="item" wx:for-index="item_i$1"` +
         ` />`
       ),
       options
