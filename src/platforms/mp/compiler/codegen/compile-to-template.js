@@ -298,22 +298,24 @@ export class TemplateGenerator {
     let eventAttrs = Object.keys(events).map(type => {
       const event = events[type]
       const { modifiers = {}} = event
+      const isCapture = /!/.test(type)
+      const realType = type.replace(/^[~|!]/, '')
       // TODO: support more modifiers
       // include capture
       const { stop } = modifiers
-      let mpType = type
+      let mpType = realType
       let binder = 'bind'
       if (stop) {
-        binder = 'catchbind'
+        binder = 'catch'
       }
-      // else if (capture) {
-      //   binder = 'capturebind'
-      // }
+      if (isCapture) {
+        binder = `capture-${binder}`
+      }
 
       if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
         mpType = 'blur'
       } else {
-        mpType = type === 'click' ? 'tap' : mpType
+        mpType = mpType === 'click' ? 'tap' : mpType
       }
       return `${binder}${mpType}="_pe"`
     })

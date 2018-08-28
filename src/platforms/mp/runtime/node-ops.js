@@ -2,20 +2,32 @@
 import { updateVnodeToMP } from './instance/index'
 
 export function createElement (tagName: string, vnode: VNode): Element {
-  return {}
+  return {
+    on: {
+
+    }
+  }
 }
 
 export function createElementNS (namespace: string, tagName: string): Element {
-  return {}
+  return {
+    on: {
+
+    }
+  }
 }
 
 export function createTextNode (text: string, vnode: VNode): Text {
   updateVnodeToMP(vnode, 't', text)
-  return {}
+  return {
+    text
+  }
 }
 
 export function createComment (text: string): Comment {
-  return {}
+  return {
+    text
+  }
 }
 
 export function insertBefore (parentNode: Node, newNode: Node, referenceNode: Node) {

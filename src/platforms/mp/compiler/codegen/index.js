@@ -1,6 +1,6 @@
 /* @flow */
 
-import { genHandlers } from 'compiler/codegen/events'
+import { genHandlers } from './events'
 import baseDirectives from 'compiler/directives/index'
 import { camelize, no, extend } from 'shared/util'
 import { baseWarn, pluckModuleFunction } from 'compiler/helpers'

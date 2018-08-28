@@ -8,14 +8,14 @@ export function proxyEvent (rootVM, event) {
   const { cid, hid } = dataset
 
   const vm = getVM(rootVM, cid)
-  const hanlders = getHandlers(vm, type, hid)
+  const handlers = getHandlers(vm, type, hid)
   const $event = Object.assign({}, event)
   Object.assign(event.target, {
     value: detail.value
   })
 
-  hanlders.forEach(hanlder => {
-    hanlder($event)
+  handlers.forEach(handler => {
+    handler($event)
   })
 }
 
@@ -54,20 +54,33 @@ function getHandlers (vm, type, hid) {
   if (!vm) return res
 
   const vnode = getVnode(vm._vnode, hid)
+
   if (!vnode) return res
 
-  const { data } = vnode
-  const { attrs, on } = data
+  const { data, elm } = vnode
+  const { attrs = {}} = data
+  const { on = {}} = elm
 
   if (('' + attrs._hid) !== ('' + hid)) return res
 
   res = eventTypes.reduce((buf, event) => {
-    const hanlder = on[event]
-    if (typeof hanlder === 'function') {
-      buf.push(hanlder)
-    } else if (Array.isArray(hanlder)) {
-      buf = buf.concat(hanlder)
+    const handler = on[event]
+    if (typeof handler === 'function') {
+      buf.push(handler)
+    } else if (Array.isArray(handler)) {
+      buf = buf.concat(handler)
     }
+
+    const onceEvent = `~${event}`
+    const onceHandler = on[onceEvent]
+    if (onceHandler && !onceHandler.once) {
+      if (typeof onceHandler === 'function') {
+        buf.push(onceHandler)
+      } else if (Array.isArray(handler)) {
+        buf = buf.concat(onceHandler)
+      }
+    }
+
     return buf
   }, [])
 
