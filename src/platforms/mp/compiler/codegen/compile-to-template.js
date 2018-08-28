@@ -8,6 +8,7 @@ import { baseWarn } from 'compiler/helpers'
 
 const vbindReg = /^(v-bind)?:/
 const vonReg = /^v-on:|@/
+const vmodelReg = /^v-model/
 
 const notEmpty = e => e
 
@@ -267,8 +268,8 @@ export class TemplateGenerator {
   }
 
   genAttrs (el): string {
-    const { attrsList = [], _hid, attrsMap = {}} = el
-    const hasVModel = !!attrsMap['v-model']
+    const { attrsList = [], _hid } = el
+    const hasVModel = this.hasVModel(el)
 
     let attrs = attrsList.map((attr) => {
       const { name, value } = attr
@@ -277,7 +278,7 @@ export class TemplateGenerator {
       } else if (vbindReg.test(name)) {
         const realName = name.replace(vbindReg, '')
         return `${realName}="{{ _h[ ${_hid} ][ '${realName}' ] }}"`
-      } else if (name === 'v-model') {
+      } else if (vmodelReg.test(name)) {
         return `value="{{ _h[ ${_hid} ].value }}"`
       } else {
         return `${name}="${value}"`
@@ -300,17 +301,10 @@ export class TemplateGenerator {
       const { modifiers = {}} = event
       const isCapture = /!/.test(type)
       const realType = type.replace(/^[~|!]/, '')
-      // TODO: support more modifiers
-      // include capture
       const { stop } = modifiers
       let mpType = realType
-      let binder = 'bind'
-      if (stop) {
-        binder = 'catch'
-      }
-      if (isCapture) {
-        binder = `capture-${binder}`
-      }
+      let binder = stop ? 'catch' : 'bind'
+      binder = isCapture ? `capture-${binder}` : binder
 
       if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
         mpType = 'blur'
@@ -457,6 +451,11 @@ export class TemplateGenerator {
 
   isComponent (el): boolean {
     return el._cid && !!this.imports[el.tag]
+  }
+
+  hasVModel (el): boolean {
+    const { attrsList = [] } = el
+    return attrsList.some(attr => vmodelReg.test(attr.name))
   }
 }
 
