@@ -6,7 +6,7 @@ import { updateVnodeToMP } from '../instance/index'
 /**
  * Runtime helper for rendering v-for lists.
  */
-export function renderList (
+export function afterRenderList (
   val: any,
   render: (
     val: any,
@@ -14,46 +14,23 @@ export function renderList (
     index?: number
   ) => VNode,
   forId: string | number,
-  context: Vue
-): ?Array<VNode> {
-  let ret: ?Array<VNode>, i, l, keys, key
-  if (Array.isArray(val) || typeof val === 'string') {
-    ret = new Array(val.length)
-    for (i = 0, l = val.length; i < l; i++) {
-      ret[i] = render(val[i], i)
-    }
-  } else if (typeof val === 'number') {
-    ret = new Array(val)
-    for (i = 0; i < val; i++) {
-      ret[i] = render(i + 1, i)
-    }
-  } else if (isObject(val)) {
-    keys = Object.keys(val)
-    ret = new Array(keys.length)
-    for (i = 0, l = keys.length; i < l; i++) {
-      key = keys[i]
-      ret[i] = render(val[key], key, i)
-    }
-  }
-  if (isDef(ret)) {
-    (ret: any)._isVList = true
-  }
-
+  context: Vue,
+  ret: Array<VNode>
+) {
   updateListToMP(ret, val, forId, context)
-  return ret
 }
 
-// TODO: aop
-// TODO: support v-for="(item, key, i) in object"
 // TODO: support for destructuring
 function updateListToMP (vnodeList, val, forId, context) {
   const firstItem = vnodeList[0]
   let forKeys
   let list = []
+  /* istanbul ignore else */
   if (firstItem) {
+    // collect v-key
     if (Array.isArray(firstItem)) {
       forKeys = firstItem.map(e => {
-        const { attrs = {}} = e.data || {}
+        const { attrs = {}} = e.data || /* istanbul ignore next */ {}
         const { _fk = '' } = attrs
         return _fk
       })
@@ -65,8 +42,9 @@ function updateListToMP (vnodeList, val, forId, context) {
 
     forKeys = forKeys.filter(e => e)
 
+    // generate list array with v-key value
     let valToList = []
-
+    /* istanbul ignore else */
     if (Array.isArray(val) || typeof val === 'string') {
       valToList = new Array(val.length)
       for (let i = 0, l = val.length; i < l; i++) {
@@ -104,7 +82,13 @@ function updateListToMP (vnodeList, val, forId, context) {
   // see unit test: with key
   // list won't update after this.list.reverse() if it's not disable
   vnodeList.forEach(vnode => {
-    vnode.key = undefined
+    if (Array.isArray(vnode)) {
+      vnode.forEach(c => {
+        if (c.key) c.key = undefined
+      })
+    } else if (vnode.key) {
+      vnode.key = undefined
+    }
   })
 
   updateVnodeToMP(cloneVnode, 'li', list)
@@ -113,6 +97,7 @@ function updateListToMP (vnodeList, val, forId, context) {
 function getValue (obj = {}, path = '') {
   const paths = path.split('.')
   return paths.reduce((prev, k) => {
+    /* istanbul ignore if */
     if (prev && isDef(prev)) {
       prev = prev[k]
     }

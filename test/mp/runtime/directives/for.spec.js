@@ -444,6 +444,43 @@ describe('Directive v-for', () => {
     }).then(done)
   })
 
+  it('template v-for with key', done => {
+    const { page, vm } = createPage({
+      data: {
+        list: [
+          { a: 1, id: 1, id2: 10 },
+          { a: 2, id: 2, id2: 20 },
+          { a: 3, id: 3, id2: 30 }
+        ]
+      },
+      template:
+        '<div>' +
+          '<template v-for="item in list">' +
+            '<p :key="item.id">{{item.a}}</p>' +
+            '<p :key="item.id2">{{item.a + 1}}</p>' +
+          '</template>' +
+        '</div>'
+    })
+
+    const pageData = getPageData(page, '0')
+    expect(pageData._h['1'].li).toEqual([{ id: 1, id2: 10 }, { id: 2, id2: 20 }, { id: 3, id2: 30 }])
+    assertList(page, ['1', '2', '3'], '3')
+    assertList(page, ['2', '3', '4'], '5')
+    vm.list.reverse()
+    waitForUpdate(() => {
+      assertList(page, ['3', '2', '1'], '3')
+      assertList(page, ['4', '3', '2'], '5')
+      vm.list.splice(1, 1)
+    }).then(() => {
+      assertList(page, ['3', '1'], '3')
+      assertList(page, ['4', '2'], '5')
+      vm.list.splice(1, 0, { a: 2, id: 4, id2: 40 })
+    }).then(() => {
+      assertList(page, ['3', '2', '1'], '3')
+      assertList(page, ['4', '3', '2'], '5')
+    }).then(done)
+  })
+
   it('component v-for', done => {
     const { page, vm } = createPage({
       data: {

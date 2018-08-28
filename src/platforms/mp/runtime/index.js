@@ -10,7 +10,7 @@ import { mountComponent } from 'core/instance/lifecycle'
 
 import { initMP } from 'mp/runtime/lifecycle/index'
 import { updateMPData, initVMToMP, afterRenderSlot, renderIf } from 'mp/runtime/instance/index'
-import { renderList, createTextVNode } from 'mp/runtime/vdom/index'
+import { afterRenderList, createTextVNode } from 'mp/runtime/vdom/index'
 import { aop } from 'mp/util/index'
 
 // import {
@@ -39,8 +39,14 @@ extend(Vue.options.directives, platformDirectives)
 
 // install platform patch function
 Vue.prototype.__patch__ = patch
-Vue.prototype._l = renderList
 Vue.prototype._v = createTextVNode
+Vue.prototype._ri = renderIf
+Vue.prototype.$updateMPData = updateMPData
+
+Vue.prototype._l = aop(Vue.prototype._l, {
+  argsCount: 4,
+  after: afterRenderList
+})
 
 const oInit = Vue.prototype._init
 Vue.prototype._init = function (options) {
@@ -72,9 +78,5 @@ Vue.prototype.$mount = function (
     return vm
   }
 }
-
-Vue.prototype._ri = renderIf
-
-Vue.prototype.$updateMPData = updateMPData
 
 export default Vue
