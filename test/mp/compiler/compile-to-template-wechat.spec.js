@@ -191,10 +191,6 @@ describe('compilteToTemplate: wechat', () => {
       `<scoll-view class="_scoll-view" data-cid="{{ c }}" data-hid="{{ 1 }}" bindscroll="_pe" bindscrolltoupper="_pe"></scoll-view>`
     )
     assertCodegen(
-      `<div @click.stop="onClick"></div>`,
-      `<view class="_div" data-cid="{{ c }}" data-hid="{{ 1 }}" catchbindtap="_pe"></view>`
-    )
-    assertCodegen(
       `<input @change="onInput">`,
       `<input class="_input" data-cid="{{ c }}" data-hid="{{ 1 }}" bindblur="_pe"></input>`
     )
@@ -202,10 +198,26 @@ describe('compilteToTemplate: wechat', () => {
       `<textarea @change="onInput"></textarea>`,
       `<textarea class="_textarea" data-cid="{{ c }}" data-hid="{{ 1 }}" bindblur="_pe"></textarea>`
     )
-  //   assertCodegen(
-  //     `<div @click.capture="onClick"></div>`,
-  //     `<view class="_div" data-cid="{{ c }}" data-hid="{{ 1 }}" capturebindtap="_pe"></view>`
-  //   )
+    // .stop
+    assertCodegen(
+      `<div @click.stop="onClick"></div>`,
+      `<view class="_div" data-cid="{{ c }}" data-hid="{{ 1 }}" catchtap="_pe"></view>`
+    )
+    // .captrue
+    assertCodegen(
+      `<div @click.capture="onClick"></div>`,
+      `<view class="_div" data-cid="{{ c }}" data-hid="{{ 1 }}" capture-bindtap="_pe"></view>`
+    )
+    // .capture.stop
+    assertCodegen(
+      `<div @click.capture.stop="onClick"></div>`,
+      `<view class="_div" data-cid="{{ c }}" data-hid="{{ 1 }}" capture-catchtap="_pe"></view>`
+    )
+    // .once
+    assertCodegen(
+      `<div @click.once="onClick"></div>`,
+      `<view class="_div" data-cid="{{ c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
+    )
   })
 
   it('generate v-if', () => {

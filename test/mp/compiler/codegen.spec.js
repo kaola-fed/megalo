@@ -415,7 +415,7 @@ describe('codegen', () => {
   it('generate events with generic modifiers', () => {
     assertCodegen(
       '<input @input.stop="onInput">',
-      `with(this){return _c('input',{attrs:{"_hid":0},on:{"input":function($event){$event.stopPropagation();return onInput($event)}}})}`
+      `with(this){return _c('input',{attrs:{"_hid":0},on:{"input":function($event){if(!('button' in $event)&&_k($event.keyCode,"stop",undefined,$event.key,undefined))return null;return onInput($event)}}})}`
     )
     // TODO: try support
     // assertCodegen(

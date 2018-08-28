@@ -29,7 +29,11 @@ export function createPage (options, delay) {
     shouldCloseOnEnd = true
   } catch (e) {}
 
-  options = Object.assign({}, options, { mpType: 'page' })
+  options = Object.assign({}, options, {
+    mpType: 'page'
+  })
+
+  Vue.config.warnHandler = console.warn
 
   new Vue(options).$mount()
   const page = Page.createInstance()

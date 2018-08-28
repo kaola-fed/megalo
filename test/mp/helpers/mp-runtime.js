@@ -43,8 +43,6 @@ class MPPage extends MPBase {
         current = current[k]
       })
     })
-
-    // console.log(JSON.stringify(this.data, false, 2))
   }
   _init () {
     this._callHook('onLoad', { query: { id: 100 }})
@@ -57,6 +55,23 @@ class MPPage extends MPBase {
   }
   _hide () {
     this._callHook('onHide')
+  }
+  _triggerEvent (el = {}, type) {
+    const { dataset = {
+      hid: '0',
+      cid: '0'
+    }} = el
+
+    Object.assign(el, {
+      dataset
+    })
+
+    const $event = {
+      type,
+      currentTarget: el,
+      target: el.target || el
+    }
+    this._pe($event)
   }
 }
 
