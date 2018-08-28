@@ -541,7 +541,7 @@ describe('Directive v-on', () => {
   it('listen on the same events multiple times', () => {
     const spy2 = jasmine.createSpy()
     const { page } = createPage({
-      template: `<button @click="foo" @click="bar"></button>`,
+      template: `<button @click="foo" @click.once="bar"></button>`,
       methods: {
         foo: spy,
         bar: spy2
@@ -549,6 +549,9 @@ describe('Directive v-on', () => {
     })
     page._triggerEvent(undefined, 'tap')
     expect(spy.calls.count()).toBe(1)
+    expect(spy2.calls.count()).toBe(1)
+    page._triggerEvent(undefined, 'tap')
+    expect(spy.calls.count()).toBe(2)
     expect(spy2.calls.count()).toBe(1)
   })
 })
