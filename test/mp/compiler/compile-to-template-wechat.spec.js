@@ -633,20 +633,20 @@ describe('compilteToTemplate: wechat', () => {
 
   it('generate v-model', () => {
     assertCodegen(
-      (
-        `<input v-model="input">`
-      ),
-      (
-        `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
-      )
+      `<input v-model="input">`,
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
     )
     assertCodegen(
-      (
-        `<input value="otherInput" v-model="input">`
-      ),
-      (
-        `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
-      )
+      `<input value="otherInput" v-model="input">`,
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
+    )
+    assertCodegen(
+      `<input v-model.lazy="input">`,
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindblur="_pe"></input>`
+    )
+    assertCodegen(
+      `<input v-model.number="input">`,
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe" bindblur="_pe"></input>`
     )
   })
 

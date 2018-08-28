@@ -60,7 +60,7 @@ class MPPage extends MPBase {
     const { dataset = {
       hid: '0',
       cid: '0'
-    }} = el
+    }, detail } = el
 
     Object.assign(el, {
       dataset
@@ -69,7 +69,8 @@ class MPPage extends MPBase {
     const $event = {
       type,
       currentTarget: el,
-      target: el.target || el
+      target: el.target || el,
+      detail
     }
     this._pe($event)
   }
