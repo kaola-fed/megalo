@@ -13,6 +13,7 @@ export function getVM (vm = {}, id) {
   const { $children } = vm
   for (let i = 0; i < $children.length; ++i) {
     res = getVM($children[i], id)
+    /* istanbul ignore else */
     if (res) {
       return res
     }
@@ -43,9 +44,9 @@ function isSlotParent (parent, child) {
   return isDef(childSlotParentUId) && childSlotParentUId === parent._uid
 }
 
-export function getVMParentId (vm) {
-  if (vm.$parent) {
-    return getVMId(vm.$parent)
-  }
-  return ''
-}
+// export function getVMParentId (vm) {
+//   if (vm.$parent) {
+//     return getVMId(vm.$parent)
+//   }
+//   return ''
+// }

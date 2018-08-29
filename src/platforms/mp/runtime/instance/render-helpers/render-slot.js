@@ -13,11 +13,18 @@ export function afterRenderSlot (
   bindObject: ?Object,
   nodes: ?Array<VNode>
 ): ?Array<VNode> {
+  // single tag:
+  // <CompA><span slot-scope="props">{{ props.msg }}</span></CompA>
+  if (nodes && nodes.tag) {
+    nodes = [nodes]
+  }
   if (nodes && nodes.length) {
     const firstNode = getFirstNode(nodes)
     const { context } = firstNode
-    const sid = getVMId(context)
-    updateSlotId(this, sid)
+    if (context !== this) {
+      const sid = getVMId(context)
+      updateSlotId(this, sid)
+    }
     markComponents(nodes, this._uid)
   }
   return nodes

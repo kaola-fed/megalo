@@ -1,3 +1,3 @@
 export * from './patch'
-export * from './render-list'
 export * from './create-text-vnode'
+export * from './create-element'

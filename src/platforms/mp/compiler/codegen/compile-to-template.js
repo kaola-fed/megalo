@@ -120,37 +120,46 @@ export class TemplateGenerator {
     if (scopedSlots) {
       Object.keys(scopedSlots)
         .forEach(k => {
-          const slot = scopedSlots[k] ||
-          /* istanbul ignore next */ {}
-          const { children = [] } = slot
+          const slot = scopedSlots[k] || /* istanbul ignore next */ {}
+          let slotAst = []
+          if (slot.tag === 'template') {
+            slotAst = slot.children || /* istanbul ignore next */ []
+          } else {
+            slotAst = [slot]
+          }
           const slotName = removeQuotes(k)
-          addSlotAst(slotName, ...children)
+          addSlotAst(slotName, ...slotAst)
           slots[slotName].scoped = true
         })
     }
 
     walk(root)
 
-    const slotsArr = Object.keys(slots).map(name => {
-      const slot = slots[name]
-      const { ast } = slot
-      const parts = slot.ast.map(e => this.genElement(e))
-      const dependencies = slot.ast.reduce((res, e) => res.concat(this.collectDependencies(e)), [])
-      const slotName = `${name}_${uid()}`
-      const body = [
-        `<template name="${slotName}" parent="${this.name}">`,
-        ...parts,
-        `</template>`
-      ].join('')
+    const slotsArr = Object.keys(slots)
+      .map(name => {
+        const slot = slots[name]
+        const { ast } = slot
+        if (ast.length <= 0) {
+          return null
+        }
+        const parts = slot.ast.map(e => this.genElement(e))
+        const dependencies = slot.ast.reduce((res, e) => res.concat(this.collectDependencies(e)), [])
+        const slotName = `${name}_${uid()}`
+        const body = [
+          `<template name="${slotName}" parent="${this.name}">`,
+          ...parts,
+          `</template>`
+        ].join('')
 
-      return {
-        name,
-        slotName,
-        dependencies,
-        body,
-        ast
-      }
-    })
+        return {
+          name,
+          slotName,
+          dependencies,
+          body,
+          ast
+        }
+      })
+      .filter(notEmpty)
 
     this.slots = this.slots.concat(slotsArr)
 
@@ -159,7 +168,9 @@ export class TemplateGenerator {
     function walk (el, parent) {
       if (self.isNamedSlotDefinition(el)) {
         const name = removeQuotes(el.slotTarget)
-        addSlotAst(name, el)
+        if (parent === root) {
+          addSlotAst(name, el)
+        }
         // extract the slot wrapper
         /* istanbul ignore else */
         if (parent && parent.children && parent.children.length) {
@@ -170,7 +181,7 @@ export class TemplateGenerator {
       if (el.children) {
         if (!parent ||
           /* istanbul ignore next */
-          (parent !== root && !self.isComponent(el))
+          !self.isComponent(el)
         ) {
           el.children.forEach(e => {
             walk(e, el)
@@ -182,7 +193,7 @@ export class TemplateGenerator {
       }
     }
 
-    function addSlotAst (name, ...ast) {
+    function addSlotAst (name, ...asts) {
       if (!slots[name]) {
         slots[name] = {
           ast: [],
@@ -192,7 +203,15 @@ export class TemplateGenerator {
       }
       const slot = slots[name]
       if (slot.scoped) return
-      slot.ast = slot.ast.concat(ast)
+      asts = asts.filter((el) => {
+        /* istanbul ignore if */
+        if (!el) return false
+        if (el.tag) return true
+        // ignore white space text node
+        const text = (el.text || /* istanbul ignore next */ '').trim()
+        return text !== ''
+      })
+      slot.ast = slot.ast.concat(asts)
     }
   }
 
@@ -445,8 +464,8 @@ export class TemplateGenerator {
   }
 
   isNamedSlotDefinition (el): boolean {
-    const { tag, slotTarget } = el
-    return tag === 'template' && slotTarget
+    const { slotTarget } = el
+    return slotTarget
   }
 
   isComponent (el): boolean {

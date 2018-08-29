@@ -8,7 +8,7 @@ import {
 } from 'compiler/helpers'
 
 function transformNode (el: ASTElement, options: CompilerOptions) {
-  const warn = options.warn || baseWarn
+  const warn = options.warn || /* istanbul ignore next */ baseWarn
   const staticClass = getAndRemoveAttr(el, 'class')
   if (process.env.NODE_ENV !== 'production' && staticClass) {
     const res = parseText(staticClass, options.delimiters)

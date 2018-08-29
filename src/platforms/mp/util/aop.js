@@ -8,11 +8,12 @@ export function aop (fn, options = {}) {
     if (argsCount !== undefined) {
       ag = ag.slice(0, argsCount)
     }
+
     if (before) {
-      before.call(self, ...ag)
+      before.call(self, ...ag, ag)
     }
 
-    const ret = fn.call(self, ...ag)
+    const ret = fn.call(self, ...ag, ag)
 
     if (after) {
       after.call(self, ...ag, ret)

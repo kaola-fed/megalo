@@ -25,6 +25,7 @@ export function updateSlotId (vm, sid) {
   vm = vm || this
   const vmId = getVMId(vm)
 
+  /* istanbul ignore else */
   if (isDef(sid)) {
     vm.$mp.update({
       [`$root.${vmId}.s`]: sid
@@ -37,6 +38,7 @@ export function updateMPData (type = 't', data, vnode) {
   const vmId = getVMId(vm)
   const hid = getHid(vm, vnode)
 
+  /* istanbul ignore else */
   if (isDef(hid)) {
     vm.$mp.update({
       [`$root.${vmId}._h.${hid}.${type}`]: data
@@ -65,6 +67,7 @@ export function updateVnodeToMP (vnode, key = 't', value) {
   const realContext = slotContext || context
   realContext && realContext.$updateMPData(key, value, vnode)
 
+  /* istanbul ignore if */
   if (!realContext) {
     console.warn('update text with no context', key, value, vnode)
   }

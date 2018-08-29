@@ -24,18 +24,19 @@ export default function model (
   const value = dir.value
   const modifiers = dir.modifiers
   const tag = el.tag
-  const type = el.attrsMap.type
+  // const type = el.attrsMap.type
 
-  if (process.env.NODE_ENV !== 'production') {
-    // inputs with type="file" are read only and setting the input's
-    // value will throw an error.
-    if (tag === 'input' && type === 'file') {
-      warn(
-        `<${el.tag} v-model="${value}" type="file">:\n` +
-        `File inputs are read only. Use a v-on:change listener instead.`
-      )
-    }
-  }
+  // input.type === 'file' not supported
+  // if (process.env.NODE_ENV !== 'production') {
+  //   // inputs with type="file" are read only and setting the input's
+  //   // value will throw an error.
+  //   if (tag === 'input' && type === 'file') {
+  //     warn(
+  //       `<${el.tag} v-model="${value}" type="file">:\n` +
+  //       `File inputs are read only. Use a v-on:change listener instead.`
+  //     )
+  //   }
+  // }
 
   if (el.component) {
     genComponentModel(el, value, modifiers)
@@ -149,10 +150,11 @@ function genDefaultModel (
 
   const { lazy, number, trim } = modifiers || {}
   const needCompositionGuard = !lazy && type !== 'range'
+  // input.type=range not supported
   const event = lazy
     ? 'change'
     : type === 'range'
-      ? RANGE_TOKEN
+    /* istanbul ignore next */ ? RANGE_TOKEN
       : 'input'
 
   let valueExpression = '$event.target.value'

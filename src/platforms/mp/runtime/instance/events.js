@@ -34,6 +34,7 @@ function getVnode (vnode = {}, hid) {
     children = Object.keys($slots)
       .reduce((res, k) => {
         const nodes = $slots[k]
+        /* istanbul ignore else */
         if (nodes._rendered) {
           res = res.concat(nodes)
         }
@@ -51,6 +52,7 @@ function getHandlers (vm, type, hid) {
   let res = []
 
   const eventTypes = eventTypeMap[type] || [type]
+  /* istanbul ignore if */
   if (!vm) return res
 
   const vnode = getVnode(vm._vnode, hid)
@@ -61,26 +63,17 @@ function getHandlers (vm, type, hid) {
   const { attrs = {}} = data
   const { on = {}} = elm
 
+  /* istanbul ignore if */
   if (('' + attrs._hid) !== ('' + hid)) return res
 
   res = eventTypes.reduce((buf, event) => {
     const handler = on[event]
+    /* istanbul ignore if */
     if (typeof handler === 'function') {
       buf.push(handler)
     } else if (Array.isArray(handler)) {
       buf = buf.concat(handler)
     }
-
-    const onceEvent = `~${event}`
-    const onceHandler = on[onceEvent]
-    if (onceHandler && !onceHandler.once) {
-      if (typeof onceHandler === 'function') {
-        buf.push(onceHandler)
-      } else if (Array.isArray(handler)) {
-        buf = buf.concat(onceHandler)
-      }
-    }
-
     return buf
   }, [])
 

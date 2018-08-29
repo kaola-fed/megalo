@@ -5,6 +5,7 @@ export * from './update'
 export * from './helper'
 export * from './render-helpers/render-slot'
 export * from './render-helpers/render-if'
+export * from './render-helpers/render-list'
 
 export function initRootVM (mpVM, opt = {}) {
   const { Component, options } = opt

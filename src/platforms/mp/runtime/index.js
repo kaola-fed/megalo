@@ -9,8 +9,8 @@ import {
 import { mountComponent } from 'core/instance/lifecycle'
 
 import { initMP } from 'mp/runtime/lifecycle/index'
-import { updateMPData, initVMToMP, afterRenderSlot, renderIf } from 'mp/runtime/instance/index'
-import { afterRenderList, createTextVNode } from 'mp/runtime/vdom/index'
+import { updateMPData, initVMToMP, afterRenderSlot, renderIf, afterRenderList } from 'mp/runtime/instance/index'
+import { createTextVNode, beforeCreateElement } from 'mp/runtime/vdom/index'
 import { aop } from 'mp/util/index'
 
 // import {
@@ -63,6 +63,12 @@ Vue.prototype._init = function (options) {
       argsCount: 4,
       after: afterRenderSlot
     })
+
+    this._c = aop(this._c, {
+      argsCount: 6,
+      before: beforeCreateElement
+    })
+
     return this
   }
 }

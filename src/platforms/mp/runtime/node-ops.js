@@ -9,12 +9,8 @@ export function createElement (tagName: string, vnode: VNode): Element {
   }
 }
 
-export function createElementNS (namespace: string, tagName: string): Element {
-  return {
-    on: {
-
-    }
-  }
+export /* istanbul ignore next */ function createElementNS (namespace: string, tagName: string): Element {
+  return {}
 }
 
 export function createTextNode (text: string, vnode: VNode): Text {
@@ -47,7 +43,7 @@ export function nextSibling (node: Node): ?Node {
   return {}
 }
 
-export function tagName (node: Element): string {
+export /* istanbul ignore next */ function tagName (node: Element): string {
   return '#'
 }
 
@@ -56,12 +52,10 @@ export function setTextContent (node: Node, text: string, vnode: VNode) {
   return {}
 }
 
-export function setStyleScope (node: Element, scopeId: string, vnode: VNode) {
-  // console.log('setStyleScope', vnode)
+export /* istanbul ignore next */ function setStyleScope (node: Element, scopeId: string, vnode: VNode) {
   return {}
 }
 
-export function setAttribute (node: Element, scopeId: string, v: string, vnode: VNode) {
-  // console.log('setAttribute', vnode)
+export /* istanbul ignore next */ function setAttribute (node: Element, scopeId: string, v: string, vnode: VNode) {
   return {}
 }

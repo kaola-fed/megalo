@@ -1,7 +1,7 @@
 /* @flow */
 
 import { isObject, isDef } from 'core/util/index'
-import { updateVnodeToMP } from '../instance/index'
+import { updateVnodeToMP } from '../update'
 
 /**
  * Runtime helper for rendering v-for lists.
@@ -21,7 +21,9 @@ export function afterRenderList (
 }
 
 // TODO: support for destructuring
-function updateListToMP (vnodeList, val, forId, context) {
+// TODO: keys collecting method needs improve for
+// <li v-for="i in 3" :key="i"></li>
+function updateListToMP (vnodeList = [], val, forId, context) {
   const firstItem = vnodeList[0]
   let forKeys
   let list = []

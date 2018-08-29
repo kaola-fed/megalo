@@ -246,6 +246,8 @@ export function genData (el: ASTElement, state: CodegenState): string {
   if (el.events) {
     data += `${genHandlers(el.events, false, state.warn)},`
   }
+  // not supported
+  /* istanbul ignore if */
   if (el.nativeEvents) {
     data += `${genHandlers(el.nativeEvents, true, state.warn)},`
   }
@@ -424,9 +426,13 @@ function getNormalizationType (
     if (el.type !== 1) {
       continue
     }
+    // TODO: a better normalization mode without text node combination
+    // it was 2 full normalizatiom before
+    // but it will combine two adjacent text node which will cause hid and context infomation lost
     if (needsNormalization(el) ||
         (el.ifConditions && el.ifConditions.some(c => needsNormalization(c.block)))) {
-      res = 2
+      // res = 2
+      res = 1
       break
     }
     if (maybeComponent(el) ||
