@@ -923,10 +923,7 @@ function addAttr (el, name, value) {
 }
 
 // add a raw attr (use this in preTransforms)
-function addRawAttr (el, name, value) {
-  el.attrsMap[name] = value;
-  el.attrsList.push({ name: name, value: value });
-}
+
 
 function addDirective (
   el,
@@ -1062,7 +1059,7 @@ function getAndRemoveAttr (
 /*  */
 
 function transformNode (el, options) {
-  var warn = options.warn || baseWarn;
+  var warn = options.warn || /* istanbul ignore next */ baseWarn;
   var staticClass = getAndRemoveAttr(el, 'class');
   if (process.env.NODE_ENV !== 'production' && staticClass) {
     var res = parseText(staticClass, options.delimiters);
@@ -1167,6 +1164,121 @@ var style = {
   transformNode: transformNode$1,
   genData: genData$1
 }
+
+var modules = [
+  klass,
+  style
+]
+
+var ASSET_TYPES = [
+  'component',
+  'directive',
+  'filter'
+];
+
+var LIFECYCLE_HOOKS = [
+  'beforeCreate',
+  'created',
+  'beforeMount',
+  'mounted',
+  'beforeUpdate',
+  'updated',
+  'beforeDestroy',
+  'destroyed',
+  'activated',
+  'deactivated',
+  'errorCaptured'
+];
+
+/*  */
+
+var config = ({
+  /**
+   * Option merge strategies (used in core/util/options)
+   */
+  // $flow-disable-line
+  optionMergeStrategies: Object.create(null),
+
+  /**
+   * Whether to suppress warnings.
+   */
+  silent: false,
+
+  /**
+   * Show production mode tip message on boot?
+   */
+  productionTip: process.env.NODE_ENV !== 'production',
+
+  /**
+   * Whether to enable devtools
+   */
+  devtools: process.env.NODE_ENV !== 'production',
+
+  /**
+   * Whether to record perf
+   */
+  performance: false,
+
+  /**
+   * Error handler for watcher errors
+   */
+  errorHandler: null,
+
+  /**
+   * Warn handler for watcher warns
+   */
+  warnHandler: null,
+
+  /**
+   * Ignore certain custom elements
+   */
+  ignoredElements: [],
+
+  /**
+   * Custom user key aliases for v-on
+   */
+  // $flow-disable-line
+  keyCodes: Object.create(null),
+
+  /**
+   * Check if a tag is reserved so that it cannot be registered as a
+   * component. This is platform-dependent and may be overwritten.
+   */
+  isReservedTag: no,
+
+  /**
+   * Check if an attribute is reserved so that it cannot be used as a component
+   * prop. This is platform-dependent and may be overwritten.
+   */
+  isReservedAttr: no,
+
+  /**
+   * Check if a tag is an unknown element.
+   * Platform-dependent.
+   */
+  isUnknownElement: no,
+
+  /**
+   * Get the namespace of an element
+   */
+  getTagNamespace: noop,
+
+  /**
+   * Parse the real tag name for the specific platform.
+   */
+  parsePlatformTagName: identity,
+
+  /**
+   * Check if an attribute must be bound using property, e.g. value
+   * Platform-dependent.
+   */
+  mustUseProp: no,
+
+  /**
+   * Exposed for legacy reasons
+   */
+  _lifecycleHooks: LIFECYCLE_HOOKS
+})
 
 /*  */
 
@@ -1323,6 +1435,310 @@ function parseString (chr) {
 
 /*  */
 
+var warn;
+
+// in some cases, the event used has to be determined at runtime
+// so we used some reserved tokens during compile.
+var RANGE_TOKEN = '__r';
+
+
+function model (
+  el,
+  dir,
+  _warn
+) {
+  warn = _warn;
+  var value = dir.value;
+  var modifiers = dir.modifiers;
+  var tag = el.tag;
+  // const type = el.attrsMap.type
+
+  // input.type === 'file' not supported
+  // if (process.env.NODE_ENV !== 'production') {
+  //   // inputs with type="file" are read only and setting the input's
+  //   // value will throw an error.
+  //   if (tag === 'input' && type === 'file') {
+  //     warn(
+  //       `<${el.tag} v-model="${value}" type="file">:\n` +
+  //       `File inputs are read only. Use a v-on:change listener instead.`
+  //     )
+  //   }
+  // }
+
+  if (el.component) {
+    genComponentModel(el, value, modifiers);
+    // component v-model doesn't need extra runtime
+    return false
+  // } else if (tag === 'select') {
+  //   genSelect(el, value, modifiers)
+  // } else if (tag === 'input' && type === 'checkbox') {
+  //   genCheckboxModel(el, value, modifiers)
+  // } else if (tag === 'input' && type === 'radio') {
+  //   genRadioModel(el, value, modifiers)
+  } else if (tag === 'input' || tag === 'textarea') {
+    genDefaultModel(el, value, modifiers);
+  } else if (!config.isReservedTag(tag)) {
+    genComponentModel(el, value, modifiers);
+    // component v-model doesn't need extra runtime
+    return false
+  } else if (process.env.NODE_ENV !== 'production') {
+    warn(
+      "<" + (el.tag) + " v-model=\"" + value + "\">: " +
+      "v-model is not supported on this element type. " +
+      'If you are working with contenteditable, it\'s recommended to ' +
+      'wrap a library dedicated for that purpose inside a custom component.'
+    );
+  }
+
+  // ensure runtime directive metadata
+  return true
+}
+
+// function genCheckboxModel (
+//   el: ASTElement,
+//   value: string,
+//   modifiers: ?ASTModifiers
+// ) {
+//   const number = modifiers && modifiers.number
+//   const valueBinding = getBindingAttr(el, 'value') || 'null'
+//   const trueValueBinding = getBindingAttr(el, 'true-value') || 'true'
+//   const falseValueBinding = getBindingAttr(el, 'false-value') || 'false'
+//   addProp(el, 'checked',
+//     `Array.isArray(${value})` +
+//     `?_i(${value},${valueBinding})>-1` + (
+//       trueValueBinding === 'true'
+//         ? `:(${value})`
+//         : `:_q(${value},${trueValueBinding})`
+//     )
+//   )
+//   addHandler(el, 'change',
+//     `var $$a=${value},` +
+//         '$$el=$event.target,' +
+//         `$$c=$$el.checked?(${trueValueBinding}):(${falseValueBinding});` +
+//     'if(Array.isArray($$a)){' +
+//       `var $$v=${number ? '_n(' + valueBinding + ')' : valueBinding},` +
+//           '$$i=_i($$a,$$v);' +
+//       `if($$el.checked){$$i<0&&(${genAssignmentCode(value, '$$a.concat([$$v])')})}` +
+//       `else{$$i>-1&&(${genAssignmentCode(value, '$$a.slice(0,$$i).concat($$a.slice($$i+1))')})}` +
+//     `}else{${genAssignmentCode(value, '$$c')}}`,
+//     null, true
+//   )
+// }
+
+// function genRadioModel (
+//   el: ASTElement,
+//   value: string,
+//   modifiers: ?ASTModifiers
+// ) {
+//   const number = modifiers && modifiers.number
+//   let valueBinding = getBindingAttr(el, 'value') || 'null'
+//   valueBinding = number ? `_n(${valueBinding})` : valueBinding
+//   addProp(el, 'checked', `_q(${value},${valueBinding})`)
+//   addHandler(el, 'change', genAssignmentCode(value, valueBinding), null, true)
+// }
+
+// function genSelect (
+//   el: ASTElement,
+//   value: string,
+//   modifiers: ?ASTModifiers
+// ) {
+//   const number = modifiers && modifiers.number
+//   const selectedVal = `Array.prototype.filter` +
+//     `.call($event.target.options,function(o){return o.selected})` +
+//     `.map(function(o){var val = "_value" in o ? o._value : o.value;` +
+//     `return ${number ? '_n(val)' : 'val'}})`
+
+//   const assignment = '$event.target.multiple ? $$selectedVal : $$selectedVal[0]'
+//   let code = `var $$selectedVal = ${selectedVal};`
+//   code = `${code} ${genAssignmentCode(value, assignment)}`
+//   addHandler(el, 'change', code, null, true)
+// }
+
+function genDefaultModel (
+  el,
+  value,
+  modifiers
+) {
+  var type = el.attrsMap.type;
+
+  // warn if v-bind:value conflicts with v-model
+  // except for inputs with v-bind:type
+  if (process.env.NODE_ENV !== 'production') {
+    var value$1 = el.attrsMap['v-bind:value'] || el.attrsMap[':value'];
+    var typeBinding = el.attrsMap['v-bind:type'] || el.attrsMap[':type'];
+    if (value$1 && !typeBinding) {
+      var binding = el.attrsMap['v-bind:value'] ? 'v-bind:value' : ':value';
+      warn(
+        binding + "=\"" + value$1 + "\" conflicts with v-model on the same element " +
+        'because the latter already expands to a value binding internally'
+      );
+    }
+  }
+
+  var ref = modifiers || {};
+  var lazy = ref.lazy;
+  var number = ref.number;
+  var trim = ref.trim;
+  var needCompositionGuard = !lazy && type !== 'range';
+  // input.type=range not supported
+  var event = lazy
+    ? 'change'
+    : type === 'range'
+    /* istanbul ignore next */ ? RANGE_TOKEN
+      : 'input';
+
+  var valueExpression = '$event.target.value';
+  if (trim) {
+    valueExpression = "$event.target.value.trim()";
+  }
+  if (number) {
+    valueExpression = "_n(" + valueExpression + ")";
+  }
+
+  var code = genAssignmentCode(value, valueExpression);
+  if (needCompositionGuard) {
+    code = "if($event.target.composing)return;" + code;
+  }
+
+  addProp(el, 'value', ("(" + value + ")"));
+  addHandler(el, event, code, null, true);
+  if (trim || number) {
+    addHandler(el, 'blur', '$forceUpdate()');
+  }
+}
+
+/*  */
+
+function text (el, dir) {
+  if (dir.value) {
+    addProp(el, 'textContent', ("_s(" + (dir.value) + ")"));
+  }
+}
+
+/*  */
+
+function html (el, dir) {
+  if (dir.value) {
+    addProp(el, 'innerHTML', ("_s(" + (dir.value) + ")"));
+  }
+}
+
+var directives = {
+  model: model,
+  text: text,
+  html: html
+}
+
+/*  */
+
+var isUnaryTag$2 = makeMap(
+  'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
+  'link,meta,param,source,track,wbr'
+);
+
+// Elements that you can, intentionally, leave open
+// (and which close themselves)
+var canBeLeftOpenTag$2 = makeMap(
+  'colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr,source'
+);
+
+// HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
+// Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
+var isNonPhrasingTag$1 = makeMap(
+  'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
+  'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
+  'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
+  'optgroup,option,param,rp,rt,source,style,summary,tbody,td,tfoot,th,thead,' +
+  'title,tr,track'
+);
+
+var removeQuotes = function (t) {
+  if ( t === void 0 ) t = '';
+
+  return t.replace(/"/g, '');
+};
+
+function cloneAST (ast) {
+  var walked = [];
+  var newAst = doClone(ast);
+  return newAst
+  function doClone (old) {
+    var walkedVal = walked.find(function (v) { return v.old === old; });
+    if (walkedVal) {
+      return walkedVal._new
+    }
+    if (Array.isArray(old)) {
+      var _new = [];
+      walked.push({ _new: _new, old: old });
+      for (var i = 0, len = old.length; i < len; ++i) {
+        _new.push(doClone(old[i]));
+      }
+      return _new
+    } else if (typeof old === 'object') {
+      var _new$1 = {};
+      walked.push({ _new: _new$1, old: old });
+      for (var key in old) {
+        var newVal = doClone(old[key]);
+        _new$1[key] = newVal;
+      }
+      return _new$1
+    } else {
+      return old
+    }
+  }
+}
+
+var Stack = function Stack () {
+  this.stack = [];
+};
+
+var prototypeAccessors = { top: { configurable: true } };
+Stack.prototype.push = function push (data) {
+  return this.stack.push(data)
+};
+Stack.prototype.pop = function pop () {
+  return this.stack.pop()
+};
+prototypeAccessors.top.get = function () {
+  return this.stack[this.stack.length - 1] || null
+};
+
+Object.defineProperties( Stack.prototype, prototypeAccessors );
+
+var createUidFn = function (prefix) {
+  if ( prefix === void 0 ) prefix = '';
+
+  var id = 0;
+  return function () {
+    return ("" + prefix + (id++))
+  }
+};
+
+var uid = createUidFn();
+
+var escapeText = function (str) {
+  if ( str === void 0 ) str = '';
+
+  return str.replace(/\</g, "{{\"<\"}}")
+};
+
+/*  */
+
+var baseOptions = {
+  expectHTML: true,
+  modules: modules,
+  directives: directives,
+  isPreTag: isPreTag,
+  isUnaryTag: isUnaryTag$2,
+  mustUseProp: mustUseProp,
+  canBeLeftOpenTag: canBeLeftOpenTag$2,
+  isReservedTag: isReservedTag,
+  getTagNamespace: getTagNamespace,
+  staticKeys: genStaticKeys(modules)
+};
+
+/*  */
+
 // can we use __proto__?
 var hasProto = '__proto__' in {};
 
@@ -1408,7 +1824,7 @@ var modifierRE = /\.[^.]+/g;
 var decodeHTMLCached = cached(he.decode);
 
 // configurable state
-var warn;
+var warn$1;
 var delimiters;
 var transforms;
 var preTransforms;
@@ -1441,7 +1857,7 @@ function parse (
   template,
   options
 ) {
-  warn = options.warn || baseWarn;
+  warn$1 = options.warn || baseWarn;
 
   platformIsPreTag = options.isPreTag || no;
   platformMustUseProp = options.mustUseProp || no;
@@ -1464,7 +1880,7 @@ function parse (
   function warnOnce (msg) {
     if (!warned) {
       warned = true;
-      warn(msg);
+      warn$1(msg);
     }
   }
 
@@ -1483,7 +1899,7 @@ function parse (
   }
 
   parseHTML(template, {
-    warn: warn,
+    warn: warn$1,
     expectHTML: options.expectHTML,
     isUnaryTag: options.isUnaryTag,
     canBeLeftOpenTag: options.canBeLeftOpenTag,
@@ -1508,7 +1924,7 @@ function parse (
 
       if (isForbiddenTag(element) && !isServerRendering()) {
         element.forbidden = true;
-        process.env.NODE_ENV !== 'production' && warn(
+        process.env.NODE_ENV !== 'production' && warn$1(
           'Templates should only be responsible for mapping the state to the ' +
           'UI. Avoid placing tags with side-effects in your templates, such as ' +
           "<" + tag + ">" + ', as they will not be parsed.'
@@ -1707,7 +2123,7 @@ function processKey (el) {
   var exp = getBindingAttr(el, 'key');
   if (exp) {
     if (process.env.NODE_ENV !== 'production' && el.tag === 'template') {
-      warn("<template> cannot be keyed. Place the key on real elements instead.");
+      warn$1("<template> cannot be keyed. Place the key on real elements instead.");
     }
     el.key = exp;
   }
@@ -1728,7 +2144,7 @@ function processFor (el) {
     if (res) {
       extend(el, res);
     } else if (process.env.NODE_ENV !== 'production') {
-      warn(
+      warn$1(
         ("Invalid v-for expression: " + exp)
       );
     }
@@ -1783,7 +2199,7 @@ function processIfConditions (el, parent) {
       block: el
     });
   } else if (process.env.NODE_ENV !== 'production') {
-    warn(
+    warn$1(
       "v-" + (el.elseif ? ('else-if="' + el.elseif + '"') : 'else') + " " +
       "used on element <" + (el.tag) + "> without corresponding v-if."
     );
@@ -1797,7 +2213,7 @@ function findPrevElement (children) {
       return children[i]
     } else {
       if (process.env.NODE_ENV !== 'production' && children[i].text !== ' ') {
-        warn(
+        warn$1(
           "text \"" + (children[i].text.trim()) + "\" between v-if and v-else(-if) " +
           "will be ignored."
         );
@@ -1825,7 +2241,7 @@ function processSlot (el) {
   if (el.tag === 'slot') {
     el.slotName = getBindingAttr(el, 'name');
     if (process.env.NODE_ENV !== 'production' && el.key) {
-      warn(
+      warn$1(
         "`key` does not work on <slot> because slots are abstract outlets " +
         "and can possibly expand into multiple elements. " +
         "Use the key on a wrapping element instead."
@@ -1837,7 +2253,7 @@ function processSlot (el) {
       slotScope = getAndRemoveAttr(el, 'scope');
       /* istanbul ignore if */
       if (process.env.NODE_ENV !== 'production' && slotScope) {
-        warn(
+        warn$1(
           "the \"scope\" attribute for scoped slots have been deprecated and " +
           "replaced by \"slot-scope\" since 2.5. The new \"slot-scope\" attribute " +
           "can also be used on plain elements in addition to <template> to " +
@@ -1849,7 +2265,7 @@ function processSlot (el) {
     } else if ((slotScope = getAndRemoveAttr(el, 'slot-scope'))) {
       /* istanbul ignore if */
       if (process.env.NODE_ENV !== 'production' && el.attrsMap['v-for']) {
-        warn(
+        warn$1(
           "Ambiguous combined usage of slot-scope and v-for on <" + (el.tag) + "> " +
           "(v-for takes higher priority). Use a wrapper <template> for the " +
           "scoped slot to make it clearer.",
@@ -1924,7 +2340,7 @@ function processAttrs (el) {
         }
       } else if (onRE.test(name)) { // v-on
         name = name.replace(onRE, '');
-        addHandler(el, name, value, modifiers, false, warn);
+        addHandler(el, name, value, modifiers, false, warn$1);
       } else { // normal directives
         name = name.replace(dirRE, '');
         // parse arg
@@ -1943,7 +2359,7 @@ function processAttrs (el) {
       if (process.env.NODE_ENV !== 'production') {
         var res = parseText(value, delimiters);
         if (res) {
-          warn(
+          warn$1(
             name + "=\"" + value + "\": " +
             'Interpolation inside attributes has been removed. ' +
             'Use v-bind or the colon shorthand instead. For example, ' +
@@ -1990,7 +2406,7 @@ function makeAttrsMap (attrs) {
       process.env.NODE_ENV !== 'production' &&
       map[attrs[i].name] && !isIE && !isEdge
     ) {
-      warn('duplicate attribute: ' + attrs[i].name);
+      warn$1('duplicate attribute: ' + attrs[i].name);
     }
     map[attrs[i].name] = attrs[i].value;
   }
@@ -2032,7 +2448,7 @@ function checkForAliasModel (el, value) {
   var _el = el;
   while (_el) {
     if (_el.for && _el.alias === value) {
-      warn(
+      warn$1(
         "<" + (el.tag) + " v-model=\"" + value + "\">: " +
         "You are binding v-model directly to a v-for iteration alias. " +
         "This will not be able to modify the v-for source array because " +
@@ -2043,496 +2459,6 @@ function checkForAliasModel (el, value) {
     _el = _el.parent;
   }
 }
-
-/*  */
-
-/**
- * Expand input[v-model] with dyanmic type bindings into v-if-else chains
- * Turn this:
- *   <input v-model="data[type]" :type="type">
- * into this:
- *   <input v-if="type === 'checkbox'" type="checkbox" v-model="data[type]">
- *   <input v-else-if="type === 'radio'" type="radio" v-model="data[type]">
- *   <input v-else :type="type" v-model="data[type]">
- */
-
-function preTransformNode (el, options) {
-  if (el.tag === 'input') {
-    var map = el.attrsMap;
-    if (!map['v-model']) {
-      return
-    }
-
-    var typeBinding;
-    if (map[':type'] || map['v-bind:type']) {
-      typeBinding = getBindingAttr(el, 'type');
-    }
-    if (!map.type && !typeBinding && map['v-bind']) {
-      typeBinding = "(" + (map['v-bind']) + ").type";
-    }
-
-    if (typeBinding) {
-      var ifCondition = getAndRemoveAttr(el, 'v-if', true);
-      var ifConditionExtra = ifCondition ? ("&&(" + ifCondition + ")") : "";
-      var hasElse = getAndRemoveAttr(el, 'v-else', true) != null;
-      var elseIfCondition = getAndRemoveAttr(el, 'v-else-if', true);
-      // 1. checkbox
-      var branch0 = cloneASTElement(el);
-      // process for on the main node
-      processFor(branch0);
-      addRawAttr(branch0, 'type', 'checkbox');
-      processElement(branch0, options);
-      branch0.processed = true; // prevent it from double-processed
-      branch0.if = "(" + typeBinding + ")==='checkbox'" + ifConditionExtra;
-      addIfCondition(branch0, {
-        exp: branch0.if,
-        block: branch0
-      });
-      // 2. add radio else-if condition
-      var branch1 = cloneASTElement(el);
-      getAndRemoveAttr(branch1, 'v-for', true);
-      addRawAttr(branch1, 'type', 'radio');
-      processElement(branch1, options);
-      addIfCondition(branch0, {
-        exp: "(" + typeBinding + ")==='radio'" + ifConditionExtra,
-        block: branch1
-      });
-      // 3. other
-      var branch2 = cloneASTElement(el);
-      getAndRemoveAttr(branch2, 'v-for', true);
-      addRawAttr(branch2, ':type', typeBinding);
-      processElement(branch2, options);
-      addIfCondition(branch0, {
-        exp: ifCondition,
-        block: branch2
-      });
-
-      if (hasElse) {
-        branch0.else = true;
-      } else if (elseIfCondition) {
-        branch0.elseif = elseIfCondition;
-      }
-
-      return branch0
-    }
-  }
-}
-
-function cloneASTElement (el) {
-  return createASTElement(el.tag, el.attrsList.slice(), el.parent)
-}
-
-var model = {
-  preTransformNode: preTransformNode
-}
-
-var modules = [
-  klass,
-  style,
-  model
-]
-
-var ASSET_TYPES = [
-  'component',
-  'directive',
-  'filter'
-];
-
-var LIFECYCLE_HOOKS = [
-  'beforeCreate',
-  'created',
-  'beforeMount',
-  'mounted',
-  'beforeUpdate',
-  'updated',
-  'beforeDestroy',
-  'destroyed',
-  'activated',
-  'deactivated',
-  'errorCaptured'
-];
-
-/*  */
-
-var config = ({
-  /**
-   * Option merge strategies (used in core/util/options)
-   */
-  // $flow-disable-line
-  optionMergeStrategies: Object.create(null),
-
-  /**
-   * Whether to suppress warnings.
-   */
-  silent: false,
-
-  /**
-   * Show production mode tip message on boot?
-   */
-  productionTip: process.env.NODE_ENV !== 'production',
-
-  /**
-   * Whether to enable devtools
-   */
-  devtools: process.env.NODE_ENV !== 'production',
-
-  /**
-   * Whether to record perf
-   */
-  performance: false,
-
-  /**
-   * Error handler for watcher errors
-   */
-  errorHandler: null,
-
-  /**
-   * Warn handler for watcher warns
-   */
-  warnHandler: null,
-
-  /**
-   * Ignore certain custom elements
-   */
-  ignoredElements: [],
-
-  /**
-   * Custom user key aliases for v-on
-   */
-  // $flow-disable-line
-  keyCodes: Object.create(null),
-
-  /**
-   * Check if a tag is reserved so that it cannot be registered as a
-   * component. This is platform-dependent and may be overwritten.
-   */
-  isReservedTag: no,
-
-  /**
-   * Check if an attribute is reserved so that it cannot be used as a component
-   * prop. This is platform-dependent and may be overwritten.
-   */
-  isReservedAttr: no,
-
-  /**
-   * Check if a tag is an unknown element.
-   * Platform-dependent.
-   */
-  isUnknownElement: no,
-
-  /**
-   * Get the namespace of an element
-   */
-  getTagNamespace: noop,
-
-  /**
-   * Parse the real tag name for the specific platform.
-   */
-  parsePlatformTagName: identity,
-
-  /**
-   * Check if an attribute must be bound using property, e.g. value
-   * Platform-dependent.
-   */
-  mustUseProp: no,
-
-  /**
-   * Exposed for legacy reasons
-   */
-  _lifecycleHooks: LIFECYCLE_HOOKS
-})
-
-/*  */
-
-var warn$1;
-
-// in some cases, the event used has to be determined at runtime
-// so we used some reserved tokens during compile.
-var RANGE_TOKEN = '__r';
-
-
-function model$1 (
-  el,
-  dir,
-  _warn
-) {
-  warn$1 = _warn;
-  var value = dir.value;
-  var modifiers = dir.modifiers;
-  var tag = el.tag;
-  var type = el.attrsMap.type;
-
-  if (process.env.NODE_ENV !== 'production') {
-    // inputs with type="file" are read only and setting the input's
-    // value will throw an error.
-    if (tag === 'input' && type === 'file') {
-      warn$1(
-        "<" + (el.tag) + " v-model=\"" + value + "\" type=\"file\">:\n" +
-        "File inputs are read only. Use a v-on:change listener instead."
-      );
-    }
-  }
-
-  if (el.component) {
-    genComponentModel(el, value, modifiers);
-    // component v-model doesn't need extra runtime
-    return false
-  } else if (tag === 'select') {
-    genSelect(el, value, modifiers);
-  } else if (tag === 'input' && type === 'checkbox') {
-    genCheckboxModel(el, value, modifiers);
-  } else if (tag === 'input' && type === 'radio') {
-    genRadioModel(el, value, modifiers);
-  } else if (tag === 'input' || tag === 'textarea') {
-    genDefaultModel(el, value, modifiers);
-  } else if (!config.isReservedTag(tag)) {
-    genComponentModel(el, value, modifiers);
-    // component v-model doesn't need extra runtime
-    return false
-  } else if (process.env.NODE_ENV !== 'production') {
-    warn$1(
-      "<" + (el.tag) + " v-model=\"" + value + "\">: " +
-      "v-model is not supported on this element type. " +
-      'If you are working with contenteditable, it\'s recommended to ' +
-      'wrap a library dedicated for that purpose inside a custom component.'
-    );
-  }
-
-  // ensure runtime directive metadata
-  return true
-}
-
-function genCheckboxModel (
-  el,
-  value,
-  modifiers
-) {
-  var number = modifiers && modifiers.number;
-  var valueBinding = getBindingAttr(el, 'value') || 'null';
-  var trueValueBinding = getBindingAttr(el, 'true-value') || 'true';
-  var falseValueBinding = getBindingAttr(el, 'false-value') || 'false';
-  addProp(el, 'checked',
-    "Array.isArray(" + value + ")" +
-    "?_i(" + value + "," + valueBinding + ")>-1" + (
-      trueValueBinding === 'true'
-        ? (":(" + value + ")")
-        : (":_q(" + value + "," + trueValueBinding + ")")
-    )
-  );
-  addHandler(el, 'change',
-    "var $$a=" + value + "," +
-        '$$el=$event.target,' +
-        "$$c=$$el.checked?(" + trueValueBinding + "):(" + falseValueBinding + ");" +
-    'if(Array.isArray($$a)){' +
-      "var $$v=" + (number ? '_n(' + valueBinding + ')' : valueBinding) + "," +
-          '$$i=_i($$a,$$v);' +
-      "if($$el.checked){$$i<0&&(" + (genAssignmentCode(value, '$$a.concat([$$v])')) + ")}" +
-      "else{$$i>-1&&(" + (genAssignmentCode(value, '$$a.slice(0,$$i).concat($$a.slice($$i+1))')) + ")}" +
-    "}else{" + (genAssignmentCode(value, '$$c')) + "}",
-    null, true
-  );
-}
-
-function genRadioModel (
-  el,
-  value,
-  modifiers
-) {
-  var number = modifiers && modifiers.number;
-  var valueBinding = getBindingAttr(el, 'value') || 'null';
-  valueBinding = number ? ("_n(" + valueBinding + ")") : valueBinding;
-  addProp(el, 'checked', ("_q(" + value + "," + valueBinding + ")"));
-  addHandler(el, 'change', genAssignmentCode(value, valueBinding), null, true);
-}
-
-function genSelect (
-  el,
-  value,
-  modifiers
-) {
-  var number = modifiers && modifiers.number;
-  var selectedVal = "Array.prototype.filter" +
-    ".call($event.target.options,function(o){return o.selected})" +
-    ".map(function(o){var val = \"_value\" in o ? o._value : o.value;" +
-    "return " + (number ? '_n(val)' : 'val') + "})";
-
-  var assignment = '$event.target.multiple ? $$selectedVal : $$selectedVal[0]';
-  var code = "var $$selectedVal = " + selectedVal + ";";
-  code = code + " " + (genAssignmentCode(value, assignment));
-  addHandler(el, 'change', code, null, true);
-}
-
-function genDefaultModel (
-  el,
-  value,
-  modifiers
-) {
-  var type = el.attrsMap.type;
-
-  // warn if v-bind:value conflicts with v-model
-  // except for inputs with v-bind:type
-  if (process.env.NODE_ENV !== 'production') {
-    var value$1 = el.attrsMap['v-bind:value'] || el.attrsMap[':value'];
-    var typeBinding = el.attrsMap['v-bind:type'] || el.attrsMap[':type'];
-    if (value$1 && !typeBinding) {
-      var binding = el.attrsMap['v-bind:value'] ? 'v-bind:value' : ':value';
-      warn$1(
-        binding + "=\"" + value$1 + "\" conflicts with v-model on the same element " +
-        'because the latter already expands to a value binding internally'
-      );
-    }
-  }
-
-  var ref = modifiers || {};
-  var lazy = ref.lazy;
-  var number = ref.number;
-  var trim = ref.trim;
-  var needCompositionGuard = !lazy && type !== 'range';
-  var event = lazy
-    ? 'change'
-    : type === 'range'
-      ? RANGE_TOKEN
-      : 'input';
-
-  var valueExpression = '$event.target.value';
-  if (trim) {
-    valueExpression = "$event.target.value.trim()";
-  }
-  if (number) {
-    valueExpression = "_n(" + valueExpression + ")";
-  }
-
-  var code = genAssignmentCode(value, valueExpression);
-  if (needCompositionGuard) {
-    code = "if($event.target.composing)return;" + code;
-  }
-
-  addProp(el, 'value', ("(" + value + ")"));
-  addHandler(el, event, code, null, true);
-  if (trim || number) {
-    addHandler(el, 'blur', '$forceUpdate()');
-  }
-}
-
-/*  */
-
-function text (el, dir) {
-  if (dir.value) {
-    addProp(el, 'textContent', ("_s(" + (dir.value) + ")"));
-  }
-}
-
-/*  */
-
-function html (el, dir) {
-  if (dir.value) {
-    addProp(el, 'innerHTML', ("_s(" + (dir.value) + ")"));
-  }
-}
-
-var directives = {
-  model: model$1,
-  text: text,
-  html: html
-}
-
-/*  */
-
-var isUnaryTag$2 = makeMap(
-  'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
-  'link,meta,param,source,track,wbr'
-);
-
-// Elements that you can, intentionally, leave open
-// (and which close themselves)
-var canBeLeftOpenTag$2 = makeMap(
-  'colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr,source'
-);
-
-// HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
-// Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
-var isNonPhrasingTag$1 = makeMap(
-  'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
-  'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
-  'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
-  'optgroup,option,param,rp,rt,source,style,summary,tbody,td,tfoot,th,thead,' +
-  'title,tr,track'
-);
-
-var removeQuotes = function (t) {
-  if ( t === void 0 ) t = '';
-
-  return t.replace(/"/g, '');
-};
-
-function cloneAST (ast) {
-  var walked = [];
-  var newAst = doClone(ast);
-  return newAst
-  function doClone (old) {
-    var walkedVal = walked.find(function (v) { return v.old === old; });
-    if (walkedVal) {
-      return walkedVal._new
-    }
-    if (Array.isArray(old)) {
-      var _new = [];
-      walked.push({ _new: _new, old: old });
-      for (var i = 0, len = old.length; i < len; ++i) {
-        _new.push(doClone(old[i]));
-      }
-      return _new
-    } else if (typeof old === 'object') {
-      var _new$1 = {};
-      walked.push({ _new: _new$1, old: old });
-      for (var key in old) {
-        var newVal = doClone(old[key]);
-        _new$1[key] = newVal;
-      }
-      return _new$1
-    } else {
-      return old
-    }
-  }
-}
-
-var Stack = function Stack () {
-  this.stack = [];
-};
-
-var prototypeAccessors = { top: { configurable: true } };
-Stack.prototype.push = function push (data) {
-  return this.stack.push(data)
-};
-Stack.prototype.pop = function pop () {
-  return this.stack.pop()
-};
-prototypeAccessors.top.get = function () {
-  return this.stack[this.stack.length - 1] || null
-};
-
-Object.defineProperties( Stack.prototype, prototypeAccessors );
-
-var uid = (function () {
-  var id = 0;
-  return function () {
-    return id++
-  }
-})();
-
-/*  */
-
-var baseOptions = {
-  expectHTML: true,
-  modules: modules,
-  directives: directives,
-  isPreTag: isPreTag,
-  isUnaryTag: isUnaryTag$2,
-  mustUseProp: mustUseProp,
-  canBeLeftOpenTag: canBeLeftOpenTag$2,
-  isReservedTag: isReservedTag,
-  getTagNamespace: getTagNamespace,
-  staticKeys: genStaticKeys(modules)
-};
 
 /*  */
 
@@ -2699,16 +2625,17 @@ var keyNames = {
 var genGuard = function (condition) { return ("if(" + condition + ")return null;"); };
 
 var modifierCode = {
-  stop: '$event.stopPropagation();',
-  prevent: '$event.preventDefault();',
-  self: genGuard("$event.target !== $event.currentTarget"),
-  ctrl: genGuard("!$event.ctrlKey"),
-  shift: genGuard("!$event.shiftKey"),
-  alt: genGuard("!$event.altKey"),
-  meta: genGuard("!$event.metaKey"),
-  left: genGuard("'button' in $event && $event.button !== 0"),
-  middle: genGuard("'button' in $event && $event.button !== 1"),
-  right: genGuard("'button' in $event && $event.button !== 2")
+  // stop: '$event.stopPropagation();',
+  // prevent: '$event.preventDefault();',
+  // self: genGuard(`$event.target !== $event.currentTarget`),
+  self: genGuard("$event.target.dataset.hid !== $event.currentTarget.dataset.hid")
+  // ctrl: genGuard(`!$event.ctrlKey`),
+  // shift: genGuard(`!$event.shiftKey`),
+  // alt: genGuard(`!$event.altKey`),
+  // meta: genGuard(`!$event.metaKey`),
+  // left: genGuard(`'button' in $event && $event.button !== 0`),
+  // middle: genGuard(`'button' in $event && $event.button !== 1`),
+  // right: genGuard(`'button' in $event && $event.button !== 2`)
 };
 
 function genHandlers (
@@ -2716,7 +2643,7 @@ function genHandlers (
   isNative,
   warn
 ) {
-  var res = isNative ? 'nativeOn:{' : 'on:{';
+  var res = isNative ? /* istanbul ignore next */ 'nativeOn:{' : 'on:{';
   for (var name in events) {
     res += "\"" + name + "\":" + (genHandler(name, events[name])) + ",";
   }
@@ -2727,6 +2654,7 @@ function genHandler (
   name,
   handler
 ) {
+  /* istanbul ignore if */
   if (!handler) {
     return 'function(){}'
   }
@@ -2742,7 +2670,7 @@ function genHandler (
     if (isMethodPath || isFunctionExpression) {
       return handler.value
     }
-    /* istanbul ignore if */
+    /* istanbul ignore next */
     return ("function($event){" + (handler.value) + "}") // inline statement
   } else {
     var code = '';
@@ -2752,10 +2680,11 @@ function genHandler (
       if (modifierCode[key]) {
         genModifierCode += modifierCode[key];
         // left/right
+        /* istanbul ignore if */
         if (keyCodes[key]) {
           keys.push(key);
         }
-      } else if (key === 'exact') {
+      } else /* istanbul ignore next */ if (key === 'exact') {
         var modifiers = (handler.modifiers);
         genModifierCode += genGuard(
           ['ctrl', 'shift', 'alt', 'meta']
@@ -2779,15 +2708,17 @@ function genHandler (
       : isFunctionExpression
         ? ("return (" + (handler.value) + ")($event)")
         : handler.value;
-    /* istanbul ignore if */
+    /* istanbul ignore next */
     return ("function($event){" + code + handlerCode + "}")
   }
 }
 
+/* istanbul ignore next */
 function genKeyFilter (keys) {
   return ("if(!('button' in $event)&&" + (keys.map(genFilterCode).join('&&')) + ")return null;")
 }
 
+/* istanbul ignore next */
 function genFilterCode (key) {
   var keyVal = parseInt(key, 10);
   if (keyVal) {
@@ -3643,7 +3574,9 @@ function generate (
 function genElement (el, state) {
   if (el.staticRoot && !el.staticProcessed) {
     return genStatic(el, state)
+    /* istanbul ignore if */
   } else if (el.once && !el.onceProcessed) {
+    /* istanbul ignore next */
     return genOnce(el, state)
   } else if (el.for && !el.forProcessed) {
     return genFor(el, state)
@@ -3656,7 +3589,9 @@ function genElement (el, state) {
   } else {
     // component or element
     var code;
+    /* istanbul ignore if */
     if (el.component) {
+      /* istanbul ignore next */
       code = genComponent(el.component, el, state);
     } else {
       var data = el.plain ? undefined : genData$2(el, state);
@@ -3665,6 +3600,7 @@ function genElement (el, state) {
       code = "_c('" + (el.tag) + "'" + (data ? ("," + data) : '') + (children ? ("," + children) : '') + ")";
     }
     // module transforms
+    /* istanbul ignore next */
     for (var i = 0; i < state.transforms.length; i++) {
       code = state.transforms[i](el, code);
     }
@@ -3680,6 +3616,7 @@ function genStatic (el, state) {
 }
 
 // v-once
+/* istanbul ignore next */
 function genOnce (el, state) {
   el.onceProcessed = true;
   if (el.if && !el.ifProcessed) {
@@ -3725,7 +3662,6 @@ function genIfConditions (
   if (!conditions.length) {
     return altEmpty || '_e()'
   }
-
   var condition = conditions.shift();
   if (condition.exp) {
     return ("(" + (condition.exp) + ")?" + (genTernaryExp(condition.block)) + ":" + (genIfConditions(conditions, state, altGen, altEmpty)))
@@ -3774,7 +3710,7 @@ function genFor (
     "function(" + alias + iterator1 + iterator2 + "){" +
       "" + (genIfScope(el._if)) +
       "return " + ((altGen || genElement)(el, state)) +
-    "}, " + _forId + ", _self)"
+    "}," + _forId + ",_self)"
 }
 
 function genData$2 (el, state) {
@@ -3820,6 +3756,8 @@ function genData$2 (el, state) {
   if (el.events) {
     data += (genHandlers(el.events, false, state.warn)) + ",";
   }
+  // not supported
+  /* istanbul ignore if */
   if (el.nativeEvents) {
     data += (genHandlers(el.nativeEvents, true, state.warn)) + ",";
   }
@@ -3837,6 +3775,7 @@ function genData$2 (el, state) {
     data += "model:{value:" + (el.model.value) + ",callback:" + (el.model.callback) + ",expression:" + (el.model.expression) + "},";
   }
   // inline-template
+  /* istanbul ignore if */
   if (el.inlineTemplate) {
     var inlineTemplate = genInlineTemplate(el, state);
     if (inlineTemplate) {
@@ -3880,6 +3819,7 @@ function genDirectives (el, state) {
   }
 }
 
+/* istanbul ignore next */
 function genInlineTemplate (el, state) {
   var ast = el.children[0];
   if (process.env.NODE_ENV !== 'production' && (
@@ -3975,9 +3915,13 @@ function getNormalizationType (
     if (el.type !== 1) {
       continue
     }
+    // TODO: a better normalization mode without text node combination
+    // it was 2 full normalizatiom before
+    // but it will combine two adjacent text node which will cause hid and context infomation lost
     if (needsNormalization(el) ||
         (el.ifConditions && el.ifConditions.some(function (c) { return needsNormalization(c.block); }))) {
-      res = 2;
+      // res = 2
+      res = 1;
       break
     }
     if (maybeComponent(el) ||
@@ -3998,6 +3942,7 @@ function genNode (node, state) {
   } else if (node.type === 1) {
     return genElement(node, state)
   } if (node.type === 3 && node.isComment) {
+    /* istanbul ignore next */
     return genComment(node)
   } else {
     return genText(node)
@@ -4011,6 +3956,7 @@ function genText (text) {
 }
 
 function genComment (comment) {
+  /* istanbul ignore next */
   return ("_e(" + (JSON.stringify(comment.text)) + ")")
 }
 
@@ -4033,6 +3979,7 @@ function genSlot (el, state) {
 }
 
 // componentName is el.component, take it as argument to shun flow's pessimistic refinement
+/* istanbul ignore next */
 function genComponent (
   componentName,
   el,
@@ -4068,8 +4015,9 @@ function genIfScope (ifConditions) {
   if (!ifConditions || !ifConditions.length) {
     return ''
   }
-  var conds = ifConditions.map(function (c) { return ("var " + (c.cond) + "  = !!(" + (c.exp) + ");"); });
-  return conds.join('\n')
+  var conds = ifConditions.map(function (c) { return ("var " + (c.cond) + " = !!(" + (c.exp) + ");"); });
+  var _ifs = "_ri(" + (ifConditions.map(function (c) { return ((c.cond) + "," + (c._hid)); }).join(',')) + ");";
+  return conds.join('') + _ifs
 }
 
 /*  */
@@ -4469,6 +4417,8 @@ var TAG_MAP = {
   'block': 'block'
 }
 
+var iteratorUid = createUidFn('item');
+
 var TYPE = {
   ELEMENT: 1,
   TEXT: 2,
@@ -4496,9 +4446,12 @@ function walk (node, state) {
     return walkIf(node, state)
   }
 
+  /* istanbul ignore else */
   if (node.type === TYPE.ELEMENT) {
     walkElem(node, state);
-  } else if (node.type === TYPE.TEXT || node.type === TYPE.STATIC_TEXT) {
+  } else if (
+    node.type === TYPE.TEXT || node.type === TYPE.STATIC_TEXT
+  ) {
     walkText(node, state);
   }
 }
@@ -4507,22 +4460,27 @@ function walkFor (node, state) {
   var _for = node.for;
   var key = node.key;
   var alias = node.alias;
-  // create a default iterator1 for wxml listing,
+  var prefix = /{/.test(alias) ? ("" + (iteratorUid())) : alias;
+  // create default iterator1, iterator2 for xml listing,
   // which is needed for _hid generating
-  var iterator1 = node.iterator1; if ( iterator1 === void 0 ) iterator1 = alias + "_index$0";
+  var iterator1 = node.iterator1; if ( iterator1 === void 0 ) iterator1 = prefix + "_i$1";
+  var iterator2 = node.iterator2; if ( iterator2 === void 0 ) iterator2 = prefix + "_i$2";
   Object.assign(node, {
     mpForWalked: true,
-    iterator1: iterator1
+    iterator1: iterator1,
+    iterator2: iterator2
   });
 
   state.pushListState({
     iterator1: iterator1,
+    iterator2: iterator2,
     _for: _for,
     key: key,
     node: node,
     alias: alias
   });
 
+  /* istanbul ignore if */
   if (node._hid === undefined) {
     state.assignHId(node);
     addAttr$1(node, '_hid', node._hid);
@@ -4570,7 +4528,7 @@ function walkText (node, state) {
   if (type === TYPE.STATIC_TEXT) {
     node.mpNotGenRenderFn = true;
   } else {
-    node.expression = expression + ", " + _hid;
+    node.expression = expression + "," + _hid;
   }
 }
 
@@ -4608,20 +4566,12 @@ function walkIf (node, state) {
       _if[currIdxInIf]._hid = block._hid;
     }
   });
-
-  var _if = scopeNode._if;
-  _if.forEach(function (c, i) {
-    addAttr$1(scopeNode, ("_if_id$" + i), c._hid);
-    addAttr$1(scopeNode, ("_if_v$" + i), c.cond);
-  });
-
-  Object.assign(scopeNode, { _if: _if });
 }
 
 function walkChildren (node, state) {
   var children = node.children;
   var scopedSlots = node.scopedSlots;
-  if (children) {
+  if (children && children.length) {
     children.forEach(function (n) {
       walk(n, state);
     });
@@ -4629,7 +4579,7 @@ function walkChildren (node, state) {
 
   if (scopedSlots) {
     Object.keys(scopedSlots).forEach(function (k) {
-      var slot = scopedSlots[k] || {};
+      var slot = scopedSlots[k];
       var children = slot.children; if ( children === void 0 ) children = [];
       children.forEach(function (n) {
         walk(n, state);
@@ -4643,8 +4593,9 @@ function addAttr$1 (node, name, value) {
   node.plain = false;
   var attrs = node.attrs; if ( attrs === void 0 ) attrs = [];
   var attrsMap = node.attrsMap; if ( attrsMap === void 0 ) attrsMap = {};
-
-  var attrIndex = attrs.findIndex(function (attr) { return attr.name === name; });
+  var attr = attrs.filter(function (attr) { return attr.name === name; })[0];
+  var attrIndex = attrs.indexOf(attr);
+  /* istanbul ignore next */
   attrIndex = attrIndex !== -1 ? attrIndex : attrs.length;
   attrs[attrIndex] = {
     name: name,
@@ -4662,7 +4613,7 @@ function isTag (node) {
 var State = function State (options) {
   if ( options === void 0 ) options = {};
 
-  this.rootNode = options.rootNode || null;
+  this.rootNode = options.rootNode;
   this.compCount = -1;
   this.elemCount = -1;
   this.compStack = new Stack();
@@ -4714,7 +4665,7 @@ State.prototype.getHId = function getHId (node) {
   var currentListState = this.getCurrentListState();
   var _hid = "" + (this.getCurrentElemIndex());
   if (currentListState) {
-    var listTail = currentListState.map(function (s) { return s.iterator1; }).join(" + '-' + ");
+    var listTail = currentListState.map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join(" + '-' + ");
     _hid = _hid + " + '-' + " + listTail;
   }
   return ("" + _hid)
@@ -4724,7 +4675,7 @@ State.prototype.getCId = function getCId (node) {
   var currentListState = this.getCurrentListState();
   var _cid = "" + (this.getCurrentCompIndex());
   if (currentListState) {
-    var listTail = currentListState.map(function (s) { return s.iterator1; }).join(" + '-' + ");
+    var listTail = currentListState.map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join(" + '-' + ");
     _cid = _cid + " + '-' + " + listTail;
   }
   return ("" + _cid)
@@ -4744,9 +4695,7 @@ var createCompiler = createCompilerCreator(function baseCompile (
   options
 ) {
   var ast = parse(template.trim(), options);
-  if (options.optimize !== false) {
-    optimize(ast, options);
-  }
+  optimize(ast, options);
   mpify(ast);
   var code = generate(ast, options);
   return {
@@ -4784,6 +4733,7 @@ var presets = {
 
 var vbindReg = /^(v-bind)?:/;
 var vonReg = /^v-on:|@/;
+var vmodelReg = /^v-model/;
 
 var notEmpty = function (e) { return e; };
 
@@ -4833,6 +4783,7 @@ TemplateGenerator.prototype.generate = function generate (ast) {
       slots: this.slots
     }
   } catch (err) {
+    /* istanbul ignore next */
     return {
       body: this.genError(err),
       slots: this.slots
@@ -4878,12 +4829,12 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
 
   var attrs = [
     (" is=\"" + compName + "\""),
-    (" data=\"{{" + data + "}}\""),
+    (" data=\"{{ " + data + " }}\""),
     this.genIf(el),
     this.genFor(el)
   ].filter(notEmpty).join('');
 
-  return ("<template " + attrs + "/>")
+  return ("<template" + attrs + " />")
 };
 
 // TODO: deprecate the namedSlots inside a nameSlots
@@ -4898,35 +4849,45 @@ TemplateGenerator.prototype.resolveSlotDefinition = function resolveSlotDefiniti
   if (scopedSlots) {
     Object.keys(scopedSlots)
       .forEach(function (k) {
-        var slot = scopedSlots[k] || {};
-        var children = slot.children; if ( children === void 0 ) children = [];
+        var slot = scopedSlots[k] || /* istanbul ignore next */ {};
+        var slotAst = [];
+        if (slot.tag === 'template') {
+          slotAst = slot.children || /* istanbul ignore next */ [];
+        } else {
+          slotAst = [slot];
+        }
         var slotName = removeQuotes(k);
-        addSlotAst.apply(void 0, [ slotName ].concat( children ));
+        addSlotAst.apply(void 0, [ slotName ].concat( slotAst ));
         slots[slotName].scoped = true;
       });
   }
 
   walk(root);
 
-  var slotsArr = Object.keys(slots).map(function (name) {
-    var slot = slots[name];
-    var ast = slot.ast;
-    var parts = slot.ast.map(function (e) { return this$1.genElement(e); });
-    var dependencies = slot.ast.reduce(function (res, e) { return res.concat(this$1.collectDependencies(e)); }, []);
-    var slotName = name + "_" + (uid());
-    var body = [
-      ("<template name=\"" + slotName + "\" parent=\"" + (this$1.name) + "\">") ].concat( parts,
-      ["</template>"]
-    ).join('');
+  var slotsArr = Object.keys(slots)
+    .map(function (name) {
+      var slot = slots[name];
+      var ast = slot.ast;
+      if (ast.length <= 0) {
+        return null
+      }
+      var parts = slot.ast.map(function (e) { return this$1.genElement(e); });
+      var dependencies = slot.ast.reduce(function (res, e) { return res.concat(this$1.collectDependencies(e)); }, []);
+      var slotName = name + "_" + (uid());
+      var body = [
+        ("<template name=\"" + slotName + "\" parent=\"" + (this$1.name) + "\">") ].concat( parts,
+        ["</template>"]
+      ).join('');
 
-    return {
-      name: name,
-      slotName: slotName,
-      dependencies: dependencies,
-      body: body,
-      ast: ast
-    }
-  });
+      return {
+        name: name,
+        slotName: slotName,
+        dependencies: dependencies,
+        body: body,
+        ast: ast
+      }
+    })
+    .filter(notEmpty);
 
   this.slots = this.slots.concat(slotsArr);
 
@@ -4935,16 +4896,20 @@ TemplateGenerator.prototype.resolveSlotDefinition = function resolveSlotDefiniti
   function walk (el, parent) {
     if (self.isNamedSlotDefinition(el)) {
       var name = removeQuotes(el.slotTarget);
-      addSlotAst(name, el);
+      if (parent === root) {
+        addSlotAst(name, el);
+      }
       // extract the slot wrapper
-      if (parent) {
+      /* istanbul ignore else */
+      if (parent && parent.children && parent.children.length) {
         parent.children = parent.children.filter(function (e) { return e !== el; });
       }
       return
     }
     if (el.children) {
       if (!parent ||
-        (parent !== root && !self.isComponent(el))
+        /* istanbul ignore next */
+        !self.isComponent(el)
       ) {
         el.children.forEach(function (e) {
           walk(e, el);
@@ -4957,8 +4922,8 @@ TemplateGenerator.prototype.resolveSlotDefinition = function resolveSlotDefiniti
   }
 
   function addSlotAst (name) {
-      var ast = [], len = arguments.length - 1;
-      while ( len-- > 0 ) ast[ len ] = arguments[ len + 1 ];
+      var asts = [], len = arguments.length - 1;
+      while ( len-- > 0 ) asts[ len ] = arguments[ len + 1 ];
 
     if (!slots[name]) {
       slots[name] = {
@@ -4969,7 +4934,15 @@ TemplateGenerator.prototype.resolveSlotDefinition = function resolveSlotDefiniti
     }
     var slot = slots[name];
     if (slot.scoped) { return }
-    slot.ast = slot.ast.concat(ast);
+    asts = asts.filter(function (el) {
+      /* istanbul ignore if */
+      if (!el) { return false }
+      if (el.tag) { return true }
+      // ignore white space text node
+      var text = (el.text || /* istanbul ignore next */ '').trim();
+      return text !== ''
+    });
+    slot.ast = slot.ast.concat(asts);
   }
 };
 
@@ -4982,10 +4955,10 @@ TemplateGenerator.prototype.genTag = function genTag (el) {
   var tag = el.tag;
   var mpTag = TAG_MAP[tag] || tag;
   var attrs = this.isTemplate(el) ? [] : [
+    this.genVShow(el),
     this.genClass(el),
     this.genStyle(el),
     this.genAttrs(el),
-    this.genVShow(el),
     this.genEvents(el)
   ];
 
@@ -5005,17 +4978,20 @@ TemplateGenerator.prototype.genClass = function genClass (el) {
     var classBinding = el.classBinding;
     var _hid = el._hid;
   var staticClass = el.staticClass; if ( staticClass === void 0 ) staticClass = '';
-  var klass = [("_" + tag)];
+  var klass = [];
   staticClass = removeQuotes(staticClass);
   if (staticClass) {
     klass.push(staticClass);
-    // scoped id class
-    klass.push(this.scopeId);
   }
   if (classBinding) {
     klass.push(("{{ _h[ " + _hid + " ].cl }}"));
   }
-  klass = klass.join(' ');
+  // scoped id class
+  if (klass.length) {
+    klass.push(this.scopeId);
+  }
+  klass.unshift(("_" + tag));
+  klass = klass.filter(notEmpty).join(' ');
   return (" class=\"" + klass + "\"")
 };
 
@@ -5041,14 +5017,13 @@ TemplateGenerator.prototype.genVShow = function genVShow (el) {
   if (!attrsMap['v-show']) {
     return ''
   }
-  return ("hidden=\"{{ _h[ " + _hid + " ].vs }}\"")
+  return (" hidden=\"{{ _h[ " + _hid + " ].vs }}\"")
 };
 
 TemplateGenerator.prototype.genAttrs = function genAttrs (el) {
   var attrsList = el.attrsList; if ( attrsList === void 0 ) attrsList = [];
     var _hid = el._hid;
-    var attrsMap = el.attrsMap; if ( attrsMap === void 0 ) attrsMap = {};
-  var hasVModel = !!attrsMap['v-model'];
+  var hasVModel = this.hasVModel(el);
 
   var attrs = attrsList.map(function (attr) {
     var name = attr.name;
@@ -5057,9 +5032,9 @@ TemplateGenerator.prototype.genAttrs = function genAttrs (el) {
       return ''
     } else if (vbindReg.test(name)) {
       var realName = name.replace(vbindReg, '');
-      return (realName + "=\"{{ _hid[ " + _hid + " ][ '" + realName + "' ] }}\"")
-    } else if (name === 'v-model') {
-      return ("value=\"{{ _h[" + _hid + "].value }}\"")
+      return (realName + "=\"{{ _h[ " + _hid + " ][ '" + realName + "' ] }}\"")
+    } else if (vmodelReg.test(name)) {
+      return ("value=\"{{ _h[ " + _hid + " ].value }}\"")
     } else {
       return (name + "=\"" + value + "\"")
     }
@@ -5081,19 +5056,17 @@ TemplateGenerator.prototype.genEvents = function genEvents (el) {
   var eventAttrs = Object.keys(events).map(function (type) {
     var event = events[type];
     var modifiers = event.modifiers; if ( modifiers === void 0 ) modifiers = {};
+    var isCapture = /!/.test(type);
+    var realType = type.replace(/^[~|!]/, '');
     var stop = modifiers.stop;
-      var capture = modifiers.capture;
-    var mpType = type;
-    var binder = 'bind';
-    if (stop) {
-      binder = 'catchbind';
-    } else if (capture) {
-      binder = 'capturebind';
-    }
+    var mpType = realType;
+    var binder = stop ? 'catch' : 'bind';
+    binder = isCapture ? ("capture-" + binder) : binder;
+
     if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
       mpType = 'blur';
     } else {
-      mpType = type === 'click' ? 'tap' : mpType;
+      mpType = mpType === 'click' ? 'tap' : mpType;
     }
     return ("" + binder + mpType + "=\"_pe\"")
   });
@@ -5105,6 +5078,7 @@ TemplateGenerator.prototype.genIfConditions = function genIfConditions (el) {
     var this$1 = this;
 
   el.ifConditionsGenerated = true;
+  /* istanbul ignore if */
   if (!el.ifConditions) {
     return ''
   }
@@ -5139,7 +5113,7 @@ TemplateGenerator.prototype.genFor = function genFor (el) {
   var _for = [
     (" wx:for=\"{{ _h[ " + _forId + " ].li }}\""),
     this.genForKey(el),
-    alias ? (" wx:for-item=\"" + alias + "\"") : ''
+    alias ? (" wx:for-item=\"" + alias + "\"") : /* istanbul ignore next */ ''
   ];
   iterator1 && _for.push((" wx:for-index=\"" + iterator1 + "\""));
 
@@ -5152,7 +5126,7 @@ TemplateGenerator.prototype.genForKey = function genForKey (el) {
   }
 
   var keyName = el.key.replace(/^\w*\./, '').replace(/\./g, '_');
-  return keyName ? (" wx:key=\"" + keyName + "\"") : ''
+  return keyName ? (" wx:key=\"" + keyName + "\"") : /* istanbul ignore next */ ''
 };
 
 TemplateGenerator.prototype.genText = function genText (el) {
@@ -5160,7 +5134,7 @@ TemplateGenerator.prototype.genText = function genText (el) {
   if (el.expression) {
     return ("{{ _h[ " + (el._hid) + " ].t }}")
   }
-  return text || ''
+  return escapeText(text) || /* istanbul ignore next */ ''
 };
 
 TemplateGenerator.prototype.genSlot = function genSlot (el) {
@@ -5168,7 +5142,7 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
   slotName = slotName.replace(/"/g, '');
   var defaultSlotName = slotName + "$" + (uid());
   var defaultSlotBody = this.genChildren(el);
-  var defaultSlot = defaultSlotBody ? ("<template name=\"" + defaultSlotName + "\">" + defaultSlotBody + "</template>") : '';
+  var defaultSlot = defaultSlotBody ? ("<template name=\"" + defaultSlotName + "\">" + defaultSlotBody + "</template>") : /* istanbul ignore next */ '';
   return (defaultSlot + "<template is=\"{{ s_" + slotName + " || '" + defaultSlotName + "' }}\" data=\"{{ ...$root[ s ], $root }}\"/>")
 };
 
@@ -5181,6 +5155,7 @@ TemplateGenerator.prototype.genChildren = function genChildren (el) {
   return el.children.map(function (child) { return this$1.genElement(child); }).join('')
 };
 
+/* istanbul ignore next */
 TemplateGenerator.prototype.genError = function genError (err) {
   return ("<template name=\"" + (this.name) + "\">compile error: " + (err.toString()) + "\n" + (err.stack) + "</template>")
 };
@@ -5203,15 +5178,16 @@ TemplateGenerator.prototype.collectDependencies = function collectDependencies (
 };
 
 TemplateGenerator.prototype.getComponentSrc = function getComponentSrc (name) {
-  return (this.imports[name] || {}).src || ''
+  return (this.imports[name] || /* istanbul ignore next */ {}).src /* istanbul ignore next */ ||
+    ''
 };
 
 TemplateGenerator.prototype.genVHtml = function genVHtml (el) {
   var _hid = el._hid;
-  return ("<view class=\"_vhtml\" " + ([
+  return ("<view class=\"_vhtml\"" + ([
     this.genIf(el),
     this.genFor(el)
-  ].join('')) + ">{{ _h[" + _hid + "].html }}</view>")
+  ].join('')) + ">{{ _h[ " + _hid + " ].html }}</view>")
 };
 
 TemplateGenerator.prototype.isVHtml = function isVHtml (el) {
@@ -5237,13 +5213,17 @@ TemplateGenerator.prototype.isSlot = function isSlot (el) {
 };
 
 TemplateGenerator.prototype.isNamedSlotDefinition = function isNamedSlotDefinition (el) {
-  var tag = el.tag;
-    var slotTarget = el.slotTarget;
-  return tag === 'template' && slotTarget
+  var slotTarget = el.slotTarget;
+  return slotTarget
 };
 
 TemplateGenerator.prototype.isComponent = function isComponent (el) {
   return el._cid && !!this.imports[el.tag]
+};
+
+TemplateGenerator.prototype.hasVModel = function hasVModel (el) {
+  var attrsList = el.attrsList; if ( attrsList === void 0 ) attrsList = [];
+  return attrsList.some(function (attr) { return vmodelReg.test(attr.name); })
 };
 
 /*  */

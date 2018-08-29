@@ -1,6 +1,6 @@
 {
   "name": "megalo",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Reactive, component-oriented view layer for modern web interfaces.",
   "main": "dist/vue.runtime.common.js",
   "module": "dist/megalo.mp.esm.js",
@@ -27,7 +27,7 @@
     "build": "node scripts/build.js",
     "build:ssr": "npm run build -- web-runtime-cjs,web-server-renderer",
     "build:weex": "npm run build -- weex",
-    "build:megalo": "npm run build -- megalo-",
+    "build:megalo": "npm run build -- megalo",
     "test": "npm run lint && flow check && npm run test:types && npm run test:cover && npm run test:e2e -- --env phantomjs && npm run test:ssr && npm run test:weex && npm run test:megalo",
     "test:unit": "karma start test/unit/karma.unit.config.js",
     "test:cover": "karma start test/unit/karma.cover.config.js",
