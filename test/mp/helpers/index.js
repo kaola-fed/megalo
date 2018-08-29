@@ -24,6 +24,7 @@ export function getPageData (page, id) {
 
 export function createPage (options, delay) {
   let shouldCloseOnEnd
+
   try {
     jasmine.clock().install()
     shouldCloseOnEnd = true
@@ -42,7 +43,9 @@ export function createPage (options, delay) {
   // setData with throttle with leading delay
   try {
     jasmine.clock().tick(delay || 1000)
-  } catch (e) {}
+  } catch (e) {
+    console.error('[createPage Error]', e)
+  }
 
   try {
     shouldCloseOnEnd && jasmine.clock().uninstall()

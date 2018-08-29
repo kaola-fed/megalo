@@ -1,35 +1,43 @@
 import { createPage, getPageData } from '../../helpers'
 
-function assertClass (assertions) {
-  const pageOptions = {
-    mpType: 'page',
-    template: `<div class="foo" :class="value"></div>`,
-    data: {
-      value: ''
-    }
-  }
-
-  assertions.forEach(([value, expected], i) => {
-    let _value
-    if (typeof value === 'function') {
-      _value = value(pageOptions.data.value)
-    } else {
-      _value = value
-    }
-    const options = Object.assign({}, pageOptions, {
-      data: {
-        value: _value
-      }
-    })
-    const { page } = createPage(options)
-    expect(getPageData(page, '0')._h['0'].cl).toEqual(expected)
-  })
-}
-
 describe(':class', () => {
+  let warn
+  beforeEach(() => {
+    warn = console.warn
+    console.warn = jasmine.createSpy()
+    jasmine.clock().install()
+  })
+
   afterEach(() => {
     jasmine.clock().uninstall()
+    console.warn = warn
   })
+
+  function assertClass (assertions) {
+    const pageOptions = {
+      mpType: 'page',
+      template: `<div class="foo" :class="value"></div>`,
+      data: {
+        value: ''
+      }
+    }
+
+    assertions.forEach(([value, expected], i) => {
+      let _value
+      if (typeof value === 'function') {
+        _value = value(pageOptions.data.value)
+      } else {
+        _value = value
+      }
+      const options = Object.assign({}, pageOptions, {
+        data: {
+          value: _value
+        }
+      })
+      const { page } = createPage(options)
+      expect(getPageData(page, '0')._h['0'].cl).toEqual(expected)
+    })
+  }
 
   it('with plain string', () => {
     assertClass([
@@ -61,7 +69,6 @@ describe(':class', () => {
 
   // TODO: template support parent and child class merge
   it('class merge between parent and child', done => {
-    jasmine.clock().install()
     const pageOptions = {
       mpType: 'page',
       template: '<child class="a" :class="value"></child>',
@@ -92,7 +99,6 @@ describe(':class', () => {
       child.value = ['bar', 'baz']
     }).then(() => {
       expectClass(page).toEqual('bar baz foo')
-      jasmine.clock().uninstall()
     }).then(done)
 
     function expectClass (page) {
@@ -103,7 +109,6 @@ describe(':class', () => {
   // TODO: support this
   it('class merge between multiple nested components sharing same element', done => {
     pending()
-    jasmine.clock().install()
     const pageOptions = {
       mpType: 'page',
       template: `
@@ -153,9 +158,7 @@ describe(':class', () => {
       // expectClass(page).toBe('componentClass3 c2 c1')
       // vm.componentClass3 = 'c3'
     }).then(() => {
-      // jasmine.clock().tick(1000);
       // expectClass(page).toBe('c3 c2 c1')
-      jasmine.clock().uninstall()
     }).then(done)
 
     function expectClass (page) {
@@ -164,7 +167,6 @@ describe(':class', () => {
   })
 
   it('deep update', done => {
-    jasmine.clock().install()
     const pageOptions = {
       mpType: 'page',
       template: '<div :class="test"></div>',
@@ -179,11 +181,23 @@ describe(':class', () => {
     vm.test.b = true
     waitForUpdate(() => {
       expectClass(page).toBe('a b')
-      jasmine.clock().uninstall()
     }).then(done)
 
     function expectClass (page) {
       return expect(getPageData(page, '0')._h['0'].cl)
     }
+  })
+
+  it('should warn about ${staticClass}', () => {
+    createPage({
+      mpType: 'page',
+      template: '<div class="{{test}}"></div>',
+      data: {
+        test: { a: true, b: false }
+      }
+    })
+    expect(console.warn.calls.argsFor(0)[0]).toContain(
+      'class="{{test}}": Interpolation inside attributes has been removed. Use v-bind or the colon shorthand instead. For example, instead of <div class="{{ val }}">, use <div :class="val">.'
+    )
   })
 })

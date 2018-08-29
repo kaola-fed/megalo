@@ -143,7 +143,7 @@ describe('codegen', () => {
     // v-for with extra element
     assertCodegen(
       '<div><p></p><li v-for="item in items"></li></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},[_c('p',{attrs:{"_hid":1}}),_l((items),function(item,item_i$1,item_i$2){return _c('li',{attrs:{"_hid":2 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1)}})},2,_self)],2)}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},[_c('p',{attrs:{"_hid":1}}),_l((items),function(item,item_i$1,item_i$2){return _c('li',{attrs:{"_hid":2 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1)}})},2,_self)],1)}`
     )
   })
 
@@ -220,28 +220,28 @@ describe('codegen', () => {
   it('generate template tag', () => {
     assertCodegen(
       '<div><template><p>{{hello}}</p></template></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},[[_c('p',{attrs:{"_hid":2}},[_v(_s(hello),3)])]],2)}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},[[_c('p',{attrs:{"_hid":2}},[_v(_s(hello),3)])]],1)}`
     )
   })
 
   it('generate single slot', () => {
     assertCodegen(
       '<div><slot></slot></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},[_t("default",null,{_hid:1,_cid:0})],2)}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},[_t("default",null,{_hid:1,_cid:0})],1)}`
     )
   })
 
   it('generate named slot', () => {
     assertCodegen(
       '<div><slot name="one"></slot></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},[_t("one",null,{_hid:1,_cid:0})],2)}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},[_t("one",null,{_hid:1,_cid:0})],1)}`
     )
   })
 
   it('generate slot fallback content', () => {
     assertCodegen(
       '<div><slot><div>hi</div></slot></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},[_t("default",[_c('div',{attrs:{"_hid":3}},[])],{_hid:1,_cid:0})],2)}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},[_t("default",[_c('div',{attrs:{"_hid":3}},[])],{_hid:1,_cid:0})],1)}`
     )
   })
 
@@ -639,7 +639,7 @@ describe('codegen', () => {
     // normalize type: 2
     assertCodegen(
       '<div><child></child><template v-for="item in list">{{ item }}</template></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},[_c('child',{attrs:{"_hid":1,"_cid":0}}),_l((list),function(item,item_i$1,item_i$2){return [_v(_s(item),4 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1))]},3,_self)],2)}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},[_c('child',{attrs:{"_hid":1,"_cid":0}}),_l((list),function(item,item_i$1,item_i$2){return [_v(_s(item),4 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1))]},3,_self)],1)}`
     )
   })
 

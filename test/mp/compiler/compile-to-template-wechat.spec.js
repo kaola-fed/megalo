@@ -380,7 +380,54 @@ describe('compilteToTemplate: wechat', () => {
     )
   })
 
-  // slot
+  // v-show
+  it('genrate v-show', () => {
+    assertCodegen(
+      (
+        `<div v-show="count > 50">` +
+          `{{ item.name }}` +
+        `</div>`
+      ),
+      (
+        `<view hidden="{{ _h[ 1 ].vs }}" class="_div">` +
+          `{{ _h[ 2 ].t }}` +
+        `</view>`
+      )
+    )
+  })
+
+  it('generate v-model', () => {
+    assertCodegen(
+      `<input v-model="input">`,
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
+    )
+    assertCodegen(
+      `<input value="otherInput" v-model="input">`,
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
+    )
+    assertCodegen(
+      `<input v-model.lazy="input">`,
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindblur="_pe"></input>`
+    )
+    assertCodegen(
+      `<input v-model.number="input">`,
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe" bindblur="_pe"></input>`
+    )
+  })
+
+  it('generate v-html', () => {
+    assertCodegen(
+      (
+        `<div v-html="input"></div>`
+      ),
+      (
+        `<view class="_vhtml">{{ _h[ 1 ].html }}</view>`
+      )
+    )
+  })
+})
+
+describe('slot', () => {
   it('claim slot default slot', () => {
     const slot1 = slotName('default')
     assertCodegen(
@@ -464,9 +511,9 @@ describe('compilteToTemplate: wechat', () => {
         `<div>` +
           `<CompA>` +
             `default 1` +
-            `<template slot="head">` +
-              `<div>{{ title }}</div>` +
-            `</template>` +
+            `<p slot="head">` +
+              `<span>{{ title }}</span>` +
+            `</p>` +
             `default 2` +
           `</CompA>` +
         `</div>`
@@ -483,7 +530,9 @@ describe('compilteToTemplate: wechat', () => {
           if (slot.name === 'head') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<view class="_div">{{ _h[ 7 ].t }}</view>` +
+                `<view class="_p">` +
+                  `<label class="_span">{{ _h[ 7 ].t }}</label>` +
+                `</view>` +
               `</template>`
             )
           } else if (slot.name === 'default') {
@@ -491,6 +540,45 @@ describe('compilteToTemplate: wechat', () => {
               `<template name="${slot.slotName}" parent="${options.name}">` +
                 `default 1` +
                 `default 2` +
+              `</template>`
+            )
+          }
+        })
+      }
+    )
+  })
+
+  it('default slot should use fallback content if has only whitespace', () => {
+    const slot1 = slotName('first').replace('$', '_')
+    const slot2 = slotName('second').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<div slot="first">1</div> <div slot="second">2</div> <div slot="second">2+</div>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_first: '${slot1}', s_second: '${slot2}' }}" />` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        expect(res.slots.length).toEqual(2)
+        res.slots.forEach((slot, index) => {
+          if (slot.name === 'first') {
+            expect(slot.body).toEqual(
+              `<template name="${slot.slotName}" parent="${options.name}">` +
+                `<view class="_div">1</view>` +
+              `</template>`
+            )
+          } else if (slot.name === 'second') {
+            expect(slot.body).toEqual(
+              `<template name="${slot.slotName}" parent="${options.name}">` +
+                `<view class="_div">2</view>` +
+                `<view class="_div">2+</view>` +
               `</template>`
             )
           }
@@ -581,17 +669,133 @@ describe('compilteToTemplate: wechat', () => {
   })
 
   it('define(using) slot-scope with scattered template', () => {
-    const slot1 = slotName('default').replace('$', '_')
+    const slot1 = slotName('b').replace('$', '_')
+    const slot2 = slotName('default').replace('$', '_')
     assertCodegen(
       (
         `<div>` +
           `<CompA>` +
-            'default 1' +
-            `<template slot-scope="slotScope">` +
-              `<div>{{ title }}</div>` +
-            `</template>` +
-            'default 2' +
+            `<p slot="b">select b</p>` +
+            `<span><p slot="b">nested b</p></span>` +
+            `<span><p slot="c">nested c</p></span>` +
           `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_b: '${slot1}', s_default: '${slot2}' }}" />` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        expect(res.slots.length).toEqual(2)
+        res.slots.forEach((slot, index) => {
+          if (slot.name === 'default') {
+            expect(slot.body).toEqual(
+              `<template name="${slot.slotName}" parent="${options.name}">` +
+                `<label class="_span"></label>` +
+                `<label class="_span"></label>` +
+              `</template>`
+            )
+          } else if (slot.name === 'b') {
+            expect(slot.body).toEqual(
+              `<template name="${slot.slotName}" parent="${options.name}">` +
+                `<view class="_p">select b</view>` +
+              `</template>`
+            )
+          }
+        })
+      }
+    )
+  })
+
+  it('named slot only match children', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    const slot2 = slotName('head').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `default 1` +
+            `<p slot="head">` +
+              `<span>{{ title }}</span>` +
+            `</p>` +
+            `default 2` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', s_head: '${slot2}' }}" />` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        expect(res.slots.length).toEqual(2)
+        res.slots.forEach((slot, index) => {
+          if (slot.name === 'head') {
+            expect(slot.body).toEqual(
+              `<template name="${slot.slotName}" parent="${options.name}">` +
+                `<view class="_p">` +
+                  `<label class="_span">{{ _h[ 7 ].t }}</label>` +
+                `</view>` +
+              `</template>`
+            )
+          } else if (slot.name === 'default') {
+            expect(slot.body).toEqual(
+              `<template name="${slot.slotName}" parent="${options.name}">` +
+                `default 1` +
+                `default 2` +
+              `</template>`
+            )
+          }
+        })
+      }
+    )
+  })
+
+  it('should not keep slot name when passed further down (nested)', () => {
+    const slot2 = slotName('foo').replace('$', '_')
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA><CompB><span slot="foo">foo</span></CompB></CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}' }}" />` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        expect(res.slots.length).toEqual(2)
+        res.slots.forEach((slot, index) => {
+          if (slot.name === 'foo') {
+            expect(slot.body).toEqual(
+              `<template name="${slot.slotName}" parent="${options.name}">` +
+                `<label class="_span">foo</label>` +
+              `</template>`
+            )
+          } else if (slot.name === 'default') {
+            expect(slot.body).toEqual(
+              `<template name="${slot.slotName}" parent="${options.name}">` +
+                `<template is="CompB$1234" data="{{ ...$root[ cp + 1 ], $root, s_foo: '${slot2}' }}" />` +
+              `</template>`
+            )
+          }
+        })
+      }
+    )
+  })
+
+  it('scoped slot should overwrite nont scoped slot', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA><span slot-scope="foo">foo.bar</span><span>default slot</span></CompA>` +
         `</div>`
       ),
       (
@@ -606,7 +810,7 @@ describe('compilteToTemplate: wechat', () => {
           if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<view class="_div">{{ _h[ 7 ].t }}</view>` +
+                `<label class="_span">foo.bar</label>` +
               `</template>`
             )
           }
@@ -615,49 +819,22 @@ describe('compilteToTemplate: wechat', () => {
     )
   })
 
-  // v-show
-  it('genrate v-show', () => {
+  it('ignore empty scoped slot', () => {
     assertCodegen(
       (
-        `<div v-show="count > 50">` +
-          `{{ item.name }}` +
+        `<div>` +
+          `<CompA><template slot-scope="foo"></template></CompA>` +
         `</div>`
       ),
       (
-        `<view hidden="{{ _h[ 1 ].vs }}" class="_div">` +
-          `{{ _h[ 2 ].t }}` +
+        `<view class="_div">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root }}" />` +
         `</view>`
-      )
-    )
-  })
-
-  it('generate v-model', () => {
-    assertCodegen(
-      `<input v-model="input">`,
-      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
-    )
-    assertCodegen(
-      `<input value="otherInput" v-model="input">`,
-      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
-    )
-    assertCodegen(
-      `<input v-model.lazy="input">`,
-      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindblur="_pe"></input>`
-    )
-    assertCodegen(
-      `<input v-model.number="input">`,
-      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe" bindblur="_pe"></input>`
-    )
-  })
-
-  it('generate v-html', () => {
-    assertCodegen(
-      (
-        `<div v-html="input"></div>`
       ),
-      (
-        `<view class="_vhtml">{{ _h[ 1 ].html }}</view>`
-      )
+      options,
+      function aasertRes (res) {
+        expect(res.slots.length).toEqual(0)
+      }
     )
   })
 })
