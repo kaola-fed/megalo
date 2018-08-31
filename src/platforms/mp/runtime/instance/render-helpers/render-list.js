@@ -83,15 +83,19 @@ function updateListToMP (vnodeList = [], val, forId, context) {
   // key will reuse existing vnode which won't update the vnode content
   // see unit test: with key
   // list won't update after this.list.reverse() if it's not disable
-  vnodeList.forEach(vnode => {
-    if (Array.isArray(vnode)) {
-      vnode.forEach(c => {
-        if (c.key) c.key = undefined
-      })
-    } else if (vnode.key) {
-      vnode.key = undefined
-    }
-  })
+
+  // if is a scoped slot list
+  if (firstItem && !firstItem.fn) {
+    vnodeList.forEach(vnode => {
+      if (Array.isArray(vnode)) {
+        vnode.forEach(c => {
+          if (c.key) c.key = undefined
+        })
+      } else if (vnode.key) {
+        vnode.key = undefined
+      }
+    })
+  }
 
   updateVnodeToMP(cloneVnode, 'li', list)
 }

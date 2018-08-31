@@ -13,6 +13,9 @@ export function afterRenderSlot (
   bindObject: ?Object,
   nodes: ?Array<VNode>
 ): ?Array<VNode> {
+  const componentVnode = this.$vnode
+  const componentCid = componentVnode.data.attrs._cid
+  const { _hid = '' } = props
   // single tag:
   // <CompA><span slot-scope="props">{{ props.msg }}</span></CompA>
   if (nodes && nodes.tag) {
@@ -27,7 +30,30 @@ export function afterRenderSlot (
     }
     markComponents(nodes, this._uid)
   }
+
+  // scopedSlotFn with v-for
+  const scopedSlotFn = this.$scopedSlots[name]
+  if (scopedSlotFn && /\-/.test(_hid)) {
+    const tail = _hid.replace(/^\d+/, '')
+    updateNodesHid(nodes, tail)
+  } else if (/\-/.test(componentCid)) {
+    const tail = componentCid.replace(/^\d+/, '')
+    updateNodesHid(nodes, tail)
+  }
+
   return nodes
+}
+
+function updateNodesHid (nodes = [], tail) {
+  nodes.forEach(node => {
+    /* istanbul ignore else */
+    if (node.data && node.data._hid) {
+      node.data._hid += tail
+    } else if (node && node.data && node.data.attrs && node.data.attrs._hid) {
+      node.data.attrs._hid += tail
+    }
+    updateNodesHid(node.children || [], tail)
+  })
 }
 
 function getFirstNode (nodes) {

@@ -256,6 +256,7 @@ export function genData (el: ASTElement, state: CodegenState): string {
   if (el.slotTarget && !el.slotScope) {
     data += `slot:${el.slotTarget},`
   }
+
   // scoped slots
   if (el.scopedSlots) {
     data += `${genScopedSlots(el.scopedSlots, state)},`

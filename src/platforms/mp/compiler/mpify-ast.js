@@ -91,9 +91,11 @@ function walkElem (node, state) {
 }
 
 function walkComponent (node, state) {
+  // generate _cid first
+  const _cid = state.getCId()
+
   // enter a component
   state.pushComp()
-  const _cid = state.getCId()
 
   Object.assign(node, { _cid })
   addAttr(node, '_cid', _cid)
@@ -157,10 +159,7 @@ function walkChildren (node, state) {
   if (scopedSlots) {
     Object.keys(scopedSlots).forEach(k => {
       const slot = scopedSlots[k]
-      const { children = [] } = slot
-      children.forEach(n => {
-        walk(n, state)
-      })
+      walk(slot, state)
     })
   }
 }
@@ -192,14 +191,15 @@ class State {
     this.compCount = -1
     this.elemCount = -1
     this.compStack = new Stack()
-    this.listStates = new Stack()
+    // this.listStates = new Stack()
     // init a root component state, like page
     this.pushComp()
   }
   pushComp () {
     this.compStack.push({
-      id: this.compCount++,
-      elems: 0
+      id: ++this.compCount,
+      elems: 0,
+      listStates: new Stack()
     })
   }
   popComp () {
@@ -209,30 +209,33 @@ class State {
     this.elemCount++
   }
   popListState () {
-    return this.listStates.pop()
+    return this.getCurrentComp().listStates.pop()
   }
   pushListState (state) {
-    const currentStates = this.listStates.top
+    const currentComp = this.getCurrentComp()
+    const currentStates = currentComp.listStates.top
     let newStates = []
     if (currentStates && currentStates.length) {
       newStates = [].concat(currentStates)
     }
 
     newStates.push(state)
-    this.listStates.push(newStates)
+    currentComp.listStates.push(newStates)
+  }
+  getCurrentComp () {
+    return this.compStack.top
   }
   getCurrentCompIndex () {
-    const currentComponent = this.compStack.top
-    return `${currentComponent.id}`
+    return `${this.compCount}`
   }
   getCurrentElemIndex () {
     return this.elemCount
   }
   getCurrentListState () {
-    return this.listStates.top
+    return this.getCurrentComp().listStates.top
   }
   getCurrentListNode () {
-    const top = this.listStates.top || []
+    const top = this.getCurrentComp().listStates.top || []
     return (top[top.length - 1] || {}).node
   }
   getHId (node) {
