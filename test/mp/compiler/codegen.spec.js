@@ -255,22 +255,22 @@ describe('codegen', () => {
   it('generate scoped slot', () => {
     assertCodegen(
       '<foo><template slot-scope="bar">{{ bar }}</template></foo>',
-      `with(this){return _c('foo',{attrs:{"_hid":0,"_cid":0},scopedSlots:_u([{key:"default",fn:function(bar){return [_v(_s(bar),2)]}}])})}`
+      `with(this){return _c('foo',{attrs:{"_hid":0,"_cid":0},scopedSlots:_u([{key:"default",fn:function(bar){return [_v(_s(bar),3)]}}])})}`
     )
     assertCodegen(
       '<foo><div slot-scope="bar">{{ bar }}</div></foo>',
-      `with(this){return _c('foo',{attrs:{"_hid":0,"_cid":0},scopedSlots:_u([{key:"default",fn:function(bar){return _c('div',{},[_v(_s(bar),2)])}}])})}`
+      `with(this){return _c('foo',{attrs:{"_hid":0,"_cid":0},scopedSlots:_u([{key:"default",fn:function(bar){return _c('div',{attrs:{"_hid":2}},[_v(_s(bar),3)])}}])})}`
     )
   })
 
   it('generate named scoped slot', () => {
     assertCodegen(
       '<foo><template slot="foo" slot-scope="bar">{{ bar }}</template></foo>',
-      `with(this){return _c('foo',{attrs:{"_hid":0,"_cid":0},scopedSlots:_u([{key:"foo",fn:function(bar){return [_v(_s(bar),2)]}}])})}`
+      `with(this){return _c('foo',{attrs:{"_hid":0,"_cid":0},scopedSlots:_u([{key:"foo",fn:function(bar){return [_v(_s(bar),3)]}}])})}`
     )
     assertCodegen(
       '<foo><div slot="foo" slot-scope="bar">{{ bar }}</div></foo>',
-      `with(this){return _c('foo',{attrs:{"_hid":0,"_cid":0},scopedSlots:_u([{key:"foo",fn:function(bar){return _c('div',{},[_v(_s(bar),2)])}}])})}`
+      `with(this){return _c('foo',{attrs:{"_hid":0,"_cid":0},scopedSlots:_u([{key:"foo",fn:function(bar){return _c('div',{attrs:{"_hid":2}},[_v(_s(bar),3)])}}])})}`
     )
   })
 

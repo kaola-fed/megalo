@@ -180,43 +180,43 @@ describe('compilteToTemplate: wechat', () => {
   it('generate events', () => {
     assertCodegen(
       `<div @click="onClick"></div>`,
-      `<view class="_div" data-cid="{{ c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
+      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
     )
     assertCodegen(
       `<scoll-view @scrolltoupper="onScollToUpper"></scoll-view>`,
-      `<scoll-view class="_scoll-view" data-cid="{{ c }}" data-hid="{{ 1 }}" bindscrolltoupper="_pe"></scoll-view>`
+      `<scoll-view class="_scoll-view" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindscrolltoupper="_pe"></scoll-view>`
     )
     assertCodegen(
       `<scoll-view @scroll="onScroll" @scrolltoupper="onScollToUpper"></scoll-view>`,
-      `<scoll-view class="_scoll-view" data-cid="{{ c }}" data-hid="{{ 1 }}" bindscroll="_pe" bindscrolltoupper="_pe"></scoll-view>`
+      `<scoll-view class="_scoll-view" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindscroll="_pe" bindscrolltoupper="_pe"></scoll-view>`
     )
     assertCodegen(
       `<input @change="onInput">`,
-      `<input class="_input" data-cid="{{ c }}" data-hid="{{ 1 }}" bindblur="_pe"></input>`
+      `<input class="_input" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindblur="_pe"></input>`
     )
     assertCodegen(
       `<textarea @change="onInput"></textarea>`,
-      `<textarea class="_textarea" data-cid="{{ c }}" data-hid="{{ 1 }}" bindblur="_pe"></textarea>`
+      `<textarea class="_textarea" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindblur="_pe"></textarea>`
     )
     // .stop
     assertCodegen(
       `<div @click.stop="onClick"></div>`,
-      `<view class="_div" data-cid="{{ c }}" data-hid="{{ 1 }}" catchtap="_pe"></view>`
+      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" catchtap="_pe"></view>`
     )
     // .captrue
     assertCodegen(
       `<div @click.capture="onClick"></div>`,
-      `<view class="_div" data-cid="{{ c }}" data-hid="{{ 1 }}" capture-bindtap="_pe"></view>`
+      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" capture-bindtap="_pe"></view>`
     )
     // .capture.stop
     assertCodegen(
       `<div @click.capture.stop="onClick"></div>`,
-      `<view class="_div" data-cid="{{ c }}" data-hid="{{ 1 }}" capture-catchtap="_pe"></view>`
+      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" capture-catchtap="_pe"></view>`
     )
     // .once
     assertCodegen(
       `<div @click.once="onClick"></div>`,
-      `<view class="_div" data-cid="{{ c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
+      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
     )
   })
 
@@ -351,8 +351,8 @@ describe('compilteToTemplate: wechat', () => {
         `<CompB :message="count"></CompB>`
       ),
       (
-        `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root }}" />` +
-        `<template is="${CompB.name}" data="{{ ...$root[ cp + 1 ], $root }}" />`
+        `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, $t: '' }}" />` +
+        `<template is="${CompB.name}" data="{{ ...$root[ cp + 1 ], $root, $t: '' }}" />`
       ),
       options
     )
@@ -362,8 +362,8 @@ describe('compilteToTemplate: wechat', () => {
         `<CompB v-else :message="count"></CompB>`
       ),
       (
-        `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root }}" wx:if="{{ _h[ 1 ]._if }}" />` +
-        `<template is="${CompB.name}" data="{{ ...$root[ cp + 1 ], $root }}" wx:else />`
+        `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, $t: '' }}" wx:if="{{ _h[ 1 ]._if }}" />` +
+        `<template is="${CompB.name}" data="{{ ...$root[ cp + 1 ], $root, $t: '' }}" wx:else />`
       ),
       options
     )
@@ -372,7 +372,8 @@ describe('compilteToTemplate: wechat', () => {
         `<CompA v-for="item in list" :message="count"></CompA>`
       ),
       (
-        `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ], $root }}"` +
+        `<template is="${CompA.name}"` +
+          ` data="{{ ...$root[ cp + 0 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ], $root, $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) }}"` +
           ` wx:for="{{ _h[ 1 ].li }}" wx:for-item="item" wx:for-index="item_i$1"` +
         ` />`
       ),
@@ -399,19 +400,19 @@ describe('compilteToTemplate: wechat', () => {
   it('generate v-model', () => {
     assertCodegen(
       `<input v-model="input">`,
-      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
     )
     assertCodegen(
       `<input value="otherInput" v-model="input">`,
-      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
     )
     assertCodegen(
       `<input v-model.lazy="input">`,
-      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindblur="_pe"></input>`
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindblur="_pe"></input>`
     )
     assertCodegen(
       `<input v-model.number="input">`,
-      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ c }}" data-hid="{{ 1 }}" bindinput="_pe" bindblur="_pe"></input>`
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindinput="_pe" bindblur="_pe"></input>`
     )
   })
 
@@ -439,7 +440,7 @@ describe('slot', () => {
       (
         `<view class="_div">` +
           `<template name="${slot1}">default slot</template>` +
-          `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root }}"/>` +
+          `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, $t: ($t || ''), $c: c }}"/>` +
         `</view>`
       ),
       options
@@ -461,18 +462,18 @@ describe('slot', () => {
       (
         `<view class="_div">` +
           `<template name="${slot1}">head default slot</template>` +
-          `<template is="{{ s_head || '${slot1}' }}" data="{{ ...$root[ s ], $root }}"/>` +
+          `<template is="{{ s_head || '${slot1}' }}" data="{{ ...$root[ s ], $root, $t: ($t || ''), $c: c }}"/>` +
           `<template name="${slot2}">default slot</template>` +
-          `<template is="{{ s_default || '${slot2}' }}" data="{{ ...$root[ s ], $root }}"/>` +
+          `<template is="{{ s_default || '${slot2}' }}" data="{{ ...$root[ s ], $root, $t: ($t || ''), $c: c }}"/>` +
           `<template name="${slot3}">foot default slot</template>` +
-          `<template is="{{ s_foot || '${slot3}' }}" data="{{ ...$root[ s ], $root }}"/>` +
+          `<template is="{{ s_foot || '${slot3}' }}" data="{{ ...$root[ s ], $root, $t: ($t || ''), $c: c }}"/>` +
         `</view>`
       ),
       options
     )
   })
 
-  it('define(using) slot', () => {
+  it('define slot snippet', () => {
     const slot1 = slotName('default').replace('$', '_')
     assertCodegen(
       (
@@ -486,7 +487,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}' }}" />` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', $t: '' }}" />` +
         `</view>`
       ),
       options,
@@ -495,7 +496,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<view class="_div">{{ _h[ 6 ].t }}</view>` +
+              `<view class="_div">{{ _h[ 6 + $t ].t }}</view>` +
             `</template>`
           )
         })
@@ -503,7 +504,7 @@ describe('slot', () => {
     )
   })
 
-  it('define(using) named slot', () => {
+  it('define named slot snippet', () => {
     const slot1 = slotName('default').replace('$', '_')
     const slot2 = slotName('head').replace('$', '_')
     assertCodegen(
@@ -520,7 +521,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', s_head: '${slot2}' }}" />` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', s_head: '${slot2}', $t: '' }}" />` +
         `</view>`
       ),
       options,
@@ -531,7 +532,7 @@ describe('slot', () => {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
                 `<view class="_p">` +
-                  `<label class="_span">{{ _h[ 7 ].t }}</label>` +
+                  `<label class="_span">{{ _h[ 7 + $t ].t }}</label>` +
                 `</view>` +
               `</template>`
             )
@@ -561,7 +562,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_first: '${slot1}', s_second: '${slot2}' }}" />` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_first: '${slot1}', s_second: '${slot2}', $t: '' }}" />` +
         `</view>`
       ),
       options,
@@ -587,7 +588,7 @@ describe('slot', () => {
     )
   })
 
-  it('define(using) embedded slot', () => {
+  it('define embedded slot snippet', () => {
     // const slotName1 =
     slotName('default').replace('$', '_')
     const slotName2 = slotName('default').replace('$', '_')
@@ -605,7 +606,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slotName2}' }}" />` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slotName2}', $t: '' }}" />` +
         `</view>`
       ),
       options,
@@ -618,7 +619,7 @@ describe('slot', () => {
         expect(slot1.dependencies.length).toEqual(0)
         expect(slot1.body).toEqual(
           `<template name="${slot1.slotName}" parent="${options.name}">` +
-            `<view class="_div">{{ _h[ 8 ].t }}</view>` +
+            `<view class="_div">{{ _h[ 8 + $t ].t }}</view>` +
           `</template>`
         )
 
@@ -627,7 +628,7 @@ describe('slot', () => {
         expect(slot2.body).toEqual(
           `<template name="${slot2.slotName}" parent="${options.name}">` +
             `<view class="_div">` +
-              `<template is="${CompB.name}" data="{{ ...$root[ cp + 1 ], $root, s_default: '${slot1.slotName}' }}" />` +
+              `<template is="${CompB.name}" data="{{ ...$root[ cp + 1 ], $root, s_default: '${slot1.slotName}', $t: '' }}" />` +
             `</view>` +
           `</template>`
         )
@@ -635,7 +636,7 @@ describe('slot', () => {
     )
   })
 
-  it('define(using) slot-scope', () => {
+  it('define slot-scope snippet', () => {
     const slot1 = slotName('default').replace('$', '_')
     assertCodegen(
       (
@@ -649,7 +650,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}' }}" />` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', $t: '' }}" />` +
         `</view>`
       ),
       options,
@@ -659,7 +660,7 @@ describe('slot', () => {
           if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<view class="_div">{{ _h[ 5 ].t }}</view>` +
+                `<view class="_div">{{ _h[ 6 + $t ].t }}</view>` +
               `</template>`
             )
           }
@@ -668,7 +669,7 @@ describe('slot', () => {
     )
   })
 
-  it('define(using) slot-scope with scattered template', () => {
+  it('define slot-scope snippet with scattered template', () => {
     const slot1 = slotName('b').replace('$', '_')
     const slot2 = slotName('default').replace('$', '_')
     assertCodegen(
@@ -683,7 +684,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_b: '${slot1}', s_default: '${slot2}' }}" />` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_b: '${slot1}', s_default: '${slot2}', $t: '' }}" />` +
         `</view>`
       ),
       options,
@@ -726,7 +727,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', s_head: '${slot2}' }}" />` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', s_head: '${slot2}', $t: '' }}" />` +
         `</view>`
       ),
       options,
@@ -737,7 +738,7 @@ describe('slot', () => {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
                 `<view class="_p">` +
-                  `<label class="_span">{{ _h[ 7 ].t }}</label>` +
+                  `<label class="_span">{{ _h[ 7 + $t ].t }}</label>` +
                 `</view>` +
               `</template>`
             )
@@ -765,7 +766,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}' }}" />` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', $t: '' }}" />` +
         `</view>`
       ),
       options,
@@ -781,7 +782,7 @@ describe('slot', () => {
           } else if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<template is="CompB$1234" data="{{ ...$root[ cp + 1 ], $root, s_foo: '${slot2}' }}" />` +
+                `<template is="CompB$1234" data="{{ ...$root[ cp + 1 ], $root, s_foo: '${slot2}', $t: '' }}" />` +
               `</template>`
             )
           }
@@ -800,7 +801,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}' }}" />` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', $t: '' }}" />` +
         `</view>`
       ),
       options,
@@ -828,12 +829,294 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root }}" />` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, $t: '' }}" />` +
         `</view>`
       ),
       options,
       function aasertRes (res) {
         expect(res.slots.length).toEqual(0)
+      }
+    )
+  })
+
+  it('slot inside v-for', () => {
+    const slot1 = slotName('default')
+    assertCodegen(
+      (
+        `<div>` +
+          `<div v-for="item in list">` +
+            `<slot></slot>` +
+          `</div>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<view wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1" class="_div">` +
+            `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, $t: ($t || ''), $c: c }}"/>` +
+          `</view>` +
+        `</view>`
+      ),
+      options
+    )
+  })
+
+  it('slot with v-for', () => {
+    const slot1 = slotName('default')
+    assertCodegen(
+      (
+        `<div>` +
+          `<slot v-for="item in list"></slot>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, $t: ($t || ''), $c: c }}" wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1"/>` +
+        `</view>`
+      ),
+      options
+    )
+  })
+
+  it('slot-scope inside v-for', () => {
+    const slot1 = slotName('default')
+    assertCodegen(
+      (
+        `<div>` +
+          `<div v-for="item in list">` +
+            `<slot :item="item"></slot>` +
+          `</div>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<view wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1" class="_div">` +
+            `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1), $c: c }}"/>` +
+          `</view>` +
+        `</view>`
+      ),
+      options
+    )
+  })
+
+  it('slot-scope with v-for', () => {
+    const slot1 = slotName('default')
+    assertCodegen(
+      (
+        `<div>` +
+          `<slot v-for="item in list" :item="item"></slot>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1), $c: c }}" wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1"/>` +
+        `</view>`
+      ),
+      options
+    )
+  })
+
+  it('define slot snippet with v-for', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<span v-for="item in list" >{{ item.a }}</span>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', $t: '' }}" />` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        res.slots.forEach((slot, index) => {
+          expect(slot.name).toEqual('default')
+          expect(slot.body).toEqual(
+            `<template name="${slot.slotName}" parent="${options.name}">` +
+              `<label wx:for="{{ _h[ 4 ].li }}" wx:for-item="item" wx:for-index="item_i$1" class="_span">` +
+                `{{ _h[ 5 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) + $t ].t }}` +
+              `</label>` +
+            `</template>`
+          )
+        })
+      }
+    )
+  })
+
+  it('define slot snippet with v-for', () => {
+    //  slot wil be merged into ont default slot
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<span v-for="item in list" slot-scope="scope" >{{ item.a }}</span>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', $t: '' }}" />` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        res.slots.forEach((slot, index) => {
+          expect(slot.name).toEqual('default')
+          expect(slot.body).toEqual(
+            `<template name="${slot.slotName}" parent="${options.name}">` +
+              `<label wx:for="{{ _h[ 4 ].li }}" wx:for-item="item" wx:for-index="item_i$1" class="_span">` +
+                `{{ _h[ 5 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) + $t ].t }}` +
+              `</label>` +
+            `</template>`
+          )
+        })
+      }
+    )
+  })
+
+  it('define component and slot inside v-for', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<template v-for="item in list">` +
+            `<CompA>` +
+              `<span>{{ item.a }}</span>` +
+            `</CompA>` +
+          `</template>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<block wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1">` +
+            `<template is="${CompA.name}"` +
+              ` data="{{ ...$root[ cp + 0 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ], $root, s_default: '${slot1}', $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) }}"` +
+            ` />` +
+          `</block>` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        res.slots.forEach((slot, index) => {
+          expect(slot.name).toEqual('default')
+          expect(slot.body).toEqual(
+            `<template name="${slot.slotName}" parent="${options.name}">` +
+              `<label class="_span">` +
+                `{{ _h[ 6 + $t ].t }}` +
+              `</label>` +
+            `</template>`
+          )
+        })
+      }
+    )
+  })
+
+  it('define component and scoped slot inside v-for', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<template v-for="item in list">` +
+            `<CompA>` +
+              `<span slot-scope="scope">{{ scope.info.name }} + {{ item.a }}</span>` +
+            `</CompA>` +
+          `</template>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<block wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1">` +
+            `<template is="${CompA.name}"` +
+              ` data="{{ ...$root[ cp + 0 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ], $root, s_default: '${slot1}', $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) }}"` +
+            ` />` +
+          `</block>` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        res.slots.forEach((slot, index) => {
+          expect(slot.name).toEqual('default')
+          expect(slot.body).toEqual(
+            `<template name="${slot.slotName}" parent="${options.name}">` +
+              `<label class="_span">` +
+                `{{ _h[ 6 + $t ].t }}` +
+              `</label>` +
+            `</template>`
+          )
+        })
+      }
+    )
+  })
+
+  it('define component and scoped slot with v-for inside v-for (mixed)', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<template v-for="item in list">` +
+            `<CompA>` +
+              `<span v-for="item in list" >{{ scope.info.name }} + {{ item.a }}</span>` +
+            `</CompA>` +
+          `</template>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<block wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1">` +
+            `<template is="${CompA.name}"` +
+              ` data="{{ ...$root[ cp + 0 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ], $root, s_default: '${slot1}', $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) }}"` +
+            ` />` +
+          `</block>` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        res.slots.forEach((slot, index) => {
+          expect(slot.name).toEqual('default')
+          expect(slot.body).toEqual(
+            `<template name="${slot.slotName}" parent="${options.name}">` +
+              `<label wx:for="{{ _h[ 5 ].li }}" wx:for-item="item" wx:for-index="item_i$1" class="_span">` +
+                `{{ _h[ 6 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) + $t ].t }}` +
+              `</label>` +
+            `</template>`
+          )
+        })
+      }
+    )
+  })
+
+  it('define slot snippet with v-on', () => {
+    //  slot wil be merged into ont default slot
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<span @click="onClick">click</span>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', $t: '' }}" />` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        res.slots.forEach((slot, index) => {
+          expect(slot.name).toEqual('default')
+          expect(slot.body).toEqual(
+            `<template name="${slot.slotName}" parent="${options.name}">` +
+              `<label class="_span" data-cid="{{ $c || c }}" data-hid="{{ 4 + $t }}" bindtap="_pe">` +
+                `click` +
+              `</label>` +
+            `</template>`
+          )
+        })
       }
     )
   })

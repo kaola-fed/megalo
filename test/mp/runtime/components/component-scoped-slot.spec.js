@@ -38,11 +38,11 @@ describe('Component scoped slot', () => {
 
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h[3].t).toBe('hello')
+    expect(pageData._h[4].t).toBe('hello')
     expect(comp1.s).toBe('0')
     vm.$refs.test.msg = 'world'
     waitForUpdate(() => {
-      expect(pageData._h[3].t).toBe('world')
+      expect(pageData._h[4].t).toBe('world')
     }).then(done)
   })
 
@@ -69,11 +69,11 @@ describe('Component scoped slot', () => {
 
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h[2].t).toBe('hello')
+    expect(pageData._h[3].t).toBe('hello')
     expect(comp1.s).toBe('0')
     vm.$refs.test.msg = 'world'
     waitForUpdate(() => {
-      expect(pageData._h[2].t).toBe('world')
+      expect(pageData._h[3].t).toBe('world')
     }).then(done)
   })
 
@@ -105,12 +105,12 @@ describe('Component scoped slot', () => {
 
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h[3].t).toBe('hello world !')
+    expect(pageData._h[4].t).toBe('hello world !')
     expect(comp1.s).toBe('0')
     vm.$refs.test.msg = 'bye'
     vm.$refs.test.obj.msg2 = 'bye'
     waitForUpdate(() => {
-      expect(pageData._h[3].t).toBe('bye bye !')
+      expect(pageData._h[4].t).toBe('bye bye !')
     }).then(done)
   })
 
@@ -198,14 +198,14 @@ describe('Component scoped slot', () => {
 
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h[3].t).toBe('FOO')
-    expect(pageData._h[5].t).toBe('BAR')
+    expect(pageData._h[4].t).toBe('FOO')
+    expect(pageData._h[6].t).toBe('BAR')
     expect(comp1.s).toBe('0')
     // expect(vm.$el.innerHTML).toBe('<span>FOO</span><span>BAR</span>')
     vm.$refs.test.foo = 'BAZ'
     waitForUpdate(() => {
-      expect(pageData._h[3].t).toBe('BAZ')
-      expect(pageData._h[5].t).toBe('BAR')
+      expect(pageData._h[4].t).toBe('BAZ')
+      expect(pageData._h[6].t).toBe('BAR')
       // expect(vm.$el.innerHTML).toBe('<span>BAZ</span><span>BAR</span>')
     }).then(done)
   })
@@ -232,11 +232,11 @@ describe('Component scoped slot', () => {
     })
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h[2].t).toBe('FOO BAR')
+    expect(pageData._h[3].t).toBe('FOO BAR')
     expect(comp1.s).toBe('0')
     vm.$refs.test.foo = 'BAZ'
     waitForUpdate(() => {
-      expect(pageData._h[2].t).toBe('BAZ BAR')
+      expect(pageData._h[3].t).toBe('BAZ BAR')
     }).then(done)
   })
 
@@ -265,10 +265,8 @@ describe('Component scoped slot', () => {
     expect(comp1._h[4].t).toBe('hello fallback')
   })
 
-  // TODO: not supported
   it('slot with v-for', done => {
-    pending()
-    const { vm } = createPage({
+    const { page, vm } = createPage({
       template: `
         <test ref="test">
           <template slot="item" slot-scope="props">
@@ -292,17 +290,17 @@ describe('Component scoped slot', () => {
       }
     })
 
-    // const pageData = getPageData(page, '0')
-    // const comp1 = getPageData(page, '0,0')
-    // expect(pageData._h).toBeUndefined()
-    // expect(comp1.s).toBeUndefined()
+    const pageData = getPageData(page, '0')
+    const comp1 = getPageData(page, '0,0')
+    expect(comp1.s).toBe('0')
+
     function assertOutput () {
-      // expect(vm.$el.innerHTML).toBe(vm.$refs.test.items.map(item => {
-      //   return `<span>${item}</span>`
-      // }).join(''))
+      vm.$refs.test.items.map((item, i) => {
+        expect(pageData._h[`4-${i}`].t).toBe(item)
+      })
     }
 
-    // assertOutput()
+    assertOutput()
     vm.$refs.test.items.reverse()
     waitForUpdate(() => {
       assertOutput()
@@ -313,9 +311,7 @@ describe('Component scoped slot', () => {
     }).then(done)
   })
 
-  // TODO: not supported
   it('slot inside v-for', done => {
-    pending()
     const { page, vm } = createPage({
       template: `
         <test ref="test">
@@ -344,13 +340,12 @@ describe('Component scoped slot', () => {
 
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h).toBeUndefined()
-    expect(comp1.s).toBeUndefined()
+    expect(comp1.s).toBe('0')
 
     function assertOutput () {
-      // expect(vm.$el.innerHTML).toBe(vm.$refs.test.items.map(item => {
-      //   return `<li><span>${item}</span></li>`
-      // }).join(''))
+      vm.$refs.test.items.map((item, i) => {
+        expect(pageData._h[`4-${i}`].t).toBe(item)
+      })
     }
 
     // assertOutput()
@@ -417,7 +412,7 @@ describe('Component scoped slot', () => {
     })
 
     const pageData = getPageData(page, '0')
-    expect(pageData._h[3].t).toBe('meh')
+    expect(pageData._h[4].t).toBe('meh')
   })
 
   it('warn key on slot', () => {
@@ -449,6 +444,14 @@ describe('Component scoped slot', () => {
     )
   })
 
+  // dynamic slot name
+  // skip: render function usage (named, via data)
+  // skip: render function usage (default, as children)
+  // skip: should support dynamic slot target
+  // skip: render function usage (JSX)
+  // skip: scoped slot with v-for
+  // skip: scoped slot with v-for (plain elements)
+
   // #6725
   it('scoped slot with v-if', done => {
     const { page, vm } = createPage({
@@ -478,10 +481,64 @@ describe('Component scoped slot', () => {
       }
     })
     const pageData = getPageData(page, '0')
-    expect(pageData._h).toBeUndefined()
+    expect(pageData._h[2]._if).toBeFalsy()
     vm.ok = true
     waitForUpdate(() => {
-      expect(pageData._h[3].t).toBe('hello')
+      expect(pageData._h[4].t).toBe('hello')
+    }).then(done)
+  })
+
+  it('scoped slot snippet inside v-for', done => {
+    const { page, vm } = createPage({
+      template: `
+        <test ref="test">
+          <template slot-scope="scope">
+            <span v-for="item in items" >{{ scope.info.name }} + {{ item }}</span>
+          </template>
+        </test>
+      `,
+      components: {
+        test: {
+          data () {
+            return {
+              info: {
+                name: 'foo'
+              }
+            }
+          },
+          template: `
+            <div>
+              <slot :info="info"></slot>
+            </div>
+          `
+        }
+      },
+      data () {
+        return {
+          items: [1, 2, 3]
+        }
+      }
+    })
+
+    const pageData = getPageData(page, '0')
+    const comp1 = getPageData(page, '0,0')
+    expect(comp1.s).toBe('0')
+
+    function assertOutput () {
+      vm.items.map((item, i) => {
+        const name = vm.$refs.test.info.name
+        expect(pageData._h[`4-${i}`].t).toBe(`${name} + ${item}`)
+      })
+    }
+
+    assertOutput()
+    vm.items.reverse()
+    waitForUpdate(() => {
+      assertOutput()
+    }).then(() => {
+      vm.$refs.test.info.name = 'qux'
+    }).then(() => {
+      assertOutput()
     }).then(done)
   })
 })

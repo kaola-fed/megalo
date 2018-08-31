@@ -492,6 +492,9 @@ describe('Component slot', () => {
     // expect(vm.$el.querySelector('.named').textContent).toBe('')
   })
 
+  // skip: should not keep slot name when passed further down (nested)
+  // skip: should not keep slot name when passed further down (functional)
+
   // #3400
   it('named slots should be consistent across re-renders', done => {
     const { page, vm } = createPage({
@@ -642,8 +645,11 @@ describe('Component slot', () => {
     }).then(done)
   })
 
+  // skip: renders static tree with text
+  // skip: functional component as slot
+
   // #4209
-  // TODO: claim slot in component is not supported yet
+  // TODO: passing slot in component is skip yet
   it('slot of multiple text nodes should not be infinitely merged', done => {
     pending()
     const wrap = {
@@ -682,7 +688,40 @@ describe('Component slot', () => {
     }).then(done)
   })
 
-  // TODO: passing slot to component is not supported
+  // skip: functional component passing slot content to stateful child component
+
+  it('the elements of slot should be updated correctly', done => {
+    const { page, vm } = createPage({
+      data: { n: 1 },
+      template: '<div><test><span v-for="i in n" :key="i">{{ i }}</span><input value="a"/></test></div>',
+      components: {
+        test: {
+          template: '<div><slot></slot></div>'
+        }
+      }
+    })
+
+    const pageData = getPageData(page, '0')
+    const comp1 = getPageData(page, '0,0')
+    expect(pageData._h['4-0'].t).toBe('1')
+    expect(comp1.s).toBe('0')
+    // const input = vm.$el.querySelector('input')
+    // input.value = 'b'
+    vm.n++
+    waitForUpdate(() => {
+      expect(pageData._h['4-0'].t).toBe('1')
+      expect(pageData._h['4-1'].t).toBe('2')
+      // expect(vm.$el.innerHTML).toBe('<div><span>1</span><span>2</span><input value="a"></div>')
+      // expect(vm.$el.querySelector('input')).toBe(input)
+      // expect(vm.$el.querySelector('input').value).toBe('b')
+    }).then(done)
+  })
+
+  // skip: should resolve correctly slot with keep-alive
+  // skip: should handle nested components in slots properly
+  // skip: should preserve slot attribute if not absorbed by a Vue component
+
+  // TODO: passing slot to component is skip
   it('passing a slot down as named slot', () => {
     pending()
     const Bar = {
@@ -702,7 +741,12 @@ describe('Component slot', () => {
     // expect(vm.$el.innerHTML).toBe('<div class="foo"><div class="bar">hello</div></div>')
   })
 
-  // TODO: passing slot to component is not supported
+  // skip: fallback content for named template slot
+  // skip: should not lose functional slot across renders
+  // skip: should allow passing named slots as raw children down multiple layers of functional component
+  // skip: should not match wrong named slot in functional component on re-render
+  // TODO: passing slot to component is skip
+
   it('fallback content for named template slot', () => {
     pending()
     const Bar = {
