@@ -344,7 +344,12 @@ export class TemplateGenerator {
       return `${binder}${mpType}="_pe"`
     })
     eventAttrs = eventAttrs.join(' ')
-    return ` data-cid="{{ ${cid} }}" data-hid="{{ ${this.genHid(el)} }}" ${eventAttrs}`
+
+    /**
+     * when the element is in a slot, it will recieve "$c" as the actual component instance id
+     * othewise, using the current scope which usually the parent component in the template
+     */
+    return ` data-cid="{{ $c || ${cid} }}" data-hid="{{ ${this.genHid(el)} }}" ${eventAttrs}`
   }
 
   genIfConditions (el): string {
@@ -418,7 +423,13 @@ export class TemplateGenerator {
       tail = `, $t: ${extractHidTail(_hid)}`
     }
 
-    return `${defaultSlot}<template is="{{ s_${slotName} || '${defaultSlotName}' }}" data="{{ ...$root[ s ], $root${tail} }}"${this.genFor(el)}/>`
+    /**
+     * use "$c" to passing the actual vdom host component instance id to slot template
+     *      because the vdom is actually stored in the component's _vnodes
+     *      event hanlders searching depends on this id
+     */
+
+    return `${defaultSlot}<template is="{{ s_${slotName} || '${defaultSlotName}' }}" data="{{ ...$root[ s ], $root${tail}, $c: c }}"${this.genFor(el)}/>`
   }
 
   genChildren (el): string {
