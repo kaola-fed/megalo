@@ -13,25 +13,24 @@ import { updateMPData, initVMToMP, afterRenderSlot, renderIf, afterRenderList } 
 import { createTextVNode, beforeCreateElement } from 'mp/runtime/vdom/index'
 import { aop } from 'mp/util/index'
 
-// import {
-//   query,
-//   mustUseProp,
-//   isReservedTag,
-//   isReservedAttr,
-//   getTagNamespace,
-//   isUnknownElement
-// } from 'mp/util/index'
+import {
+  mustUseProp,
+  isReservedTag,
+  isReservedAttr,
+  getTagNamespace,
+  isUnknownElement
+} from 'mp/util/index'
 
 import { patch } from './patch'
 import platformDirectives from './directives/index'
 // import platformComponents from './components/index'
 
 // install platform specific utils
-// Vue.config.mustUseProp = mustUseProp
-// Vue.config.isReservedTag = isReservedTag
-// Vue.config.isReservedAttr = isReservedAttr
-// Vue.config.getTagNamespace = getTagNamespace
-// Vue.config.isUnknownElement = isUnknownElement
+Vue.config.mustUseProp = mustUseProp
+Vue.config.isReservedTag = isReservedTag
+Vue.config.isReservedAttr = isReservedAttr
+Vue.config.getTagNamespace = getTagNamespace
+Vue.config.isUnknownElement = isUnknownElement
 
 // install platform runtime directives & components
 extend(Vue.options.directives, platformDirectives)
