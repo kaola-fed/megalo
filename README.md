@@ -150,7 +150,7 @@ CompB template:
 </div>
 ```
 
-page template:
+page template:
 
 ```html
 <div>
@@ -160,7 +160,7 @@ CompB template:
 </div>
 ```
 
-目前 CompA 无法将从 page 接收到的 slot 片段传递给它的子组件 CompB。
+目前 CompA 无法将从 page 接收到的 slot 片段传递给它的子组件 CompB。
 
 ### slot-scope
 
