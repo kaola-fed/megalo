@@ -215,8 +215,8 @@ CompA template:
 
 ## 配套设置
 
-[magalo-aot](https://github.com/kaola-fed/megalo-aot)
-[demo](https://github.com/kaola-fed/megalo-demo)
+- [magalo-aot](https://github.com/kaola-fed/megalo-aot)
+- [demo](https://github.com/kaola-fed/megalo-demo)
 
 ## 灵感来源
 
