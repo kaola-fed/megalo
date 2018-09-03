@@ -220,6 +220,6 @@ CompA template:
 
 ## 灵感来源
 
-名字来源于动画 `Megalo Box`。项目启发自 `mpvue`。
+名字来源于动画 `Megalo Box`。项目启发自 `mpvue`。
 
 <p align="center"><img src="https://haitao.nos.netease.com/222d2a49-b9fe-4d95-aa61-074d910f0087.jpg"></p>
