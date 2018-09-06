@@ -213,7 +213,7 @@ CompA template:
 
 暂不支持。
 
-## 配套设置
+## 配套设施
 
 - [magalo-aot](https://github.com/kaola-fed/megalo-aot)
 - [demo](https://github.com/kaola-fed/megalo-demo)
