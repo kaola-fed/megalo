@@ -464,10 +464,10 @@ export class TemplateGenerator {
   }
 
   genVHtml (el): string {
-    return `<view class="_vhtml"${[
+    return `<template is="maxParse"${[
       this.genIf(el),
       this.genFor(el)
-    ].join('')}>{{ _h[ ${this.genHid(el)} ].html }}</view>`
+    ].join('')} data="{{ maxParseData: _h[ ${this.genHid(el)} ].html.nodes }}"/>`
   }
 
   isVHtml (el = {}): boolean {

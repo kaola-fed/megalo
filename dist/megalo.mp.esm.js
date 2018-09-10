@@ -618,9 +618,6 @@ Dep.prototype.notify = function notify () {
   }
 };
 
-// the current target watcher being evaluated.
-// this is globally unique because there could be only one
-// watcher being evaluated at any time.
 Dep.target = null;
 var targetStack = [];
 
@@ -999,18 +996,10 @@ function dependArray (value) {
 
 /*  */
 
-/**
- * Option overwriting strategies are functions that handle
- * how to merge a parent option value and a child option
- * value into the final value.
- */
 var strats = config.optionMergeStrategies;
 
 /**
  * Options with restrictions
- */
-/**
- * Helper that recursively merges two data objects together.
  */
 function mergeData (to, from) {
   if (!from) { return to }
@@ -1199,6 +1188,9 @@ var defaultStrat = function (parentVal, childVal) {
     : childVal
 };
 
+/**
+ * Validate component names
+ */
 
 
 /**
@@ -1408,9 +1400,7 @@ function getPropDefaultValue (vm, prop, key) {
 }
 
 /**
- * Use function string name to check built-in types,
- * because a simple equality check will fail when running
- * across different vms / iframes.
+ * Assert whether a prop is valid.
  */
 function getType (fn) {
   var match = fn && fn.toString().match(/^\s*function (\w+)/);
@@ -1782,18 +1772,6 @@ function checkProp (
 
 /*  */
 
-// The template compiler attempts to minimize the need for normalization by
-// statically analyzing the template at compile time.
-//
-// For plain HTML markup, normalization can be completely skipped because the
-// generated render function is guaranteed to return Array<VNode>. There are
-// two cases where extra normalization is needed:
-
-// 1. When the children contains components - because a functional component
-// may return an Array instead of a single root. In this case, just a simple
-// normalization is needed - if any child is an Array, we flatten the whole
-// thing with Array.prototype.concat. It is guaranteed to be only 1-level deep
-// because functional components already normalize their own children.
 function simpleNormalizeChildren (children) {
   for (var i = 0; i < children.length; i++) {
     if (Array.isArray(children[i])) {
@@ -3116,9 +3094,6 @@ function resolveInject (inject, vm) {
 
 /*  */
 
-/**
- * Runtime helper for rendering v-for lists.
- */
 function renderList (
   val,
   render
@@ -3150,9 +3125,6 @@ function renderList (
 
 /*  */
 
-/**
- * Runtime helper for rendering <slot>
- */
 function renderSlot (
   name,
   fallback,
@@ -3186,9 +3158,6 @@ function renderSlot (
 
 /*  */
 
-/**
- * Runtime helper for resolving filters
- */
 function resolveFilter (id) {
   return resolveAsset(this.$options, 'filters', id, true) || identity
 }
@@ -3227,9 +3196,6 @@ function checkKeyCodes (
 
 /*  */
 
-/**
- * Runtime helper for merging v-bind="object" into a VNode's data.
- */
 function bindObjectProps (
   data,
   tag,
@@ -3511,13 +3477,10 @@ function mergeProps (to, from) {
 
 // https://github.com/Hanks10100/weex-native-directive/tree/master/component
 
-// listening on native callback
-
 /*  */
 
 /*  */
 
-// inline hooks to be invoked on component VNodes during patch
 var componentVNodeHooks = {
   init: function init (
     vnode,
@@ -4406,7 +4369,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.0.1';
+Vue.version = '0.0.2';
 
 function getHid (vm, vnode) {
   if ( vnode === void 0 ) vnode = {};
@@ -4735,10 +4698,6 @@ function aop (fn, options) {
   }
 }
 
-/* globals renderer */
-
-
-
 var isReservedTag = makeMap(
   'template,script,style,element,content,slot,link,meta,svg,view,' +
   'a,div,img,image,text,span,richtext,input,switch,textarea,spinner,select,' +
@@ -4765,13 +4724,9 @@ var isUnaryTag = makeMap(
   true
 );
 
-
-
-
-
-
-
-
+function mustUseProp () { /* console.log('mustUseProp') */ }
+function getTagNamespace () { /* console.log('getTagNamespace') */ }
+function isUnknownElement () { /* console.log('isUnknownElement') */ }
 
 // 用于小程序的 event type 到 web 的 event
 var eventTypeMap = {
@@ -4878,9 +4833,6 @@ function getHandlers (vm, type, hid) {
 /*  */
 
 // import { extend, warn, isObject } from 'core/util/index'
-/**
- * Runtime helper for rendering <slot>
- */
 function afterRenderSlot (
   name,
   fallback,
@@ -4888,6 +4840,9 @@ function afterRenderSlot (
   bindObject,
   nodes
 ) {
+  var componentVnode = this.$vnode;
+  var componentCid = componentVnode.data.attrs._cid;
+  var _hid = props._hid; if ( _hid === void 0 ) _hid = '';
   // single tag:
   // <CompA><span slot-scope="props">{{ props.msg }}</span></CompA>
   if (nodes && nodes.tag) {
@@ -4902,7 +4857,32 @@ function afterRenderSlot (
     }
     markComponents(nodes, this._uid);
   }
+
+  // scopedSlotFn with v-for
+  var scopedSlotFn = this.$scopedSlots[name];
+  if (scopedSlotFn && /\-/.test(_hid)) {
+    var tail = _hid.replace(/^\d+/, '');
+    updateNodesHid(nodes, tail);
+  } else if (/\-/.test(componentCid)) {
+    var tail$1 = componentCid.replace(/^\d+/, '');
+    updateNodesHid(nodes, tail$1);
+  }
+
   return nodes
+}
+
+function updateNodesHid (nodes, tail) {
+  if ( nodes === void 0 ) nodes = [];
+
+  nodes.forEach(function (node) {
+    /* istanbul ignore else */
+    if (node.data && node.data._hid) {
+      node.data._hid += tail;
+    } else if (node && node.data && node.data.attrs && node.data.attrs._hid) {
+      node.data.attrs._hid += tail;
+    }
+    updateNodesHid(node.children || [], tail);
+  });
 }
 
 function getFirstNode (nodes) {
@@ -4944,9 +4924,6 @@ function renderIf () {
 
 /*  */
 
-/**
- * Runtime helper for rendering v-for lists.
- */
 function afterRenderList (
   val,
   render,
@@ -5024,15 +5001,19 @@ function updateListToMP (vnodeList, val, forId, context) {
   // key will reuse existing vnode which won't update the vnode content
   // see unit test: with key
   // list won't update after this.list.reverse() if it's not disable
-  vnodeList.forEach(function (vnode) {
-    if (Array.isArray(vnode)) {
-      vnode.forEach(function (c) {
-        if (c.key) { c.key = undefined; }
-      });
-    } else if (vnode.key) {
-      vnode.key = undefined;
-    }
-  });
+
+  // if is a scoped slot list
+  if (firstItem && !firstItem.fn) {
+    vnodeList.forEach(function (vnode) {
+      if (Array.isArray(vnode)) {
+        vnode.forEach(function (c) {
+          if (c.key) { c.key = undefined; }
+        });
+      } else if (vnode.key) {
+        vnode.key = undefined;
+      }
+    });
+  }
 
   updateVnodeToMP(cloneVnode, 'li', list);
 }
@@ -5207,6 +5188,10 @@ page.init = function init (opt) {
     proxyEvent: function proxyEvent$1 (e) {
       var rootVM = this.rootVM;
       proxyEvent(rootVM, e);
+    },
+    /////html事件默认函数
+    agentFunc: function agentFunc(e){
+
     }
   });
 };
@@ -5912,8 +5897,6 @@ function createTextVNode$1 (val, _hid) {
 
 /*  */
 
-// wrapper function for providing a more flexible interface
-// without getting yelled at by flow
 function beforeCreateElement (
   context,
   tag,
@@ -6267,6 +6250,705 @@ var klass = {
   update: updateClass
 }
 
+// HTML 支持的数学符号
+function strNumDiscode(str){
+    str = str.replace(/&forall;/g, '∀');
+    str = str.replace(/&part;/g, '∂');
+    str = str.replace(/&exists;/g, '∃');
+    str = str.replace(/&empty;/g, '∅');
+    str = str.replace(/&nabla;/g, '∇');
+    str = str.replace(/&isin;/g, '∈');
+    str = str.replace(/&notin;/g, '∉');
+    str = str.replace(/&ni;/g, '∋');
+    str = str.replace(/&prod;/g, '∏');
+    str = str.replace(/&sum;/g, '∑');
+    str = str.replace(/&minus;/g, '−');
+    str = str.replace(/&lowast;/g, '∗');
+    str = str.replace(/&radic;/g, '√');
+    str = str.replace(/&prop;/g, '∝');
+    str = str.replace(/&infin;/g, '∞');
+    str = str.replace(/&ang;/g, '∠');
+    str = str.replace(/&and;/g, '∧');
+    str = str.replace(/&or;/g, '∨');
+    str = str.replace(/&cap;/g, '∩');
+    str = str.replace(/&cap;/g, '∪');
+    str = str.replace(/&int;/g, '∫');
+    str = str.replace(/&there4;/g, '∴');
+    str = str.replace(/&sim;/g, '∼');
+    str = str.replace(/&cong;/g, '≅');
+    str = str.replace(/&asymp;/g, '≈');
+    str = str.replace(/&ne;/g, '≠');
+    str = str.replace(/&le;/g, '≤');
+    str = str.replace(/&ge;/g, '≥');
+    str = str.replace(/&sub;/g, '⊂');
+    str = str.replace(/&sup;/g, '⊃');
+    str = str.replace(/&nsub;/g, '⊄');
+    str = str.replace(/&sube;/g, '⊆');
+    str = str.replace(/&supe;/g, '⊇');
+    str = str.replace(/&oplus;/g, '⊕');
+    str = str.replace(/&otimes;/g, '⊗');
+    str = str.replace(/&perp;/g, '⊥');
+    str = str.replace(/&sdot;/g, '⋅');
+    return str;
+}
+
+//HTML 支持的希腊字母
+function strGreeceDiscode(str){
+    str = str.replace(/&Alpha;/g, 'Α');
+    str = str.replace(/&Beta;/g, 'Β');
+    str = str.replace(/&Gamma;/g, 'Γ');
+    str = str.replace(/&Delta;/g, 'Δ');
+    str = str.replace(/&Epsilon;/g, 'Ε');
+    str = str.replace(/&Zeta;/g, 'Ζ');
+    str = str.replace(/&Eta;/g, 'Η');
+    str = str.replace(/&Theta;/g, 'Θ');
+    str = str.replace(/&Iota;/g, 'Ι');
+    str = str.replace(/&Kappa;/g, 'Κ');
+    str = str.replace(/&Lambda;/g, 'Λ');
+    str = str.replace(/&Mu;/g, 'Μ');
+    str = str.replace(/&Nu;/g, 'Ν');
+    str = str.replace(/&Xi;/g, 'Ν');
+    str = str.replace(/&Omicron;/g, 'Ο');
+    str = str.replace(/&Pi;/g, 'Π');
+    str = str.replace(/&Rho;/g, 'Ρ');
+    str = str.replace(/&Sigma;/g, 'Σ');
+    str = str.replace(/&Tau;/g, 'Τ');
+    str = str.replace(/&Upsilon;/g, 'Υ');
+    str = str.replace(/&Phi;/g, 'Φ');
+    str = str.replace(/&Chi;/g, 'Χ');
+    str = str.replace(/&Psi;/g, 'Ψ');
+    str = str.replace(/&Omega;/g, 'Ω');
+
+    str = str.replace(/&alpha;/g, 'α');
+    str = str.replace(/&beta;/g, 'β');
+    str = str.replace(/&gamma;/g, 'γ');
+    str = str.replace(/&delta;/g, 'δ');
+    str = str.replace(/&epsilon;/g, 'ε');
+    str = str.replace(/&zeta;/g, 'ζ');
+    str = str.replace(/&eta;/g, 'η');
+    str = str.replace(/&theta;/g, 'θ');
+    str = str.replace(/&iota;/g, 'ι');
+    str = str.replace(/&kappa;/g, 'κ');
+    str = str.replace(/&lambda;/g, 'λ');
+    str = str.replace(/&mu;/g, 'μ');
+    str = str.replace(/&nu;/g, 'ν');
+    str = str.replace(/&xi;/g, 'ξ');
+    str = str.replace(/&omicron;/g, 'ο');
+    str = str.replace(/&pi;/g, 'π');
+    str = str.replace(/&rho;/g, 'ρ');
+    str = str.replace(/&sigmaf;/g, 'ς');
+    str = str.replace(/&sigma;/g, 'σ');
+    str = str.replace(/&tau;/g, 'τ');
+    str = str.replace(/&upsilon;/g, 'υ');
+    str = str.replace(/&phi;/g, 'φ');
+    str = str.replace(/&chi;/g, 'χ');
+    str = str.replace(/&psi;/g, 'ψ');
+    str = str.replace(/&omega;/g, 'ω');
+    str = str.replace(/&thetasym;/g, 'ϑ');
+    str = str.replace(/&upsih;/g, 'ϒ');
+    str = str.replace(/&piv;/g, 'ϖ');
+    str = str.replace(/&middot;/g, '·');
+    return str;
+}
+
+// 
+
+function strcharacterDiscode(str){
+    // 加入常用解析
+    str = str.replace(/&nbsp;/g, ' ');
+    str = str.replace(/&quot;/g, "'");
+    str = str.replace(/&amp;/g, '&');
+    // str = str.replace(/&lt;/g, '‹');
+    // str = str.replace(/&gt;/g, '›');
+
+    str = str.replace(/&lt;/g, '<');
+    str = str.replace(/&gt;/g, '>');
+    str = str.replace(/&#8226;/g, '•');
+
+    return str;
+}
+
+// HTML 支持的其他实体
+function strOtherDiscode(str){
+    str = str.replace(/&OElig;/g, 'Œ');
+    str = str.replace(/&oelig;/g, 'œ');
+    str = str.replace(/&Scaron;/g, 'Š');
+    str = str.replace(/&scaron;/g, 'š');
+    str = str.replace(/&Yuml;/g, 'Ÿ');
+    str = str.replace(/&fnof;/g, 'ƒ');
+    str = str.replace(/&circ;/g, 'ˆ');
+    str = str.replace(/&tilde;/g, '˜');
+    str = str.replace(/&ensp;/g, '');
+    str = str.replace(/&emsp;/g, '');
+    str = str.replace(/&thinsp;/g, '');
+    str = str.replace(/&zwnj;/g, '');
+    str = str.replace(/&zwj;/g, '');
+    str = str.replace(/&lrm;/g, '');
+    str = str.replace(/&rlm;/g, '');
+    str = str.replace(/&ndash;/g, '–');
+    str = str.replace(/&mdash;/g, '—');
+    str = str.replace(/&lsquo;/g, '‘');
+    str = str.replace(/&rsquo;/g, '’');
+    str = str.replace(/&sbquo;/g, '‚');
+    str = str.replace(/&ldquo;/g, '“');
+    str = str.replace(/&rdquo;/g, '”');
+    str = str.replace(/&bdquo;/g, '„');
+    str = str.replace(/&dagger;/g, '†');
+    str = str.replace(/&Dagger;/g, '‡');
+    str = str.replace(/&bull;/g, '•');
+    str = str.replace(/&hellip;/g, '…');
+    str = str.replace(/&permil;/g, '‰');
+    str = str.replace(/&prime;/g, '′');
+    str = str.replace(/&Prime;/g, '″');
+    str = str.replace(/&lsaquo;/g, '‹');
+    str = str.replace(/&rsaquo;/g, '›');
+    str = str.replace(/&oline;/g, '‾');
+    str = str.replace(/&euro;/g, '€');
+    str = str.replace(/&trade;/g, '™');
+
+    str = str.replace(/&larr;/g, '←');
+    str = str.replace(/&uarr;/g, '↑');
+    str = str.replace(/&rarr;/g, '→');
+    str = str.replace(/&darr;/g, '↓');
+    str = str.replace(/&harr;/g, '↔');
+    str = str.replace(/&crarr;/g, '↵');
+    str = str.replace(/&lceil;/g, '⌈');
+    str = str.replace(/&rceil;/g, '⌉');
+
+    str = str.replace(/&lfloor;/g, '⌊');
+    str = str.replace(/&rfloor;/g, '⌋');
+    str = str.replace(/&loz;/g, '◊');
+    str = str.replace(/&spades;/g, '♠');
+    str = str.replace(/&clubs;/g, '♣');
+    str = str.replace(/&hearts;/g, '♥');
+
+    str = str.replace(/&diams;/g, '♦');
+    str = str.replace(/&#39;/g, '\'');
+    return str;
+}
+
+function strMoreDiscode(str){
+    str = str.replace(/\r\n/g,"");  
+    str = str.replace(/\n/g,"");
+
+    str = str.replace(/code/g,"wxxxcode-style");
+    return str;
+}
+
+function strDiscode(str){
+    str = strNumDiscode(str);
+    str = strGreeceDiscode(str);
+    str = strcharacterDiscode(str);
+    str = strOtherDiscode(str);
+    str = strMoreDiscode(str);
+    return str;
+}
+function urlToHttpUrl(url,rep){
+    
+    var patt1 = new RegExp("^//");
+    var result = patt1.test(url);
+    if(result){
+        url = rep+":"+url;
+    }
+    return  url;
+}
+
+// module.exports = {
+//     strDiscode:strDiscode,
+//     urlToHttpUrl:urlToHttpUrl
+// }
+
+/**
+ * 
+ * htmlParser改造自: https://github.com/blowsie/Pure-JavaScript-HTML5-Parser
+ * 
+ */
+// Regular Expressions for parsing tags and attributes
+var startTag = /^<([-A-Za-z0-9_]+)((?:\s+[a-zA-Z_:][-a-zA-Z0-9_:.]*(?:\s*=\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/;
+var endTag = /^<\/([-A-Za-z0-9_]+)[^>]*>/;
+var attr = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*(?:(?:"((?:\\.|[^"])*)")|(?:'((?:\\.|[^'])*)')|([^>\s]+)))?/g;
+
+// Empty Elements - HTML 5
+var empty = makeMap$1("area,base,basefont,br,col,frame,hr,img,input,link,meta,param,embed,command,keygen,source,track,wbr");
+
+// Block Elements - HTML 5
+var block = makeMap$1("a,address,code,article,applet,aside,audio,blockquote,button,canvas,center,dd,del,dir,div,dl,dt,fieldset,figcaption,figure,footer,form,frameset,h1,h2,h3,h4,h5,h6,header,hgroup,hr,iframe,ins,isindex,li,map,menu,noframes,noscript,object,ol,output,p,pre,section,script,table,tbody,td,tfoot,th,thead,tr,ul,video");
+
+// Inline Elements - HTML 5
+var inline = makeMap$1("abbr,acronym,applet,b,basefont,bdo,big,br,button,cite,del,dfn,em,font,i,iframe,img,input,ins,kbd,label,map,object,q,s,samp,script,select,small,span,strike,strong,sub,sup,textarea,tt,u,var");
+
+// Elements that you can, intentionally, leave open
+// (and which close themselves)
+var closeSelf = makeMap$1("colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr");
+
+// Attributes that have their values filled in disabled="disabled"
+var fillAttrs = makeMap$1("checked,compact,declare,defer,disabled,ismap,multiple,nohref,noresize,noshade,nowrap,readonly,selected");
+
+// Special Elements (can contain anything)
+var special = makeMap$1("wxxxcode-style,script,style,view,scroll-view,block");
+
+function HTMLParser(html, handler) {
+	var index, chars, match, stack = [], last = html;
+	stack.last = function () {
+		return this[this.length - 1];
+	};
+    // console.log('要处理的html是', html)
+	while (html) {
+		chars = true;
+		// console.log('stack.last是', stack.last());
+		// Make sure we're not in a script or style element
+		if (!stack.last() || !special[stack.last()]) {
+			// Comment
+			if (html.indexOf("<!--") == 0) {
+				index = html.indexOf("-->");
+
+				if (index >= 0) {
+					if (handler.comment)
+						{ handler.comment(html.substring(4, index)); }
+					html = html.substring(index + 3);
+					chars = false;
+				}
+
+				// end tag
+			} else if (html.indexOf("</") == 0) {
+				match = html.match(endTag);
+
+				if (match) {
+					html = html.substring(match[0].length);
+					match[0].replace(endTag, parseEndTag); ///这句话干嘛用的？
+					// console.log('替换完成后的match[0]是', match[0]);
+					chars = false;
+				}
+
+				// start tag
+			} else if (html.indexOf("<") == 0) {
+				match = html.match(startTag);
+				// console.log('match的是', match);
+				if (match) {
+					html = html.substring(match[0].length);
+					// console.log('replace前的是', match[0])	
+					match[0].replace(startTag, parseStartTag);
+					// console.log('replace后的是', match[0])
+					chars = false;
+				}
+			}
+
+			if (chars) {
+				index = html.indexOf("<");
+				var text = '';
+				while (index === 0) {
+                                  text += "<";
+                                  html = html.substring(1);
+                                  index = html.indexOf("<");
+				}
+				text += index < 0 ? html : html.substring(0, index);
+				html = index < 0 ? "" : html.substring(index);
+
+				if (handler.chars)
+					{ handler.chars(text); }
+			}
+
+		} else {
+
+			html = html.replace(new RegExp("([\\s\\S]*?)<\/" + stack.last() + "[^>]*>"), function (all, text) {
+				text = text.replace(/<!--([\s\S]*?)-->|<!\[CDATA\[([\s\S]*?)]]>/g, "$1$2");
+				if (handler.chars)
+					{ handler.chars(text); }
+
+				return "";
+			});
+			// console.log('先执行了这一步,html是', html);
+
+			parseEndTag("", stack.last());
+		}
+
+		if (html == last)
+			{ throw "Parse Error: " + html; }
+		last = html;
+	}
+
+	// Clean up any remaining tags
+	parseEndTag();
+
+	function parseStartTag(tag, tagName, rest, unary) {
+		tagName = tagName.toLowerCase();
+
+		if (block[tagName]) {
+			while (stack.last() && inline[stack.last()]) {
+				parseEndTag("", stack.last());
+			}
+		}
+
+		if (closeSelf[tagName] && stack.last() == tagName) {
+			parseEndTag("", tagName);
+		}
+
+		unary = empty[tagName] || !!unary;
+
+		if (!unary)
+			{ stack.push(tagName); }
+
+		if (handler.start) {
+			var attrs = [];
+			// console.log('rest是', rest);
+			rest.replace(attr, function (match, name) {
+				// console.log('match是', match);
+				// console.log('name是', name);
+				// console.log('arguments是',arguments.length)
+				var value = arguments[2] ? arguments[2] :
+					arguments[3] ? arguments[3] :
+						arguments[4] ? arguments[4] :
+							fillAttrs[name] ? name : "";
+				// console.log('value是', value);
+				attrs.push({
+					name: name,
+					value: value,
+					escaped: value.replace(/(^|[^\\])"/g, '$1\\\"') //"
+				});
+			});
+
+			if (handler.start) {
+				handler.start(tagName, attrs, unary);
+			}
+		}
+	}
+
+	function parseEndTag(tag, tagName) {
+		// If no tag name is provided, clean shop
+		if (!tagName)
+			{ var pos = 0; }
+
+		// Find the closest opened tag of the same type
+		else {
+			tagName = tagName.toLowerCase();
+			for (var pos = stack.length - 1; pos >= 0; pos--)
+				{ if (stack[pos] == tagName)
+					{ break; } }
+		}
+		if (pos >= 0) {
+			// Close all the open elements, up the stack
+			for (var i = stack.length - 1; i >= pos; i--)
+				{ if (handler.end)
+					{ handler.end(stack[i]); } }
+
+			// Remove the open elements from the stack
+			stack.length = pos;
+		}
+	}
+}
+
+
+function makeMap$1(str) {
+	var obj = {}, items = str.split(",");
+	for (var i = 0; i < items.length; i++)
+		{ obj[items[i]] = true; }
+	return obj;
+}
+
+// module.exports = HTMLParser;
+
+/**
+ * html2Json 改造来自: https://github.com/Jxck/html2json
+ * 
+ */
+var __placeImgeUrlHttps = "https";
+var __emojisReg = '';
+var __emojisBaseSrc = '';
+var __emojis = {};
+// var wxDiscode = require('./wxDiscode.js');
+// var HTMLParser = require('./htmlparser.js');
+// Empty Elements - HTML 5
+var empty$1 = makeMap$2("area,base,basefont,br,col,frame,hr,img,input,link,meta,param,embed,command,keygen,source,track,wbr");
+// Block Elements - HTML 5
+var block$1 = makeMap$2("br,a,code,address,article,applet,aside,audio,blockquote,button,canvas,center,dd,del,dir,div,dl,dt,fieldset,figcaption,figure,footer,form,frameset,h1,h2,h3,h4,h5,h6,header,hgroup,hr,iframe,ins,isindex,li,map,menu,noframes,noscript,object,ol,output,p,pre,section,script,table,tbody,td,tfoot,th,thead,tr,ul,video");
+
+// Inline Elements - HTML 5
+var inline$1 = makeMap$2("abbr,acronym,applet,b,basefont,bdo,big,button,cite,del,dfn,em,font,i,iframe,img,input,ins,kbd,label,map,object,q,s,samp,script,select,small,span,strike,strong,sub,sup,textarea,tt,u,var");
+
+// Elements that you can, intentionally, leave open
+// (and which close themselves)
+var closeSelf$1 = makeMap$2("colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr");
+
+// Attributes that have their values filled in disabled="disabled"
+var fillAttrs$1 = makeMap$2("checked,compact,declare,defer,disabled,ismap,multiple,nohref,noresize,noshade,nowrap,readonly,selected");
+
+// Special Elements (can contain anything)
+var special$1 = makeMap$2("wxxxcode-style,script,style,view,scroll-view,block");
+
+
+function makeMap$2(str) {
+    var obj = {}, items = str.split(",");
+    for (var i = 0; i < items.length; i++)
+        { obj[items[i]] = true; }
+    return obj;
+}
+
+function removeDOCTYPE(html) {
+    return html
+        .replace(/<\?xml.*\?>\n/, '')
+        .replace(/<.*!doctype.*\>\n/, '')
+        .replace(/<.*!DOCTYPE.*\>\n/, '');
+}
+
+function trimHtml(html) {
+  return html
+        .replace(/\r?\n+/g, '')
+        .replace(/<!--.*?-->/ig, '')
+        .replace(/\/\*.*?\*\//ig, '')
+        .replace(/[ ]+</ig, '<')
+}
+/////eventMap增加事件
+function html2json(html, bindName) {
+    //处理字符串
+    html = removeDOCTYPE(html);
+    html = trimHtml(html);
+    html = strDiscode(html);
+    //生成node节点
+    var bufArray = [];
+    var results = {
+        node: bindName,
+        nodes: [],
+        images:[],
+        imageUrls:[]
+    };
+    var index = 0;
+    HTMLParser(html, {
+        start: function (tag, attrs, unary) {
+            //debug(tag, attrs, unary);
+            // node for this element
+            var node = {
+                node: 'element',
+                tag: tag,
+            };
+
+            if (bufArray.length === 0) {
+                node.index = index.toString();
+                index += 1;
+            } else {
+                var parent = bufArray[0];
+                if (parent.nodes === undefined) {
+                    parent.nodes = [];
+                }
+                node.index = parent.index + '.' + parent.nodes.length;
+            }
+
+            if (block$1[tag]) {
+                node.tagType = "block";
+            } else if (inline$1[tag]) {
+                node.tagType = "inline";
+            } else if (closeSelf$1[tag]) {
+                node.tagType = "closeSelf";
+            }
+
+            if (attrs.length !== 0) {
+                node.attr = attrs.reduce(function (pre, attr) {
+                    var name = attr.name;
+                    var value = attr.value;
+                    if (name == 'class') {
+                        // console.dir(value);
+
+                        //  value = value.join("")
+                        node.classStr = value;
+                    }
+                    // has multi attibutes
+                    // make it array of attribute
+                    if (name == 'style') {
+                        // console.dir(value);
+                        //  value = value.join("")
+                        node.styleStr = value;
+                    }
+                    if (value.match(/ /)) {
+                        value = value.split(' ');
+                    }
+                    
+
+                    // if attr already exists
+                    // merge it
+                    if (pre[name]) {
+                        if (Array.isArray(pre[name])) {
+                            // already array, push to last
+                            pre[name].push(value);
+                        } else {
+                            // single value, make it array
+                            pre[name] = [pre[name], value];
+                        }
+                    } else {
+                        // not exist, put it
+                        pre[name] = value;
+                    }
+
+                    return pre;
+                }, {});
+            }
+
+            //对img添加额外数据
+            if (node.tag === 'img') {
+                node.imgIndex = results.images.length;
+                var imgUrl = node.attr.src;
+                if (imgUrl[0] == '') {
+                    imgUrl.splice(0, 1);
+                }
+                imgUrl = urlToHttpUrl(imgUrl, __placeImgeUrlHttps);
+                node.attr.src = imgUrl;
+                node.from = bindName;
+                // node.bindtap = test;
+                results.images.push(node);
+                results.imageUrls.push(imgUrl);
+            }
+            
+            // 处理font标签样式属性
+            if (node.tag === 'font') {
+                var fontSize = ['x-small', 'small', 'medium', 'large', 'x-large', 'xx-large', '-webkit-xxx-large'];
+                var styleAttrs = {
+                    'color': 'color',
+                    'face': 'font-family',
+                    'size': 'font-size'
+                };
+                if (!node.attr.style) { node.attr.style = []; }
+                if (!node.styleStr) { node.styleStr = ''; }
+                for (var key in styleAttrs) {
+                    if (node.attr[key]) {
+                        var value = key === 'size' ? fontSize[node.attr[key]-1] : node.attr[key];
+                        node.attr.style.push(styleAttrs[key]);
+                        node.attr.style.push(value);
+                        node.styleStr += styleAttrs[key] + ': ' + value + ';';
+                    }
+                }
+            }
+
+            //临时记录source资源
+            if(node.tag === 'source'){
+                results.source = node.attr.src;
+            }
+            
+            if (unary) {
+                // if this tag doesn't have end tag
+                // like <img src="hoge.png"/>
+                // add to parents
+                var parent = bufArray[0] || results;
+                if (parent.nodes === undefined) {
+                    parent.nodes = [];
+                }
+                parent.nodes.push(node);
+            } else {
+                bufArray.unshift(node);
+            }
+        },
+        end: function (tag) {
+            //debug(tag);
+            // merge into parent tag
+            var node = bufArray.shift();
+            if (node.tag !== tag) { console.error('invalid state: mismatch end tag'); }
+
+            //当有缓存source资源时于于video补上src资源
+            if(node.tag === 'video' && results.source){
+                node.attr.src = results.source;
+                delete results.source;
+            }
+            
+            if (bufArray.length === 0) {
+                results.nodes.push(node);
+            } else {
+                var parent = bufArray[0];
+                if (parent.nodes === undefined) {
+                    parent.nodes = [];
+                }
+                parent.nodes.push(node);
+            }
+        },
+        chars: function (text) {
+            //debug(text);
+            var node = {
+                node: 'text',
+                text: text,
+                textArray:transEmojiStr(text)
+            };
+            
+            if (bufArray.length === 0) {
+                node.index = index.toString();
+                index += 1;
+                results.nodes.push(node);
+            } else {
+                var parent = bufArray[0];
+                if (parent.nodes === undefined) {
+                    parent.nodes = [];
+                }
+                node.index = parent.index + '.' + parent.nodes.length;
+                parent.nodes.push(node);
+            }
+        },
+        comment: function (text) {
+            //debug(text);
+            // var node = {
+            //     node: 'comment',
+            //     text: text,
+            // };
+            // var parent = bufArray[0];
+            // if (parent.nodes === undefined) {
+            //     parent.nodes = [];
+            // }
+            // parent.nodes.push(node);
+        },
+    });
+    return results;
+}
+
+function transEmojiStr(str){
+  // var eReg = new RegExp("["+__reg+' '+"]");
+//   str = str.replace(/\[([^\[\]]+)\]/g,':$1:')
+  
+  var emojiObjs = [];
+  //如果正则表达式为空
+  if(__emojisReg.length == 0 || !__emojis){
+      var emojiObj = {};
+      emojiObj.node = "text";
+      emojiObj.text = str;
+      array = [emojiObj];
+      return array;
+  }
+  //这个地方需要调整
+  str = str.replace(/\[([^\[\]]+)\]/g,':$1:');
+  var eReg = new RegExp("[:]");
+  var array = str.split(eReg);
+  for(var i = 0; i < array.length; i++){
+    var ele = array[i];
+    var emojiObj = {};
+    if(__emojis[ele]){
+      emojiObj.node = "element";
+      emojiObj.tag = "emoji";
+      emojiObj.text = __emojis[ele];
+      emojiObj.baseSrc= __emojisBaseSrc;
+    }else{
+      emojiObj.node = "text";
+      emojiObj.text = ele;
+    }
+    emojiObjs.push(emojiObj);
+  }
+  
+  return emojiObjs;
+}
+
+/**
+ * utils函数引入
+ **/
+function maxParse(ref){
+  var type = ref.type; if ( type === void 0 ) type = 'html';
+  var data = ref.data; if ( data === void 0 ) data = '<div class="color:red;">数据不能为空</div>';
+
+  var transData = {};//存放转化后的数据
+  var res = {};  //返回的数据
+  if (type == 'html') {
+    transData = html2json(data, 'root');
+  }
+  res = transData;
+  return res;
+}
+// module.exports = {
+//   maxParse: maxParse
+// }
+
+// 图片点击事件
+
 /*  */
 
 function updateDOMProps (oldVnode, vnode) {
@@ -6300,8 +6982,9 @@ function updateDOMProps (oldVnode, vnode) {
       // if (elm.childNodes.length === 1) {
       //   elm.removeChild(elm.childNodes[0])
       // }
+      var curRes = maxParse({type:'html', data:cur});
       if (key === 'innerHTML') {
-        updateVnodeToMP(vnode, 'html', cur);
+        updateVnodeToMP(vnode, 'html', curRes);
       }
     }
 
@@ -6628,8 +7311,6 @@ var platformModules = [
 
 /*  */
 
-// the directive module should be applied last, after all
-// built-in modules have been applied.
 var modules = platformModules.concat(baseModules);
 
 var patch = createPatchFunction({ nodeOps: nodeOps, modules: modules });
@@ -6640,22 +7321,6 @@ var patch = createPatchFunction({ nodeOps: nodeOps, modules: modules });
  * Not type checking this file because flow doesn't like attaching
  * properties to Elements.
  */
-
-// import { isTextInputType } from 'mp/util/element'
-// import { looseEqual, looseIndexOf } from 'shared/util'
-// import { mergeVNodeHook } from 'core/vdom/helpers/index'
-// import { warn } from 'core/util/index'
-
-/* istanbul ignore if */
-// if (isIE9) {
-//   // http://www.matts411.com/post/internet-explorer-9-oninput/
-//   document.addEventListener('selectionchange', () => {
-//     const el = document.activeElement
-//     if (el && el.vmodel) {
-//       trigger(el, 'input')
-//     }
-//   })
-// }
 
 var directive = {
   update: function update (el, ref, vnode) {
@@ -6717,6 +7382,78 @@ var directive = {
   }
 };
 
+// function setSelected (el, binding, vm) {
+//   actuallySetSelected(el, binding, vm)
+//   /* istanbul ignore if */
+//   if (isIE || isEdge) {
+//     setTimeout(() => {
+//       actuallySetSelected(el, binding, vm)
+//     }, 0)
+//   }
+// }
+
+// function actuallySetSelected (el, binding, vm) {
+//   const value = binding.value
+//   const isMultiple = el.multiple
+//   if (isMultiple && !Array.isArray(value)) {
+//     "production" !== 'production' && warn(
+//       `<select multiple v-model="${binding.expression}"> ` +
+//       `expects an Array value for its binding, but got ${
+//         Object.prototype.toString.call(value).slice(8, -1)
+//       }`,
+//       vm
+//     )
+//     return
+//   }
+//   let selected, option
+//   for (let i = 0, l = el.options.length; i < l; i++) {
+//     option = el.options[i]
+//     if (isMultiple) {
+//       selected = looseIndexOf(value, getValue(option)) > -1
+//       if (option.selected !== selected) {
+//         option.selected = selected
+//       }
+//     } else {
+//       if (looseEqual(getValue(option), value)) {
+//         if (el.selectedIndex !== i) {
+//           el.selectedIndex = i
+//         }
+//         return
+//       }
+//     }
+//   }
+//   if (!isMultiple) {
+//     el.selectedIndex = -1
+//   }
+// }
+
+// function hasNoMatchingOption (value, options) {
+//   return options.every(o => !looseEqual(o, value))
+// }
+
+// function getValue (option) {
+//   return '_value' in option
+//     ? option._value
+//     : option.value
+// }
+
+// function onCompositionStart (e) {
+//   e.target.composing = true
+// }
+
+// function onCompositionEnd (e) {
+//   // prevent triggering an input event for no reason
+//   if (!e.target.composing) return
+//   e.target.composing = false
+//   trigger(e.target, 'input')
+// }
+
+// function trigger (el, type) {
+//   const e = document.createEvent('HTMLEvents')
+//   e.initEvent(type, true, true)
+//   el.dispatchEvent(e)
+// }
+
 /*  */
 
 var show = {
@@ -6753,24 +7490,11 @@ var platformDirectives = {
 
 /*  */
 
-// import config from 'core/config'
-// import {
-//   query,
-//   mustUseProp,
-//   isReservedTag,
-//   isReservedAttr,
-//   getTagNamespace,
-//   isUnknownElement
-// } from 'mp/util/index'
-
-// import platformComponents from './components/index'
-
-// install platform specific utils
-// Vue.config.mustUseProp = mustUseProp
-// Vue.config.isReservedTag = isReservedTag
-// Vue.config.isReservedAttr = isReservedAttr
-// Vue.config.getTagNamespace = getTagNamespace
-// Vue.config.isUnknownElement = isUnknownElement
+Vue.config.mustUseProp = mustUseProp;
+Vue.config.isReservedTag = isReservedTag;
+Vue.config.isReservedAttr = isReservedAttr;
+Vue.config.getTagNamespace = getTagNamespace;
+Vue.config.isUnknownElement = isUnknownElement;
 
 // install platform runtime directives & components
 extend(Vue.options.directives, platformDirectives);

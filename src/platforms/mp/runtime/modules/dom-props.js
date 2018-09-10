@@ -2,6 +2,7 @@
 
 import { isDef, isUndef, extend, toNumber } from 'shared/util'
 import { updateVnodeToMP } from '../instance/index'
+import { maxParse } from '../../util/htmlParse/index'
 
 function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   if (isUndef(oldVnode.data.domProps) && isUndef(vnode.data.domProps)) {
@@ -34,8 +35,9 @@ function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
       // if (elm.childNodes.length === 1) {
       //   elm.removeChild(elm.childNodes[0])
       // }
+      const curRes = maxParse({ type: 'html', data: cur })
       if (key === 'innerHTML') {
-        updateVnodeToMP(vnode, 'html', cur)
+        updateVnodeToMP(vnode, 'html', curRes)
       }
     }
 

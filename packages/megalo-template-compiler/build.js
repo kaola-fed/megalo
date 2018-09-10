@@ -711,8 +711,6 @@ function parseComponent (
  *
  */
 
-/* globals renderer */
-
 var isPreTag = function (tag) { return tag === 'pre'; };
 
 var isReservedTag = makeMap(
@@ -743,10 +741,6 @@ var isUnaryTag$1 = makeMap(
 
 function mustUseProp () { /* console.log('mustUseProp') */ }
 function getTagNamespace () { /* console.log('getTagNamespace') */ }
-
-
-
-
 
 
 // 用于小程序的 event type 到 web 的 event
@@ -3766,6 +3760,7 @@ function genData$2 (el, state) {
   if (el.slotTarget && !el.slotScope) {
     data += "slot:" + (el.slotTarget) + ",";
   }
+
   // scoped slots
   if (el.scopedSlots) {
     data += (genScopedSlots(el.scopedSlots, state)) + ",";
@@ -4510,9 +4505,11 @@ function walkElem (node, state) {
 }
 
 function walkComponent (node, state) {
+  // generate _cid first
+  var _cid = state.getCId();
+
   // enter a component
   state.pushComp();
-  var _cid = state.getCId();
 
   Object.assign(node, { _cid: _cid });
   addAttr$1(node, '_cid', _cid);
@@ -4580,10 +4577,7 @@ function walkChildren (node, state) {
   if (scopedSlots) {
     Object.keys(scopedSlots).forEach(function (k) {
       var slot = scopedSlots[k];
-      var children = slot.children; if ( children === void 0 ) children = [];
-      children.forEach(function (n) {
-        walk(n, state);
-      });
+      walk(slot, state);
     });
   }
 }
@@ -4617,14 +4611,15 @@ var State = function State (options) {
   this.compCount = -1;
   this.elemCount = -1;
   this.compStack = new Stack();
-  this.listStates = new Stack();
+  // this.listStates = new Stack()
   // init a root component state, like page
   this.pushComp();
 };
 State.prototype.pushComp = function pushComp () {
   this.compStack.push({
-    id: this.compCount++,
-    elems: 0
+    id: ++this.compCount,
+    elems: 0,
+    listStates: new Stack()
   });
 };
 State.prototype.popComp = function popComp () {
@@ -4634,30 +4629,33 @@ State.prototype.pushElem = function pushElem () {
   this.elemCount++;
 };
 State.prototype.popListState = function popListState () {
-  return this.listStates.pop()
+  return this.getCurrentComp().listStates.pop()
 };
 State.prototype.pushListState = function pushListState (state) {
-  var currentStates = this.listStates.top;
+  var currentComp = this.getCurrentComp();
+  var currentStates = currentComp.listStates.top;
   var newStates = [];
   if (currentStates && currentStates.length) {
     newStates = [].concat(currentStates);
   }
 
   newStates.push(state);
-  this.listStates.push(newStates);
+  currentComp.listStates.push(newStates);
+};
+State.prototype.getCurrentComp = function getCurrentComp () {
+  return this.compStack.top
 };
 State.prototype.getCurrentCompIndex = function getCurrentCompIndex () {
-  var currentComponent = this.compStack.top;
-  return ("" + (currentComponent.id))
+  return ("" + (this.compCount))
 };
 State.prototype.getCurrentElemIndex = function getCurrentElemIndex () {
   return this.elemCount
 };
 State.prototype.getCurrentListState = function getCurrentListState () {
-  return this.listStates.top
+  return this.getCurrentComp().listStates.top
 };
 State.prototype.getCurrentListNode = function getCurrentListNode () {
-  var top = this.listStates.top || [];
+  var top = this.getCurrentComp().listStates.top || [];
   return (top[top.length - 1] || {}).node
 };
 State.prototype.getHId = function getHId (node) {
@@ -4766,6 +4764,8 @@ var TemplateGenerator = function TemplateGenerator (options) {
     drt: preset.directives,
     warn: warn
   });
+
+  this.slotSnippet = 0;
 };
 
 TemplateGenerator.prototype.generate = function generate (ast) {
@@ -4820,8 +4820,13 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
     var tag = el.tag;
   var compInfo = this.imports[tag];
   var compName = compInfo.name;
-  var slots = this.resolveSlotDefinition(el);
+  var slots = this.genSlotSnippets(el);
   var slotsNames = slots.map(function (sl) { return ("s_" + (sl.name) + ": '" + (sl.slotName) + "'"); });
+  var tail = ", $t: ''";
+  // passing parent for tail to slot inside v-for
+  if (/'-'/.test(_cid)) {
+    tail = ", $t: " + (extractHidTail(_cid));
+  }
   var data = [
     ("...$root[ cp + " + _cid + " ]"),
     "$root" ].concat( slotsNames
@@ -4829,7 +4834,7 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
 
   var attrs = [
     (" is=\"" + compName + "\""),
-    (" data=\"{{ " + data + " }}\""),
+    (" data=\"{{ " + data + tail + " }}\""),
     this.genIf(el),
     this.genFor(el)
   ].filter(notEmpty).join('');
@@ -4838,7 +4843,7 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
 };
 
 // TODO: deprecate the namedSlots inside a nameSlots
-TemplateGenerator.prototype.resolveSlotDefinition = function resolveSlotDefinition (el) {
+TemplateGenerator.prototype.genSlotSnippets = function genSlotSnippets (el) {
     var this$1 = this;
 
   var self = this;
@@ -4871,7 +4876,11 @@ TemplateGenerator.prototype.resolveSlotDefinition = function resolveSlotDefiniti
       if (ast.length <= 0) {
         return null
       }
+
+      this$1.enterSlotSnippet();
       var parts = slot.ast.map(function (e) { return this$1.genElement(e); });
+      this$1.leaveSlotSnippet();
+
       var dependencies = slot.ast.reduce(function (res, e) { return res.concat(this$1.collectDependencies(e)); }, []);
       var slotName = name + "_" + (uid());
       var body = [
@@ -4976,7 +4985,6 @@ TemplateGenerator.prototype.genTag = function genTag (el) {
 TemplateGenerator.prototype.genClass = function genClass (el) {
   var tag = el.tag;
     var classBinding = el.classBinding;
-    var _hid = el._hid;
   var staticClass = el.staticClass; if ( staticClass === void 0 ) staticClass = '';
   var klass = [];
   staticClass = removeQuotes(staticClass);
@@ -4984,7 +4992,7 @@ TemplateGenerator.prototype.genClass = function genClass (el) {
     klass.push(staticClass);
   }
   if (classBinding) {
-    klass.push(("{{ _h[ " + _hid + " ].cl }}"));
+    klass.push(("{{ _h[ " + (this.genHid(el)) + " ].cl }}"));
   }
   // scoped id class
   if (klass.length) {
@@ -4997,7 +5005,6 @@ TemplateGenerator.prototype.genClass = function genClass (el) {
 
 TemplateGenerator.prototype.genStyle = function genStyle (el) {
   var styleBinding = el.styleBinding;
-    var _hid = el._hid;
   var staticStyle = el.staticStyle; if ( staticStyle === void 0 ) staticStyle = '';
   var style = [];
   staticStyle = staticStyle.replace(/"|{|}/g, '').split(',').join('; ');
@@ -5005,7 +5012,7 @@ TemplateGenerator.prototype.genStyle = function genStyle (el) {
     style.push(staticStyle);
   }
   if (styleBinding) {
-    style.push(("{{ _h[ " + _hid + " ].st }}"));
+    style.push(("{{ _h[ " + (this.genHid(el)) + " ].st }}"));
   }
   style = style.filter(function (e) { return e; }).join('; ');
   return style ? (" style=\"" + style + "\"") : ''
@@ -5013,16 +5020,16 @@ TemplateGenerator.prototype.genStyle = function genStyle (el) {
 
 TemplateGenerator.prototype.genVShow = function genVShow (el) {
   var attrsMap = el.attrsMap; if ( attrsMap === void 0 ) attrsMap = {};
-    var _hid = el._hid;
   if (!attrsMap['v-show']) {
     return ''
   }
-  return (" hidden=\"{{ _h[ " + _hid + " ].vs }}\"")
+  return (" hidden=\"{{ _h[ " + (this.genHid(el)) + " ].vs }}\"")
 };
 
 TemplateGenerator.prototype.genAttrs = function genAttrs (el) {
+    var this$1 = this;
+
   var attrsList = el.attrsList; if ( attrsList === void 0 ) attrsList = [];
-    var _hid = el._hid;
   var hasVModel = this.hasVModel(el);
 
   var attrs = attrsList.map(function (attr) {
@@ -5032,9 +5039,9 @@ TemplateGenerator.prototype.genAttrs = function genAttrs (el) {
       return ''
     } else if (vbindReg.test(name)) {
       var realName = name.replace(vbindReg, '');
-      return (realName + "=\"{{ _h[ " + _hid + " ][ '" + realName + "' ] }}\"")
+      return (realName + "=\"{{ _h[ " + (this$1.genHid(el)) + " ][ '" + realName + "' ] }}\"")
     } else if (vmodelReg.test(name)) {
-      return ("value=\"{{ _h[ " + _hid + " ].value }}\"")
+      return ("value=\"{{ _h[ " + (this$1.genHid(el)) + " ].value }}\"")
     } else {
       return (name + "=\"" + value + "\"")
     }
@@ -5046,7 +5053,6 @@ TemplateGenerator.prototype.genAttrs = function genAttrs (el) {
 TemplateGenerator.prototype.genEvents = function genEvents (el) {
   var events = el.events;
     var tag = el.tag;
-    var _hid = el._hid;
   if (!events) {
     return ''
   }
@@ -5071,7 +5077,12 @@ TemplateGenerator.prototype.genEvents = function genEvents (el) {
     return ("" + binder + mpType + "=\"_pe\"")
   });
   eventAttrs = eventAttrs.join(' ');
-  return (" data-cid=\"{{ " + cid + " }}\" data-hid=\"{{ " + _hid + " }}\" " + eventAttrs)
+
+  /**
+   * when the element is in a slot, it will recieve "$c" as the actual component instance id
+   * othewise, using the current scope which usually the parent component in the template
+   */
+  return (" data-cid=\"{{ $c || " + cid + " }}\" data-hid=\"{{ " + (this.genHid(el)) + " }}\" " + eventAttrs)
 };
 
 TemplateGenerator.prototype.genIfConditions = function genIfConditions (el) {
@@ -5092,11 +5103,10 @@ TemplateGenerator.prototype.genIfConditions = function genIfConditions (el) {
 };
 
 TemplateGenerator.prototype.genIf = function genIf (el) {
-  var _hid = el._hid;
   if (el.if) {
-    return (" wx:if=\"{{ _h[ " + _hid + " ]._if }}\"")
+    return (" wx:if=\"{{ _h[ " + (this.genHid(el)) + " ]._if }}\"")
   } else if (el.elseif) {
-    return (" wx:elif=\"{{ _h[ " + _hid + " ]._if }}\"")
+    return (" wx:elif=\"{{ _h[ " + (this.genHid(el)) + " ]._if }}\"")
   } else if (el.else) {
     return " wx:else"
   }
@@ -5132,18 +5142,31 @@ TemplateGenerator.prototype.genForKey = function genForKey (el) {
 TemplateGenerator.prototype.genText = function genText (el) {
   var text = el.text; if ( text === void 0 ) text = '';
   if (el.expression) {
-    return ("{{ _h[ " + (el._hid) + " ].t }}")
+    return ("{{ _h[ " + (this.genHid(el)) + " ].t }}")
   }
   return escapeText(text) || /* istanbul ignore next */ ''
 };
 
 TemplateGenerator.prototype.genSlot = function genSlot (el) {
+  var _hid = el._hid;
   var slotName = el.slotName; if ( slotName === void 0 ) slotName = 'default';
   slotName = slotName.replace(/"/g, '');
   var defaultSlotName = slotName + "$" + (uid());
   var defaultSlotBody = this.genChildren(el);
   var defaultSlot = defaultSlotBody ? ("<template name=\"" + defaultSlotName + "\">" + defaultSlotBody + "</template>") : /* istanbul ignore next */ '';
-  return (defaultSlot + "<template is=\"{{ s_" + slotName + " || '" + defaultSlotName + "' }}\" data=\"{{ ...$root[ s ], $root }}\"/>")
+  var tail = ", $t: ($t || '')";
+  // sloped-slot inside v-for
+  if (el.hasBindings && /'-'/.test(_hid)) {
+    tail = ", $t: " + (extractHidTail(_hid));
+  }
+
+  /**
+   * use "$c" to passing the actual vdom host component instance id to slot template
+   *    because the vdom is actually stored in the component's _vnodes
+   *    event hanlders searching depends on this id
+   */
+
+  return (defaultSlot + "<template is=\"{{ s_" + slotName + " || '" + defaultSlotName + "' }}\" data=\"{{ ...$root[ s ], $root" + tail + ", $c: c }}\"" + (this.genFor(el)) + "/>")
 };
 
 TemplateGenerator.prototype.genChildren = function genChildren (el) {
@@ -5183,11 +5206,10 @@ TemplateGenerator.prototype.getComponentSrc = function getComponentSrc (name) {
 };
 
 TemplateGenerator.prototype.genVHtml = function genVHtml (el) {
-  var _hid = el._hid;
-  return ("<view class=\"_vhtml\"" + ([
+  return ("<template is=\"maxParse\"" + ([
     this.genIf(el),
     this.genFor(el)
-  ].join('')) + ">{{ _h[ " + _hid + " ].html }}</view>")
+  ].join('')) + " data=\"{{ maxParseData: _h[ " + (this.genHid(el)) + " ].html.nodes }}\"/>")
 };
 
 TemplateGenerator.prototype.isVHtml = function isVHtml (el) {
@@ -5225,6 +5247,34 @@ TemplateGenerator.prototype.hasVModel = function hasVModel (el) {
   var attrsList = el.attrsList; if ( attrsList === void 0 ) attrsList = [];
   return attrsList.some(function (attr) { return vmodelReg.test(attr.name); })
 };
+
+TemplateGenerator.prototype.genHid = function genHid (el) {
+  var tail = '';
+  if (this.isInSlotSnippet()) {
+    tail = " + $t";
+  }
+  return ("" + (el._hid) + tail)
+};
+TemplateGenerator.prototype.enterSlotSnippet = function enterSlotSnippet () {
+  this.slotSnippet++;
+};
+
+TemplateGenerator.prototype.leaveSlotSnippet = function leaveSlotSnippet () {
+  this.slotSnippet--;
+};
+
+TemplateGenerator.prototype.isInSlotSnippet = function isInSlotSnippet () {
+  return this.slotSnippet > 0
+};
+
+function extractHidTail (hid) {
+  if ( hid === void 0 ) hid = '';
+
+  var delimiter = "+ '-' +";
+  var parts = hid.split(delimiter);
+  parts = parts.slice(1).map(function (s) { return s.trim(); });
+  return ("'-' + " + (parts.join(delimiter)))
+}
 
 /*  */
 
