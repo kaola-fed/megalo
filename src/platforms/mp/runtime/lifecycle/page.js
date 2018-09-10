@@ -84,6 +84,10 @@ page.init = function init (opt) {
     proxyEvent (e) {
       const rootVM = this.rootVM
       proxyEvent(rootVM, e)
+    },
+    // ///html事件默认函数
+    agentFunc (e) {
+
     }
   })
 }
