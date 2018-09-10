@@ -8,7 +8,11 @@ export * from './render-helpers/render-if'
 export * from './render-helpers/render-list'
 
 export function initRootVM (mpVM, opt = {}) {
-  const { Component, options } = opt
+  const { options } = opt
+  let { Component } = opt
+  if (typeof options === 'function') {
+    Component = options
+  }
 
   const _options = Object.assign({}, options, {
     mpVM,
