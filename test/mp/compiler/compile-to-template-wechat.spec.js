@@ -422,7 +422,7 @@ describe('compilteToTemplate: wechat', () => {
         `<div v-html="input"></div>`
       ),
       (
-        `<view class="_vhtml">{{ _h[ 1 ].html }}</view>`
+        `<template is="maxParse" data="{{ maxParseData: _h[ 1 ].html.nodes }}"/>`
       )
     )
   })
