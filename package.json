@@ -1,6 +1,6 @@
 {
   "name": "megalo",
-  "version": "0.0.2",
+  "version": "0.0.3-0",
   "description": "Reactive, component-oriented view layer for modern web interfaces.",
   "main": "dist/vue.runtime.common.js",
   "module": "dist/megalo.mp.esm.js",
