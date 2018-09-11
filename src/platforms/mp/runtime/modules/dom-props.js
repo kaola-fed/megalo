@@ -35,7 +35,14 @@ function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
       //   elm.removeChild(elm.childNodes[0])
       // }
       if (key === 'innerHTML') {
-        updateVnodeToMP(vnode, 'html', cur)
+        const { $htmlParse } = vnode.context
+        if ($htmlParse) {
+          const htmlNodes = $htmlParse(cur)
+          updateVnodeToMP(vnode, 'html', htmlNodes)
+        } else {
+          updateVnodeToMP(vnode, 'html', cur)
+        }
+        return
       }
     }
 
