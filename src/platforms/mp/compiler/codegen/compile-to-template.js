@@ -26,7 +26,8 @@ export class TemplateGenerator {
       scopeId = '',
       imports = [],
       slots = [],
-      warn = baseWarn
+      warn = baseWarn,
+      htmlParse = {}
     } = options
 
     const preset = presets[target]
@@ -38,7 +39,9 @@ export class TemplateGenerator {
       slots,
       preset,
       drt: preset.directives,
-      warn
+      warn,
+      needHtmlParser: false,
+      htmlParse
     })
 
     this.slotSnippet = 0
@@ -47,16 +50,17 @@ export class TemplateGenerator {
   generate (ast) {
     try {
       const clonedAST = cloneAST(ast)
-      const importsCode = this.genImports()
       const code = this.genElement(clonedAST)
       const body = [
-        importsCode,
+        this.genImports(),
         `<template name="${this.name}">${code}</template>`
       ].join('')
 
+      const { needHtmlParser } = this
       return {
         body,
-        slots: this.slots
+        slots: this.slots,
+        needHtmlParser
       }
     } catch (err) {
       /* istanbul ignore next */
@@ -78,6 +82,7 @@ export class TemplateGenerator {
     if (el.ifConditions && !el.ifConditionsGenerated) {
       return this.genIfConditions(el)
     } else if (this.isVHtml(el)) {
+      this.needHtmlParser = true
       return this.genVHtml(el)
     } else if (this.isSlot(el)) {
       return this.genSlot(el)
@@ -464,10 +469,11 @@ export class TemplateGenerator {
   }
 
   genVHtml (el): string {
-    return `<view class="_vhtml"${[
+    const { htmlParse } = this
+    return `<template is="${htmlParse.templateName}"${[
       this.genIf(el),
       this.genFor(el)
-    ].join('')}>{{ _h[ ${this.genHid(el)} ].html }}</view>`
+    ].join('')} data="{{ nodes: _h[${this.genHid(el)}].html }}"/>`
   }
 
   isVHtml (el = {}): boolean {
