@@ -34,6 +34,7 @@ function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
       // if (elm.childNodes.length === 1) {
       //   elm.removeChild(elm.childNodes[0])
       // }
+      /* istanbul ignore else */
       if (key === 'innerHTML') {
         const { $htmlParse } = vnode.context
         if ($htmlParse) {

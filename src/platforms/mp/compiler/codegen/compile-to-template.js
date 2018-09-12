@@ -40,7 +40,7 @@ export class TemplateGenerator {
       preset,
       drt: preset.directives,
       warn,
-      needHtmlParser: false,
+      needHtmlParse: false,
       htmlParse
     })
 
@@ -56,11 +56,11 @@ export class TemplateGenerator {
         `<template name="${this.name}">${code}</template>`
       ].join('')
 
-      const { needHtmlParser } = this
+      const { needHtmlParse } = this
       return {
         body,
         slots: this.slots,
-        needHtmlParser
+        needHtmlParse
       }
     } catch (err) {
       /* istanbul ignore next */
@@ -82,7 +82,7 @@ export class TemplateGenerator {
     if (el.ifConditions && !el.ifConditionsGenerated) {
       return this.genIfConditions(el)
     } else if (this.isVHtml(el)) {
-      this.needHtmlParser = true
+      this.needHtmlParse = true
       return this.genVHtml(el)
     } else if (this.isSlot(el)) {
       return this.genSlot(el)
