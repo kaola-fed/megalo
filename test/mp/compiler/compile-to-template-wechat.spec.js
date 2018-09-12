@@ -16,6 +16,9 @@ const options = {
   imports: {
     CompA,
     CompB
+  },
+  htmlParse: {
+    templateName: 'octoParse'
   }
 }
 
@@ -422,8 +425,12 @@ describe('compilteToTemplate: wechat', () => {
         `<div v-html="input"></div>`
       ),
       (
-        `<view class="_vhtml">{{ _h[ 1 ].html }}</view>`
-      )
+        `<template is="octoParse" data="{{ nodes: _h[1].html }}"/>`
+      ),
+      options,
+      function (output) {
+        expect(output.needHtmlParse).toBeTruthy()
+      }
     )
   })
 })
