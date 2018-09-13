@@ -55,6 +55,7 @@ Vue.prototype._init = function (options) {
   if (!$mp) {
     initMP(this, options)
   } else {
+    delete options.$mp
     this.$mp = $mp
     oInit.call(this, options)
 

@@ -9,21 +9,17 @@ export * from './render-helpers/render-list'
 
 export function initRootVM (mpVM, opt = {}) {
   const { options } = opt
-  let { Component } = opt
-  if (typeof options === 'function') {
-    Component = options
+  const { Component } = opt
+  const $mp = {
+    page: mpVM,
+    status: 'load',
+    options: mpVM && mpVM.options,
+    update: createUpdateFn(mpVM)
   }
 
-  const _options = Object.assign({}, options, {
-    mpVM,
-    $mp: {
-      page: mpVM,
-      status: 'load',
-      options: mpVM && mpVM.options,
-      update: createUpdateFn(mpVM)
-    }
-  })
+  Object.assign(options, { $mp })
 
-  const rootVM = new Component(_options)
+  const rootVM = new Component(options)
+
   return rootVM
 }
