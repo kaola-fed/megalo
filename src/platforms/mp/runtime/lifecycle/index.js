@@ -7,7 +7,7 @@ export {
 }
 
 export function initMP (vm, options) {
-  const { mpType } = options
+  const { mpType = 'page' } = options
 
   /* istanbul ignore else */
   if (mpType === 'app') {
