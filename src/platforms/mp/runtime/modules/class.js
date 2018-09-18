@@ -1,7 +1,7 @@
 /* @flow */
 
 import {
-  // isDef,
+  isDef,
   isUndef
 } from 'shared/util'
 
@@ -27,9 +27,11 @@ function updateClass (oldVnode: any, vnode: any) {
     return
   }
 
+  const { elm = {}} = vnode
   const cls = genClassForVnode(vnode)
-
-  updateVnodeToMP(vnode, 'cl', cls)
+  if (isDef(cls) && elm.class !== cls) {
+    updateVnodeToMP(vnode, 'cl', cls)
+  }
 }
 
 export default {
