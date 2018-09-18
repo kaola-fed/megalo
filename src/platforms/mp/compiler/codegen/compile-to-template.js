@@ -4,6 +4,7 @@ import TAG_MAP from '../tag-map'
 import { cloneAST, removeQuotes, uid, escapeText } from '../util'
 import presets from './presets/index'
 import { baseWarn } from 'compiler/helpers'
+import { capitalize, camelize } from 'shared/util'
 // import { eventTypeMap } from 'mp/util/index'
 
 const vbindReg = /^(v-bind)?:/
@@ -41,7 +42,8 @@ export class TemplateGenerator {
       drt: preset.directives,
       warn,
       needHtmlParse: false,
-      htmlParse
+      htmlParse,
+      errors: []
     })
 
     this.slotSnippet = 0
@@ -60,9 +62,11 @@ export class TemplateGenerator {
       return {
         body,
         slots: this.slots,
-        needHtmlParse
+        needHtmlParse,
+        errors: this.errors
       }
     } catch (err) {
+      this.errors.push(err)
       /* istanbul ignore next */
       return {
         body: this.genError(err),
@@ -97,7 +101,8 @@ export class TemplateGenerator {
 
   genComponent (el): string {
     const { _cid, tag } = el
-    const compInfo = this.imports[tag]
+    const pascalTag = pascalize(tag)
+    const compInfo = this.imports[tag] || this.imports[pascalTag]
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
@@ -502,7 +507,12 @@ export class TemplateGenerator {
   }
 
   isComponent (el): boolean {
-    return el._cid && !!this.imports[el.tag]
+    const { tag } = el
+    if (el._cid) {
+      const pascalName = pascalize(tag)
+      return !!this.imports[tag] || !!this.imports[pascalName]
+    }
+    return false
   }
 
   hasVModel (el): boolean {
@@ -535,4 +545,10 @@ function extractHidTail (hid = ''): string {
   let parts = hid.split(delimiter)
   parts = parts.slice(1).map(s => s.trim())
   return `'-' + ${parts.join(delimiter)}`
+}
+
+function pascalize (str = ''): string {
+  const camelized = camelize(str)
+  const pascalized = capitalize(camelized)
+  return pascalized
 }

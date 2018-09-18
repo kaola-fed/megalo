@@ -359,6 +359,18 @@ describe('compilteToTemplate: wechat', () => {
       ),
       options
     )
+    // should accept PascalCase
+    assertCodegen(
+      (
+        `<comp-a :message="count"></comp-a>` +
+        `<comp-b :message="count"></comp-b>`
+      ),
+      (
+        `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, $t: '' }}" />` +
+        `<template is="${CompB.name}" data="{{ ...$root[ cp + 1 ], $root, $t: '' }}" />`
+      ),
+      options
+    )
     assertCodegen(
       (
         `<CompA v-if="show" :message="count"></CompA>` +
