@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.0.1';
+Vue.version = '0.0.3';
 
 function getHid (vm, vnode) {
   if ( vnode === void 0 ) vnode = {};
@@ -4735,10 +4735,6 @@ function aop (fn, options) {
   }
 }
 
-/* globals renderer */
-
-
-
 var isReservedTag = makeMap(
   'template,script,style,element,content,slot,link,meta,svg,view,' +
   'a,div,img,image,text,span,richtext,input,switch,textarea,spinner,select,' +
@@ -4765,13 +4761,9 @@ var isUnaryTag = makeMap(
   true
 );
 
-
-
-
-
-
-
-
+function mustUseProp () { /* console.log('mustUseProp') */ }
+function getTagNamespace () { /* console.log('getTagNamespace') */ }
+function isUnknownElement () { /* console.log('isUnknownElement') */ }
 
 // 用于小程序的 event type 到 web 的 event
 var eventTypeMap = {
@@ -4888,6 +4880,9 @@ function afterRenderSlot (
   bindObject,
   nodes
 ) {
+  var componentVnode = this.$vnode;
+  var componentCid = componentVnode.data.attrs._cid;
+  var _hid = props._hid; if ( _hid === void 0 ) _hid = '';
   // single tag:
   // <CompA><span slot-scope="props">{{ props.msg }}</span></CompA>
   if (nodes && nodes.tag) {
@@ -4902,7 +4897,32 @@ function afterRenderSlot (
     }
     markComponents(nodes, this._uid);
   }
+
+  // scopedSlotFn with v-for
+  var scopedSlotFn = this.$scopedSlots[name];
+  if (scopedSlotFn && /\-/.test(_hid)) {
+    var tail = _hid.replace(/^\d+/, '');
+    updateNodesHid(nodes, tail);
+  } else if (/\-/.test(componentCid)) {
+    var tail$1 = componentCid.replace(/^\d+/, '');
+    updateNodesHid(nodes, tail$1);
+  }
+
   return nodes
+}
+
+function updateNodesHid (nodes, tail) {
+  if ( nodes === void 0 ) nodes = [];
+
+  nodes.forEach(function (node) {
+    /* istanbul ignore else */
+    if (node.data && node.data._hid) {
+      node.data._hid += tail;
+    } else if (node && node.data && node.data.attrs && node.data.attrs._hid) {
+      node.data.attrs._hid += tail;
+    }
+    updateNodesHid(node.children || [], tail);
+  });
 }
 
 function getFirstNode (nodes) {
@@ -5024,15 +5044,19 @@ function updateListToMP (vnodeList, val, forId, context) {
   // key will reuse existing vnode which won't update the vnode content
   // see unit test: with key
   // list won't update after this.list.reverse() if it's not disable
-  vnodeList.forEach(function (vnode) {
-    if (Array.isArray(vnode)) {
-      vnode.forEach(function (c) {
-        if (c.key) { c.key = undefined; }
-      });
-    } else if (vnode.key) {
-      vnode.key = undefined;
-    }
-  });
+
+  // if is a scoped slot list
+  if (firstItem && !firstItem.fn) {
+    vnodeList.forEach(function (vnode) {
+      if (Array.isArray(vnode)) {
+        vnode.forEach(function (c) {
+          if (c.key) { c.key = undefined; }
+        });
+      } else if (vnode.key) {
+        vnode.key = undefined;
+      }
+    });
+  }
 
   updateVnodeToMP(cloneVnode, 'li', list);
 }
@@ -5054,20 +5078,19 @@ function getValue (obj, path) {
 function initRootVM (mpVM, opt) {
   if ( opt === void 0 ) opt = {};
 
-  var Component = opt.Component;
   var options = opt.options;
+  var Component = opt.Component;
+  var $mp = {
+    page: mpVM,
+    status: 'load',
+    options: mpVM && mpVM.options,
+    update: createUpdateFn(mpVM)
+  };
 
-  var _options = Object.assign({}, options, {
-    mpVM: mpVM,
-    $mp: {
-      page: mpVM,
-      status: 'load',
-      options: mpVM && mpVM.options,
-      update: createUpdateFn(mpVM)
-    }
-  });
+  Object.assign(options, { $mp: $mp });
 
-  var rootVM = new Component(_options);
+  var rootVM = new Component(options);
+
   return rootVM
 }
 
@@ -5252,7 +5275,7 @@ app.init = function (opt) {
 };
 
 function initMP (vm, options) {
-  var mpType = options.mpType;
+  var mpType = options.mpType; if ( mpType === void 0 ) mpType = 'page';
 
   /* istanbul ignore else */
   if (mpType === 'app') {
@@ -6257,9 +6280,11 @@ function updateClass (oldVnode, vnode) {
     return
   }
 
+  var elm = vnode.elm; if ( elm === void 0 ) elm = {};
   var cls = genClassForVnode(vnode);
-
-  updateVnodeToMP(vnode, 'cl', cls);
+  if (isDef(cls) && elm.class !== cls) {
+    updateVnodeToMP(vnode, 'cl', cls);
+  }
 }
 
 var klass = {
@@ -6300,8 +6325,17 @@ function updateDOMProps (oldVnode, vnode) {
       // if (elm.childNodes.length === 1) {
       //   elm.removeChild(elm.childNodes[0])
       // }
+      /* istanbul ignore else */
       if (key === 'innerHTML') {
-        updateVnodeToMP(vnode, 'html', cur);
+        var ref = vnode.context;
+        var $htmlParse = ref.$htmlParse;
+        if ($htmlParse) {
+          var htmlNodes = $htmlParse(cur);
+          updateVnodeToMP(vnode, 'html', htmlNodes);
+        } else {
+          updateVnodeToMP(vnode, 'html', cur);
+        }
+        return
       }
     }
 
@@ -6754,23 +6788,14 @@ var platformDirectives = {
 /*  */
 
 // import config from 'core/config'
-// import {
-//   query,
-//   mustUseProp,
-//   isReservedTag,
-//   isReservedAttr,
-//   getTagNamespace,
-//   isUnknownElement
-// } from 'mp/util/index'
-
 // import platformComponents from './components/index'
 
 // install platform specific utils
-// Vue.config.mustUseProp = mustUseProp
-// Vue.config.isReservedTag = isReservedTag
-// Vue.config.isReservedAttr = isReservedAttr
-// Vue.config.getTagNamespace = getTagNamespace
-// Vue.config.isUnknownElement = isUnknownElement
+Vue.config.mustUseProp = mustUseProp;
+Vue.config.isReservedTag = isReservedTag;
+Vue.config.isReservedAttr = isReservedAttr;
+Vue.config.getTagNamespace = getTagNamespace;
+Vue.config.isUnknownElement = isUnknownElement;
 
 // install platform runtime directives & components
 extend(Vue.options.directives, platformDirectives);
@@ -6795,6 +6820,7 @@ Vue.prototype._init = function (options) {
   if (!$mp) {
     initMP(this, options);
   } else {
+    delete options.$mp;
     this.$mp = $mp;
     oInit.call(this, options);
 
