@@ -217,6 +217,7 @@ CompA template:
 
 - [magalo-aot](https://github.com/kaola-fed/megalo-aot)
 - [demo](https://github.com/kaola-fed/megalo-demo)
+- [工程实例](https://github.com/kaola-fed/megalo-examples)
 
 ## 灵感来源
 
