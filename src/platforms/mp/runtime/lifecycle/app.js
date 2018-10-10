@@ -4,7 +4,16 @@ import { callHook } from './call-hook'
 const app = {}
 
 app.init = function (opt) {
-  App({
+  let _App
+
+  try {
+    _App = App
+  } catch (err) {
+    // 支付宝小程序中 App() 必须在 app.js 里调用，且不能调用多次。
+    _App = my.__megalo.App // eslint-disable-line
+  }
+
+  _App({
     data: {
       $root: {}
     },

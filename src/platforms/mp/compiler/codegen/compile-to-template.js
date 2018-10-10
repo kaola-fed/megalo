@@ -2,7 +2,7 @@
 
 import TAG_MAP from '../tag-map'
 import { cloneAST, removeQuotes, uid, escapeText } from '../util'
-import presets from './presets/index'
+import presets from '../../util/presets/index'
 import { baseWarn } from 'compiler/helpers'
 import { capitalize, camelize } from 'shared/util'
 // import { eventTypeMap } from 'mp/util/index'
@@ -35,11 +35,11 @@ export class TemplateGenerator {
 
     Object.assign(this, {
       name,
+      target,
       scopeId,
       imports,
       slots,
       preset,
-      drt: preset.directives,
       warn,
       needHtmlParse: false,
       htmlParse,
@@ -338,20 +338,8 @@ export class TemplateGenerator {
 
     let eventAttrs = Object.keys(events).map(type => {
       const event = events[type]
-      const { modifiers = {}} = event
-      const isCapture = /!/.test(type)
-      const realType = type.replace(/^[~|!]/, '')
-      const { stop } = modifiers
-      let mpType = realType
-      let binder = stop ? 'catch' : 'bind'
-      binder = isCapture ? `capture-${binder}` : binder
-
-      if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
-        mpType = 'blur'
-      } else {
-        mpType = mpType === 'click' ? 'tap' : mpType
-      }
-      return `${binder}${mpType}="_pe"`
+      const binder = this.preset.genBind(event, type, tag)
+      return `${binder}="_pe"`
     })
     eventAttrs = eventAttrs.join(' ')
 
@@ -378,12 +366,16 @@ export class TemplateGenerator {
   }
 
   genIf (el): string {
+    const IF = this.directive('if')
+    const ELSE_IF = this.directive('elseif')
+    const ELSE = this.directive('else')
+
     if (el.if) {
-      return ` wx:if="{{ _h[ ${this.genHid(el)} ]._if }}"`
+      return ` ${IF}="{{ _h[ ${this.genHid(el)} ]._if }}"`
     } else if (el.elseif) {
-      return ` wx:elif="{{ _h[ ${this.genHid(el)} ]._if }}"`
+      return ` ${ELSE_IF}="{{ _h[ ${this.genHid(el)} ]._if }}"`
     } else if (el.else) {
-      return ` wx:else`
+      return ` ${ELSE}`
     }
     return ''
   }
@@ -393,12 +385,16 @@ export class TemplateGenerator {
       return this.genForKey(el)
     }
     const { iterator1, alias, _forId } = el
+    const FOR = this.directive('for')
+    const FOR_ITEM = this.directive('forItem')
+    const FOR_INDEX = this.directive('forIndex')
+
     const _for = [
-      ` wx:for="{{ _h[ ${_forId} ].li }}"`,
+      ` ${FOR}="{{ _h[ ${_forId} ].li }}"`,
       this.genForKey(el),
-      alias ? ` wx:for-item="${alias}"` : /* istanbul ignore next */ ''
+      alias ? ` ${FOR_ITEM}="${alias}"` : /* istanbul ignore next */ ''
     ]
-    iterator1 && _for.push(` wx:for-index="${iterator1}"`)
+    iterator1 && _for.push(` ${FOR_INDEX}="${iterator1}"`)
 
     return _for.filter(e => e).join('')
   }
@@ -407,14 +403,18 @@ export class TemplateGenerator {
     if (!el.key) {
       return ''
     }
+    const FOR_KEY = this.directive('forKey')
 
     const keyName = el.key.replace(/^\w*\./, '').replace(/\./g, '_')
-    return keyName ? ` wx:key="${keyName}"` : /* istanbul ignore next */ ''
+    return keyName ? ` ${FOR_KEY}="${keyName}"` : /* istanbul ignore next */ ''
   }
 
   genText (el): string {
     const { text = '' } = el
     if (el.expression) {
+      if (this.target === 'alipay') {
+        return `{{ _h[ ${this.genHid(el)} ].t + "" }}`
+      }
       return `{{ _h[ ${this.genHid(el)} ].t }}`
     }
     return escapeText(text) || /* istanbul ignore next */ ''
@@ -518,6 +518,9 @@ export class TemplateGenerator {
   hasVModel (el): boolean {
     const { attrsList = [] } = el
     return attrsList.some(attr => vmodelReg.test(attr.name))
+  }
+  directive (grammar) {
+    return this.preset.directives[grammar] || ''
   }
 
   genHid (el): string {
