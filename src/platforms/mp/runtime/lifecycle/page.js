@@ -78,6 +78,12 @@ page.init = function init (opt) {
 
       callHook(rootVM, 'onTabItemTap', options)
     },
+    // 支付宝小程序: 标题被点击
+    onTitleClick () {
+      const rootVM = this.rootVM
+
+      callHook(rootVM, 'onTitleClick')
+    },
     _pe (e) {
       this.proxyEvent(e)
     },

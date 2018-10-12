@@ -58,6 +58,12 @@ export function createPage (options, delay) {
   }
 }
 
+let slotCount = -1
+export function slotName (name) {
+  slotCount += 1
+  return `${name}$${slotCount}`
+}
+
 export {
   App,
   Page,

@@ -41,6 +41,10 @@ function wrapMP (code, options = {}) {
 }
 
 function assertCodegen (body, assertTemplate, options = {}, callback) {
+  Object.assign(options, {
+    target: 'alipay'
+  })
+
   const template = wrapHtml(body)
   const output = compileToTemplate(template, options)
 
@@ -178,50 +182,50 @@ describe('compilteToTemplate: wechat', () => {
   it('generate events', () => {
     assertCodegen(
       `<div @click="onClick"></div>`,
-      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
+      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" onTap="_pe"></view>`
     )
     assertCodegen(
       `<scoll-view @scrolltoupper="onScollToUpper"></scoll-view>`,
-      `<scoll-view class="_scoll-view" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindscrolltoupper="_pe"></scoll-view>`
+      `<scoll-view class="_scoll-view" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" onScrollToUpper="_pe"></scoll-view>`
     )
     assertCodegen(
       `<scoll-view @scroll="onScroll" @scrolltoupper="onScollToUpper"></scoll-view>`,
-      `<scoll-view class="_scoll-view" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindscroll="_pe" bindscrolltoupper="_pe"></scoll-view>`
+      `<scoll-view class="_scoll-view" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" onScroll="_pe" onScrollToUpper="_pe"></scoll-view>`
     )
     assertCodegen(
       `<input @change="onInput">`,
-      `<input class="_input" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindblur="_pe"></input>`
+      `<input class="_input" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" onBlur="_pe"></input>`
     )
     assertCodegen(
       `<textarea @change="onInput"></textarea>`,
-      `<textarea class="_textarea" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindblur="_pe"></textarea>`
+      `<textarea class="_textarea" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" onBlur="_pe"></textarea>`
     )
     // .stop
     assertCodegen(
       `<div @click.stop="onClick"></div>`,
-      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" catchtap="_pe"></view>`
+      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" catchTap="_pe"></view>`
     )
-    // .captrue
-    assertCodegen(
-      `<div @click.capture="onClick"></div>`,
-      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" capture-bindtap="_pe"></view>`
-    )
-    // .capture.stop
-    assertCodegen(
-      `<div @click.capture.stop="onClick"></div>`,
-      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" capture-catchtap="_pe"></view>`
-    )
+    // // .captrue
+    // assertCodegen(
+    //   `<div @click.capture="onClick"></div>`,
+    //   `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" capture-bindtap="_pe"></view>`
+    // )
+    // // .capture.stop
+    // assertCodegen(
+    //   `<div @click.capture.stop="onClick"></div>`,
+    //   `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" capture-catchtap="_pe"></view>`
+    // )
     // .once
     assertCodegen(
       `<div @click.once="onClick"></div>`,
-      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
+      `<view class="_div" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" onTap="_pe"></view>`
     )
   })
 
   it('generate v-if', () => {
     assertCodegen(
       `<div v-if="code === 200"></div>`,
-      `<view wx:if="{{ _h[ 1 ]._if }}" class="_div"></view>`
+      `<view a:if="{{ _h[ 1 ]._if }}" class="_div"></view>`
     )
     assertCodegen(
       (
@@ -229,8 +233,8 @@ describe('compilteToTemplate: wechat', () => {
         `<div v-else></div>`
       ),
       (
-        `<view wx:if="{{ _h[ 1 ]._if }}" class="_div"></view>` +
-        `<view wx:else class="_div"></view>`
+        `<view a:if="{{ _h[ 1 ]._if }}" class="_div"></view>` +
+        `<view a:else class="_div"></view>`
       )
     )
     assertCodegen(
@@ -239,8 +243,8 @@ describe('compilteToTemplate: wechat', () => {
         `<div v-else-if="code < 400">{{ code }}</div>`
       ),
       (
-        `<view wx:if="{{ _h[ 1 ]._if }}" class="_div">{{ _h[ 2 ].t }}</view>` +
-        `<view wx:elif="{{ _h[ 3 ]._if }}" class="_div">{{ _h[ 4 ].t }}</view>`
+        `<view a:if="{{ _h[ 1 ]._if }}" class="_div">{{ _h[ 2 ].t }}</view>` +
+        `<view a:elif="{{ _h[ 3 ]._if }}" class="_div">{{ _h[ 4 ].t }}</view>`
       )
     )
     assertCodegen(
@@ -250,9 +254,9 @@ describe('compilteToTemplate: wechat', () => {
         `<div v-else>{{ code }}</div>`
       ),
       (
-        `<view wx:if="{{ _h[ 1 ]._if }}" class="_div">{{ _h[ 2 ].t }}</view>` +
-        `<view wx:elif="{{ _h[ 3 ]._if }}" class="_div">{{ _h[ 4 ].t }}</view>` +
-        `<view wx:else class="_div">{{ _h[ 6 ].t }}</view>`
+        `<view a:if="{{ _h[ 1 ]._if }}" class="_div">{{ _h[ 2 ].t }}</view>` +
+        `<view a:elif="{{ _h[ 3 ]._if }}" class="_div">{{ _h[ 4 ].t }}</view>` +
+        `<view a:else class="_div">{{ _h[ 6 ].t }}</view>`
       )
     )
   })
@@ -266,7 +270,7 @@ describe('compilteToTemplate: wechat', () => {
         `</div>`
       ),
       (
-        `<view wx:for="{{ _h[ 1 ].li }}" wx:for-item="item" wx:for-index="item_i$1" class="_div">` +
+        `<view a:for="{{ _h[ 1 ].li }}" a:for-item="item" a:for-index="item_i$1" class="_div">` +
           `<view class="_div">{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ].t }}</view>` +
         `</view>`
       )
@@ -278,7 +282,7 @@ describe('compilteToTemplate: wechat', () => {
         `</div>`
       ),
       (
-        `<view wx:for="{{ _h[ 1 ].li }}" wx:for-item="item" wx:for-index="index" class="_div">` +
+        `<view a:for="{{ _h[ 1 ].li }}" a:for-item="item" a:for-index="index" class="_div">` +
           `<view class="_div">{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : index) ].t }}</view>` +
         `</view>`
       )
@@ -290,7 +294,7 @@ describe('compilteToTemplate: wechat', () => {
         `</div>`
       ),
       (
-        `<view wx:for="{{ _h[ 1 ].li }}" wx:key="id" wx:for-item="item" wx:for-index="index" class="_div">` +
+        `<view a:for="{{ _h[ 1 ].li }}" a:key="id" a:for-item="item" a:for-index="index" class="_div">` +
           `<view class="_div">{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : index) ].t }}</view>` +
         `</view>`
       )
@@ -304,8 +308,8 @@ describe('compilteToTemplate: wechat', () => {
         `</div>`
       ),
       (
-        `<view wx:for="{{ _h[ 1 ].li }}" wx:key="id" wx:for-item="item" wx:for-index="index" class="_div">` +
-          `<view wx:for="{{ _h[ 2 + '-' + (item_i$2 !== undefined ? item_i$2 : index) ].li }}" wx:key="id" wx:for-item="e" wx:for-index="i" class="_div">` +
+        `<view a:for="{{ _h[ 1 ].li }}" a:key="id" a:for-item="item" a:for-index="index" class="_div">` +
+          `<view a:for="{{ _h[ 2 + '-' + (item_i$2 !== undefined ? item_i$2 : index) ].li }}" a:key="id" a:for-item="e" a:for-index="i" class="_div">` +
             `{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : index) + '-' + (e_i$2 !== undefined ? e_i$2 : i) ].t }}` +
           `</view>` +
         `</view>`
@@ -320,8 +324,8 @@ describe('compilteToTemplate: wechat', () => {
         `</div>`
       ),
       (
-        `<view wx:for="{{ _h[ 1 ].li }}" wx:key="id" wx:for-item="item" wx:for-index="item_i$1" class="_div">` +
-          `<view wx:for="{{ _h[ 2 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ].li }}" wx:key="id" wx:for-item="e" wx:for-index="e_i$1" class="_div">` +
+        `<view a:for="{{ _h[ 1 ].li }}" a:key="id" a:for-item="item" a:for-index="item_i$1" class="_div">` +
+          `<view a:for="{{ _h[ 2 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ].li }}" a:key="id" a:for-item="e" a:for-index="e_i$1" class="_div">` +
             `{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) + '-' + (e_i$2 !== undefined ? e_i$2 : e_i$1) ].t }}` +
           `</view>` +
         `</view>`
@@ -334,8 +338,8 @@ describe('compilteToTemplate: wechat', () => {
         `</template>`
       ),
       (
-        `<block wx:for="{{ _h[ 1 ].li }}" wx:for-item="item" wx:for-index="item_i$1">` +
-          `<view wx:key="id" class="_div">{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ].t }}</view>` +
+        `<block a:for="{{ _h[ 1 ].li }}" a:for-item="item" a:for-index="item_i$1">` +
+          `<view a:key="id" class="_div">{{ _h[ 3 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ].t }}</view>` +
         `</block>`
       )
     )
@@ -372,8 +376,8 @@ describe('compilteToTemplate: wechat', () => {
         `<CompB v-else :message="count"></CompB>`
       ),
       (
-        `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, $t: '' }}" wx:if="{{ _h[ 1 ]._if }}" />` +
-        `<template is="${CompB.name}" data="{{ ...$root[ cp + 1 ], $root, $t: '' }}" wx:else />`
+        `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, $t: '' }}" a:if="{{ _h[ 1 ]._if }}" />` +
+        `<template is="${CompB.name}" data="{{ ...$root[ cp + 1 ], $root, $t: '' }}" a:else />`
       ),
       options
     )
@@ -384,7 +388,7 @@ describe('compilteToTemplate: wechat', () => {
       (
         `<template is="${CompA.name}"` +
           ` data="{{ ...$root[ cp + 0 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ], $root, $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) }}"` +
-          ` wx:for="{{ _h[ 1 ].li }}" wx:for-item="item" wx:for-index="item_i$1"` +
+          ` a:for="{{ _h[ 1 ].li }}" a:for-item="item" a:for-index="item_i$1"` +
         ` />`
       ),
       options
@@ -410,19 +414,19 @@ describe('compilteToTemplate: wechat', () => {
   it('generate v-model', () => {
     assertCodegen(
       `<input v-model="input">`,
-      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" onInput="_pe"></input>`
     )
     assertCodegen(
       `<input value="otherInput" v-model="input">`,
-      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" onInput="_pe"></input>`
     )
     assertCodegen(
       `<input v-model.lazy="input">`,
-      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindblur="_pe"></input>`
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" onBlur="_pe"></input>`
     )
     assertCodegen(
       `<input v-model.number="input">`,
-      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" bindinput="_pe" bindblur="_pe"></input>`
+      `<input class="_input" value="{{ _h[ 1 ].value }}" data-cid="{{ $c || c }}" data-hid="{{ 1 }}" onInput="_pe" onBlur="_pe"></input>`
     )
   })
 
@@ -865,7 +869,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<view wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1" class="_div">` +
+          `<view a:for="{{ _h[ 2 ].li }}" a:for-item="item" a:for-index="item_i$1" class="_div">` +
             `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, $t: ($t || ''), $c: c }}"/>` +
           `</view>` +
         `</view>`
@@ -884,7 +888,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, $t: ($t || ''), $c: c }}" wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1"/>` +
+          `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, $t: ($t || ''), $c: c }}" a:for="{{ _h[ 2 ].li }}" a:for-item="item" a:for-index="item_i$1"/>` +
         `</view>`
       ),
       options
@@ -903,7 +907,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<view wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1" class="_div">` +
+          `<view a:for="{{ _h[ 2 ].li }}" a:for-item="item" a:for-index="item_i$1" class="_div">` +
             `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1), $c: c }}"/>` +
           `</view>` +
         `</view>`
@@ -922,7 +926,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1), $c: c }}" wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1"/>` +
+          `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1), $c: c }}" a:for="{{ _h[ 2 ].li }}" a:for-item="item" a:for-index="item_i$1"/>` +
         `</view>`
       ),
       options
@@ -950,7 +954,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label wx:for="{{ _h[ 4 ].li }}" wx:for-item="item" wx:for-index="item_i$1" class="_span">` +
+              `<label a:for="{{ _h[ 4 ].li }}" a:for-item="item" a:for-index="item_i$1" class="_span">` +
                 `{{ _h[ 5 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) + $t ].t }}` +
               `</label>` +
             `</template>`
@@ -982,7 +986,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label wx:for="{{ _h[ 4 ].li }}" wx:for-item="item" wx:for-index="item_i$1" class="_span">` +
+              `<label a:for="{{ _h[ 4 ].li }}" a:for-item="item" a:for-index="item_i$1" class="_span">` +
                 `{{ _h[ 5 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) + $t ].t }}` +
               `</label>` +
             `</template>`
@@ -1006,7 +1010,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<block wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1">` +
+          `<block a:for="{{ _h[ 2 ].li }}" a:for-item="item" a:for-index="item_i$1">` +
             `<template is="${CompA.name}"` +
               ` data="{{ ...$root[ cp + 0 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ], $root, s_default: '${slot1}', $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) }}"` +
             ` />` +
@@ -1043,7 +1047,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<block wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1">` +
+          `<block a:for="{{ _h[ 2 ].li }}" a:for-item="item" a:for-index="item_i$1">` +
             `<template is="${CompA.name}"` +
               ` data="{{ ...$root[ cp + 0 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ], $root, s_default: '${slot1}', $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) }}"` +
             ` />` +
@@ -1080,7 +1084,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
-          `<block wx:for="{{ _h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i$1">` +
+          `<block a:for="{{ _h[ 2 ].li }}" a:for-item="item" a:for-index="item_i$1">` +
             `<template is="${CompA.name}"` +
               ` data="{{ ...$root[ cp + 0 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) ], $root, s_default: '${slot1}', $t: '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) }}"` +
             ` />` +
@@ -1093,7 +1097,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label wx:for="{{ _h[ 5 ].li }}" wx:for-item="item" wx:for-index="item_i$1" class="_span">` +
+              `<label a:for="{{ _h[ 5 ].li }}" a:for-item="item" a:for-index="item_i$1" class="_span">` +
                 `{{ _h[ 6 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1) + $t ].t }}` +
               `</label>` +
             `</template>`
@@ -1125,7 +1129,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label class="_span" data-cid="{{ $c || c }}" data-hid="{{ 4 + $t }}" bindtap="_pe">` +
+              `<label class="_span" data-cid="{{ $c || c }}" data-hid="{{ 4 + $t }}" onTap="_pe">` +
                 `click` +
               `</label>` +
             `</template>`
