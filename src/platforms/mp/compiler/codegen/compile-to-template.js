@@ -412,9 +412,6 @@ export class TemplateGenerator {
   genText (el): string {
     const { text = '' } = el
     if (el.expression) {
-      if (this.target === 'alipay') {
-        return `{{ _h[ ${this.genHid(el)} ].t + "" }}`
-      }
       return `{{ _h[ ${this.genHid(el)} ].t }}`
     }
     return escapeText(text) || /* istanbul ignore next */ ''
