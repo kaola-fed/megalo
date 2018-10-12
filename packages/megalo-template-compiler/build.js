@@ -4707,6 +4707,35 @@ var createCompiler = createCompilerCreator(function baseCompile (
 
 var prefix = "wx:";
 
+var eventTypeMap$1 = {
+  tap: ['tap', 'click'],
+  touchstart: ['touchstart'],
+  touchmove: ['touchmove'],
+  touchcancel: ['touchcancel'],
+  touchend: ['touchend'],
+  longtap: ['longtap'],
+  input: ['input'],
+  blur: ['change', 'blur'],
+  submit: ['submit'],
+  focus: ['focus'],
+  scrolltoupper: ['scrolltoupper'],
+  scrolltolower: ['scrolltolower'],
+  scroll: ['scroll']
+};
+
+function findEventType (type) {
+  var this$1 = this;
+
+  var res = '';
+  Object.keys(this.eventTypeMap)
+    .forEach(function (mpType) {
+      if (this$1.eventTypeMap[ mpType ].indexOf(type) > -1) {
+        res = mpType;
+      }
+    });
+  return res
+}
+
 var wechat = {
   prefix: prefix,
   ext: "wxml",
@@ -4717,14 +4746,133 @@ var wechat = {
     for: (prefix + "for"),
     forItem: (prefix + "for-item"),
     forIndex: (prefix + "for-index"),
-    key: (prefix + "key"),
+    forKey: (prefix + "key"),
     on: "bind",
-    onstop: "bindcatch"
+    onStop: "catch",
+    capture: "capture"
+  },
+  eventTypeMap: eventTypeMap$1,
+  findEventType: findEventType,
+  genBind: function genBind (event, type, tag) {
+    var modifiers = event.modifiers; if ( modifiers === void 0 ) modifiers = {};
+    var isCapture = /!/.test(type);
+    var realType = type.replace(/^[~|!]/, '');
+    var stop = modifiers.stop;
+    var mpType = realType;
+    var binder = stop ? 'catch' : 'bind';
+    binder = isCapture ? ("capture-" + binder) : binder;
+
+    if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
+      mpType = 'blur';
+    } else {
+      mpType = mpType === 'click' ? 'tap' : mpType;
+    }
+    return ("" + binder + mpType)
+  }
+}
+
+var prefix$1 = "a:";
+
+var eventTypeMap$2 = {
+  Tap: ['tap', 'click'],
+  TouchStart: ['touchstart'],
+  TouchMove: ['touchmove'],
+  TouchCancel: ['touchcancel'],
+  TouchEnd: ['touchend'],
+  LongTap: ['longtap'],
+  Input: ['input'],
+  Change: ['change'],
+  Changing: ['changing'],
+  Blur: ['change', 'blur'],
+  Clear: ['clear'],
+  Submit: ['submit'],
+  Focus: ['focus'],
+  ScrollToUpper: ['scrolltoupper'],
+  ScrollToLower: ['scrolltolower'],
+  Scroll: ['scroll'],
+  TransitionEnd: ['transitionend'],
+  AnimationStart: ['animationstart'],
+  AnimationIteration: ['animationiteration'],
+  AnimationEnd: ['animationend'],
+  Appear: ['appear'],
+  Disappear: ['disappear'],
+  FirstAppear: ['firstappear'],
+  Reset: ['reset'],
+  Confirm: ['confirm'],
+  Load: ['load'],
+  Error: ['error'],
+  MarkerTap: ['markertap'],
+  CalloutTap: ['callouttap'],
+  ControlTap: ['controltap'],
+  RegionChange: ['regionchange'],
+  Messag: ['message'],
+  PlusClick: ['plusclick'],
+  TabClick: ['tabclick'],
+  CardClick: ['cardclick'],
+  GridItemClick: ['griditemclick'],
+  ModalClick: ['ModalClick'],
+  ModalClose: ['ModalClose'],
+  TapMain: ['tapmain'],
+  TapSub: ['tapsub'],
+  CloseTap: ['closetap'],
+  ButtonClick: ['buttonclick'],
+  RightItemClick: ['rightitemclick'],
+  Select: ['select'],
+  MonthChange: ['monthchange']
+
+};
+
+function findEventType$1 (type) {
+  var res = '';
+  Object.keys(eventTypeMap$2)
+    .some(function (mpType) {
+      if (eventTypeMap$2[ mpType ].indexOf(type) > -1) {
+        res = mpType;
+        return true
+      }
+    });
+  return res
+}
+
+var alipay = {
+  prefix: prefix$1,
+  ext: "axml",
+  directives: {
+    if: (prefix$1 + "if"),
+    elseif: (prefix$1 + "elif"),
+    else: (prefix$1 + "else"),
+    for: (prefix$1 + "for"),
+    forItem: (prefix$1 + "for-item"),
+    forIndex: (prefix$1 + "for-index"),
+    forKey: (prefix$1 + "key"),
+    on: "bind",
+    onStop: "catch",
+    capture: "capture"
+  },
+  eventTypeMap: eventTypeMap$2,
+  findEventType: findEventType$1,
+  genBind: function genBind (event, type, tag) {
+    var modifiers = event.modifiers; if ( modifiers === void 0 ) modifiers = {};
+    // const isCapture = /!/.test(type)
+    var realType = type.replace(/^[~|!]/, '');
+    var stop = modifiers.stop;
+    var mpType = findEventType$1(realType) || realType;
+    var binder = stop ? 'catch' : 'on';
+
+    // capture is not supported yet in alipay
+    // binder = isCapture ? `capture-${binder}` : binder
+
+    if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
+      mpType = 'blur';
+    }
+
+    return ("" + binder + (capitalize(mpType)))
   }
 }
 
 var presets = {
-  wechat: wechat
+  wechat: wechat,
+  alipay: alipay
 }
 
 /*  */
@@ -4760,11 +4908,11 @@ var TemplateGenerator = function TemplateGenerator (options) {
 
   Object.assign(this, {
     name: name,
+    target: target,
     scopeId: scopeId,
     imports: imports,
     slots: slots,
     preset: preset,
-    drt: preset.directives,
     warn: warn,
     needHtmlParse: false,
     htmlParse: htmlParse,
@@ -5063,6 +5211,8 @@ TemplateGenerator.prototype.genAttrs = function genAttrs (el) {
 };
 
 TemplateGenerator.prototype.genEvents = function genEvents (el) {
+    var this$1 = this;
+
   var events = el.events;
     var tag = el.tag;
   if (!events) {
@@ -5073,20 +5223,8 @@ TemplateGenerator.prototype.genEvents = function genEvents (el) {
 
   var eventAttrs = Object.keys(events).map(function (type) {
     var event = events[type];
-    var modifiers = event.modifiers; if ( modifiers === void 0 ) modifiers = {};
-    var isCapture = /!/.test(type);
-    var realType = type.replace(/^[~|!]/, '');
-    var stop = modifiers.stop;
-    var mpType = realType;
-    var binder = stop ? 'catch' : 'bind';
-    binder = isCapture ? ("capture-" + binder) : binder;
-
-    if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
-      mpType = 'blur';
-    } else {
-      mpType = mpType === 'click' ? 'tap' : mpType;
-    }
-    return ("" + binder + mpType + "=\"_pe\"")
+    var binder = this$1.preset.genBind(event, type, tag);
+    return (binder + "=\"_pe\"")
   });
   eventAttrs = eventAttrs.join(' ');
 
@@ -5115,12 +5253,16 @@ TemplateGenerator.prototype.genIfConditions = function genIfConditions (el) {
 };
 
 TemplateGenerator.prototype.genIf = function genIf (el) {
+  var IF = this.directive('if');
+  var ELSE_IF = this.directive('elseif');
+  var ELSE = this.directive('else');
+
   if (el.if) {
-    return (" wx:if=\"{{ _h[ " + (this.genHid(el)) + " ]._if }}\"")
+    return (" " + IF + "=\"{{ _h[ " + (this.genHid(el)) + " ]._if }}\"")
   } else if (el.elseif) {
-    return (" wx:elif=\"{{ _h[ " + (this.genHid(el)) + " ]._if }}\"")
+    return (" " + ELSE_IF + "=\"{{ _h[ " + (this.genHid(el)) + " ]._if }}\"")
   } else if (el.else) {
-    return " wx:else"
+    return (" " + ELSE)
   }
   return ''
 };
@@ -5132,12 +5274,16 @@ TemplateGenerator.prototype.genFor = function genFor (el) {
   var iterator1 = el.iterator1;
     var alias = el.alias;
     var _forId = el._forId;
+  var FOR = this.directive('for');
+  var FOR_ITEM = this.directive('forItem');
+  var FOR_INDEX = this.directive('forIndex');
+
   var _for = [
-    (" wx:for=\"{{ _h[ " + _forId + " ].li }}\""),
+    (" " + FOR + "=\"{{ _h[ " + _forId + " ].li }}\""),
     this.genForKey(el),
-    alias ? (" wx:for-item=\"" + alias + "\"") : /* istanbul ignore next */ ''
+    alias ? (" " + FOR_ITEM + "=\"" + alias + "\"") : /* istanbul ignore next */ ''
   ];
-  iterator1 && _for.push((" wx:for-index=\"" + iterator1 + "\""));
+  iterator1 && _for.push((" " + FOR_INDEX + "=\"" + iterator1 + "\""));
 
   return _for.filter(function (e) { return e; }).join('')
 };
@@ -5146,9 +5292,10 @@ TemplateGenerator.prototype.genForKey = function genForKey (el) {
   if (!el.key) {
     return ''
   }
+  var FOR_KEY = this.directive('forKey');
 
   var keyName = el.key.replace(/^\w*\./, '').replace(/\./g, '_');
-  return keyName ? (" wx:key=\"" + keyName + "\"") : /* istanbul ignore next */ ''
+  return keyName ? (" " + FOR_KEY + "=\"" + keyName + "\"") : /* istanbul ignore next */ ''
 };
 
 TemplateGenerator.prototype.genText = function genText (el) {
@@ -5265,6 +5412,9 @@ TemplateGenerator.prototype.isComponent = function isComponent (el) {
 TemplateGenerator.prototype.hasVModel = function hasVModel (el) {
   var attrsList = el.attrsList; if ( attrsList === void 0 ) attrsList = [];
   return attrsList.some(function (attr) { return vmodelReg.test(attr.name); })
+};
+TemplateGenerator.prototype.directive = function directive (grammar) {
+  return this.preset.directives[grammar] || ''
 };
 
 TemplateGenerator.prototype.genHid = function genHid (el) {

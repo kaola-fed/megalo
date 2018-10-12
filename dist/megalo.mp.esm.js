@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.0.3';
+Vue.version = '0.1.0';
 
 function getHid (vm, vnode) {
   if ( vnode === void 0 ) vnode = {};
@@ -5224,6 +5224,12 @@ page.init = function init (opt) {
 
       callHook$1(rootVM, 'onTabItemTap', options);
     },
+    // 支付宝小程序: 标题被点击
+    onTitleClick: function onTitleClick () {
+      var rootVM = this.rootVM;
+
+      callHook$1(rootVM, 'onTitleClick');
+    },
     _pe: function _pe (e) {
       this.proxyEvent(e);
     },
@@ -5237,7 +5243,16 @@ page.init = function init (opt) {
 var app = {};
 
 app.init = function (opt) {
-  App({
+  var _App;
+
+  try {
+    _App = App;
+  } catch (err) {
+    // 支付宝小程序中 App() 必须在 app.js 里调用，且不能调用多次。
+    _App = my.__megalo.App; // eslint-disable-line
+  }
+
+  _App({
     data: {
       $root: {}
     },
