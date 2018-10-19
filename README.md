@@ -184,6 +184,40 @@ CompA template:
 </div>
 ```
 
+### v-html
+
+`v-html` 需要添加插件 `@megalo/vhtml-plugin`，并引入模版解析库 [octoparse](https://github.com/kaola-fed/octoparse)
+
+webpack 配置，指定解析库的路径、和名称。
+
+```javascript
+{
+  // ...
+  target: createMegaloTarget( {
+    // ...
+    htmlParse: {
+      templateName: 'octoParse',
+      src: _.resolve('./node_modules/octoparse/lib/platform/wechat')
+    }
+  } )
+}
+```
+
+页面入口安装插件
+
+```javascript
+import Vue from 'vue'
+import VHtmlPlugin from '@megalo/vhtml-plugin'
+
+Vue.use(VHtmlPlugin)
+```
+
+模版中使用
+
+```html
+<div v-html="'<h1>megalo</h1>'"></div>
+```
+
 ### 事件
 
 除了支持事件绑定以外，还支持部分修饰符
@@ -204,10 +238,6 @@ CompA template:
 #### 动态 component、slot、template
 
 因为需要在构建阶段将所有的模版编译成小程序所需要的模版，因此动态的组件、模版、slot，目前都是不支持的。
-
-#### v-html
-
-正在开发中，敬请期待。
 
 #### v-once
 
