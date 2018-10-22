@@ -1,11 +1,11 @@
 {
   "name": "@megalo/template-compiler",
   "version": "0.1.1",
-  "description": "mpvue template compiler for Vue",
+  "description": "megalo template compiler for Vue",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Meituan-Dianping/mpvue.git"
+    "url": "git+https://github.com/kaola-fed/megalo.git"
   },
   "keywords": [
     "vue",
@@ -14,12 +14,12 @@
     "mp",
     "antmp"
   ],
-  "author": "meituan.com",
+  "author": "kaola-fed",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Meituan-Dianping/mpvue/issues"
+    "url": "https://github.com/kaola-fed/megalo/issues"
   },
-  "homepage": "https://github.com/Meituan-Dianping/mpvue/",
+  "homepage": "https://github.com/kaola-fed/megalo/",
   "dependencies": {
     "he": "^1.1.0",
     "de-indent": "^1.0.2"
