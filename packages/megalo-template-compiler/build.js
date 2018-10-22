@@ -4399,10 +4399,16 @@ var TAG_MAP = {
   'view': 'view',
   'scroll-view': 'scroll-view',
   'swiper': 'swiper',
+  'swiper-item': 'swiper-item',
+  'rich-text': 'rich-text',
+  'movable-view': 'movable-view',
+  'cover-view': 'cover-view',
   'icon': 'icon',
   'text': 'text',
   'checkbox': 'checkbox',
+  'checkbox-group': 'checkbox-group',
   'radio': 'radio',
+  'radio-group': 'radio-group',
   'picker': 'picker',
   'picker-view': 'picker-view',
   'slider': 'slider',
@@ -4411,7 +4417,12 @@ var TAG_MAP = {
   'image': 'image',
   'map': 'map',
   'contact-button': 'contact-button',
-  'block': 'block'
+  'block': 'block',
+  'live-player': 'live-player',
+  'live-pusher': 'live-pusher',
+  'web-view': 'web-view',
+  'open-data': 'open-data',
+  'official-account': 'official-account'
 }
 
 var iteratorUid = createUidFn('item');
