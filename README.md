@@ -26,10 +26,11 @@
 - [工程实例](https://github.com/kaola-fed/megalo-examples)
 
 ## 支持
-  - megalo 经公司内部大项目验证，可在公司和个人项目中使用
-  - 如果你觉得还不错，可点下 [star] 以表支持
-  - 任何技术问题均可在钉钉交流群内讨论 
-  <img alt="Join the chat at dingtalk" src="https://user-images.githubusercontent.com/20720117/47690767-450cbd00-dc2a-11e8-9c59-2547341e0add.jpeg" width="240"/>
+  - megalo 经公司内部大项目验证，可在你的公司或个人项目中使用
+  - 如果你觉得还不错，请点下「star」以表支持
+  - 任何技术问题均可在群内讨论
+  
+  <img alt="Join the chat at dingtalk" src="https://user-images.githubusercontent.com/20720117/47690767-450cbd00-dc2a-11e8-9c59-2547341e0add.jpeg" width="240"/><img alt="Join the chat at wechat" src="https://user-images.githubusercontent.com/20720117/47699822-1bb25800-dc4f-11e8-9607-e30a4dee62de.jpg" width="240"/>
 
 ## 灵感来源
 
