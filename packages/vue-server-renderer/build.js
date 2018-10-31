@@ -672,7 +672,7 @@ if (typeof Set !== 'undefined' && isNative(Set)) {
   _Set = Set;
 } else {
   // a non-standard Set polyfill that only works with primitive keys.
-  _Set = (function () {
+  _Set = /*@__PURE__*/(function () {
     function Set () {
       this.set = Object.create(null);
     }
@@ -2307,7 +2307,7 @@ function createWriteFunction (
 
 var stream = require('stream');
 
-var RenderStream = (function (superclass) {
+var RenderStream = /*@__PURE__*/(function (superclass) {
   function RenderStream (render) {
     var this$1 = this;
 
@@ -7779,7 +7779,7 @@ var Transform = require('stream').Transform;
 
 
 
-var TemplateStream = (function (Transform) {
+var TemplateStream = /*@__PURE__*/(function (Transform) {
   function TemplateStream (
     renderer,
     template,

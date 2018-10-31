@@ -558,7 +558,7 @@ if (typeof Set !== 'undefined' && isNative(Set)) {
   _Set = Set;
 } else {
   // a non-standard Set polyfill that only works with primitive keys.
-  _Set = (function () {
+  _Set = /*@__PURE__*/(function () {
     function Set () {
       this.set = Object.create(null);
     }
@@ -2050,12 +2050,10 @@ function updateComponentListeners (
 function eventsMixin (Vue) {
   var hookRE = /^hook:/;
   Vue.prototype.$on = function (event, fn) {
-    var this$1 = this;
-
     var vm = this;
     if (Array.isArray(event)) {
       for (var i = 0, l = event.length; i < l; i++) {
-        this$1.$on(event[i], fn);
+        this.$on(event[i], fn);
       }
     } else {
       (vm._events[event] || (vm._events[event] = [])).push(fn);
@@ -2080,8 +2078,6 @@ function eventsMixin (Vue) {
   };
 
   Vue.prototype.$off = function (event, fn) {
-    var this$1 = this;
-
     var vm = this;
     // all
     if (!arguments.length) {
@@ -2091,7 +2087,7 @@ function eventsMixin (Vue) {
     // array of events
     if (Array.isArray(event)) {
       for (var i = 0, l = event.length; i < l; i++) {
-        this$1.$off(event[i], fn);
+        this.$off(event[i], fn);
       }
       return vm
     }
@@ -2703,13 +2699,11 @@ Watcher.prototype.addDep = function addDep (dep) {
  * Clean up for dependency collection.
  */
 Watcher.prototype.cleanupDeps = function cleanupDeps () {
-    var this$1 = this;
-
   var i = this.deps.length;
   while (i--) {
-    var dep = this$1.deps[i];
-    if (!this$1.newDepIds.has(dep.id)) {
-      dep.removeSub(this$1);
+    var dep = this.deps[i];
+    if (!this.newDepIds.has(dep.id)) {
+      dep.removeSub(this);
     }
   }
   var tmp = this.depIds;
@@ -2781,11 +2775,9 @@ Watcher.prototype.evaluate = function evaluate () {
  * Depend on all deps collected by this watcher.
  */
 Watcher.prototype.depend = function depend () {
-    var this$1 = this;
-
   var i = this.deps.length;
   while (i--) {
-    this$1.deps[i].depend();
+    this.deps[i].depend();
   }
 };
 
@@ -2793,8 +2785,6 @@ Watcher.prototype.depend = function depend () {
  * Remove self from all dependencies' subscriber list.
  */
 Watcher.prototype.teardown = function teardown () {
-    var this$1 = this;
-
   if (this.active) {
     // remove self from vm's watcher list
     // this is a somewhat expensive operation so we skip it
@@ -2804,7 +2794,7 @@ Watcher.prototype.teardown = function teardown () {
     }
     var i = this.deps.length;
     while (i--) {
-      this$1.deps[i].removeSub(this$1);
+      this.deps[i].removeSub(this);
     }
     this.active = false;
   }
@@ -4280,10 +4270,8 @@ var KeepAlive = {
   },
 
   destroyed: function destroyed () {
-    var this$1 = this;
-
-    for (var key in this$1.cache) {
-      pruneCacheEntry(this$1.cache, key, this$1.keys);
+    for (var key in this.cache) {
+      pruneCacheEntry(this.cache, key, this.keys);
     }
   },
 
@@ -4406,7 +4394,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.1.2';
+Vue.version = '0.1.3-1';
 
 function getHid (vm, vnode) {
   if ( vnode === void 0 ) vnode = {};
@@ -4945,7 +4933,6 @@ function markComponents (nodes, parentUId) {
 }
 
 function renderIf () {
-  var this$1 = this;
   var args = [], len$1 = arguments.length;
   while ( len$1-- ) args[ len$1 ] = arguments[ len$1 ];
 
@@ -4953,7 +4940,7 @@ function renderIf () {
     var cond = args[i];
     var _hid = args[i + 1];
     var cloneVnode = {
-      context: this$1,
+      context: this,
       data: {
         attrs: { _hid: _hid }
       }
@@ -6831,10 +6818,11 @@ var oInit = Vue.prototype._init;
 Vue.prototype._init = function (options) {
   var $mp = options.$mp;
   var parent = options.parent; if ( parent === void 0 ) parent = {};
+  var mpType = options.mpType; if ( mpType === void 0 ) mpType = '';
   $mp = $mp || parent.$mp;
-  if (!$mp) {
+  if (!$mp && mpType) {
     initMP(this, options);
-  } else {
+  } else if ($mp) {
     delete options.$mp;
     this.$mp = $mp;
     oInit.call(this, options);
@@ -6849,6 +6837,9 @@ Vue.prototype._init = function (options) {
       before: beforeCreateElement
     });
 
+    return this
+  } else {
+    oInit.call(this, options);
     return this
   }
 };

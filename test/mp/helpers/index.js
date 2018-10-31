@@ -1,5 +1,6 @@
 import { App, Page } from './mp-runtime'
 import Vue from './entry-runtime-with-compiler'
+import vuex from 'vuex'
 
 export function initMPEnvironment () {
   global.Page = Page
@@ -30,6 +31,14 @@ export function createPage (options, delay) {
     shouldCloseOnEnd = true
   } catch (e) {}
 
+  if (options.vuex) {
+    Vue.use(vuex)
+    Vue.prototype.$store = new vuex.Store({
+      state: {
+        time: Date.now()
+      }
+    })
+  }
   options = Object.assign({}, options, {
     mpType: 'page'
   })
@@ -39,7 +48,6 @@ export function createPage (options, delay) {
   new Vue(options).$mount()
   const page = Page.createInstance()
   page._init()
-
   // setData with throttle with leading delay
   try {
     jasmine.clock().tick(delay || 1000)
