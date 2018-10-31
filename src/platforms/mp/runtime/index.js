@@ -11,9 +11,9 @@ import { mountComponent } from 'core/instance/lifecycle'
 import { initMP } from 'mp/runtime/lifecycle/index'
 import { updateMPData, initVMToMP, afterRenderSlot, renderIf, afterRenderList } from 'mp/runtime/instance/index'
 import { createTextVNode, beforeCreateElement } from 'mp/runtime/vdom/index'
-import { aop } from 'mp/util/index'
 
 import {
+  aop,
   mustUseProp,
   isReservedTag,
   isReservedAttr,
@@ -50,11 +50,11 @@ Vue.prototype._l = aop(Vue.prototype._l, {
 const oInit = Vue.prototype._init
 Vue.prototype._init = function (options) {
   let { $mp } = options
-  const { parent = {}} = options
+  const { parent = {}, mpType = '' } = options
   $mp = $mp || parent.$mp
-  if (!$mp) {
+  if (!$mp && mpType) {
     initMP(this, options)
-  } else {
+  } else if ($mp) {
     delete options.$mp
     this.$mp = $mp
     oInit.call(this, options)
@@ -69,6 +69,9 @@ Vue.prototype._init = function (options) {
       before: beforeCreateElement
     })
 
+    return this
+  } else {
+    oInit.call(this, options)
     return this
   }
 }
