@@ -1,7 +1,18 @@
 import { isDef } from 'core/util/index'
 import { getVMId, getHid } from './helper'
-import { throttle } from 'mp/util/throttle'
-import { Buffer } from 'mp/util/buffer'
+import {
+  throttle,
+  getValue,
+  deepEqual,
+  Buffer,
+  VM_ID_SEP,
+  VM_ID_VAR,
+  VM_ID_PREFIX,
+  ROOT_DATA_VAR,
+  HOLDER_VAR,
+  SLOT_CONTEXT_ID_VAR,
+  HOLDER_TYPE_VARS
+} from 'mp/util/index'
 
 function isEmptyObj (obj = {}) {
   return Object.keys(obj).length === 0
@@ -12,36 +23,52 @@ export function initVMToMP (vm) {
   const cid = getVMId(vm)
   const info = {
     cid,
-    cpath: `${cid},`
+    cpath: `${cid}${VM_ID_SEP}`
   }
 
+  const prefix = `${ROOT_DATA_VAR}.${cid}`
+
   vm.$mp.update({
-    [`$root.${cid}.c`]: info.cid,
-    [`$root.${cid}.cp`]: info.cpath
+    [`${prefix}.${VM_ID_VAR}`]: info.cid,
+    [`${prefix}.${VM_ID_PREFIX}`]: info.cpath
   })
 }
 
 export function updateSlotId (vm, sid) {
   vm = vm || this
   const vmId = getVMId(vm)
+  const dataPaths = [ROOT_DATA_VAR, vmId, SLOT_CONTEXT_ID_VAR]
+  const curValue = getValue(vm.$mp.page.data, dataPaths)
+  const dataPathStr = dataPaths.join('.')
 
   /* istanbul ignore else */
-  if (isDef(sid)) {
+  if (isDef(sid) && curValue !== sid) {
     vm.$mp.update({
-      [`$root.${vmId}.s`]: sid
+      [dataPathStr]: sid
     })
   }
 }
 
-export function updateMPData (type = 't', data, vnode) {
+export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
   const vm = this
   const vmId = getVMId(vm)
   const hid = getHid(vm, vnode)
+  const dataPaths = [
+    ROOT_DATA_VAR,
+    vmId,
+    HOLDER_VAR,
+    hid,
+    type
+  ]
+  const dataPathStr = dataPaths.join('.')
+
+  const curValue = getValue(vm.$mp.page.data, dataPaths)
+  const isDeepEqual = deepEqual(curValue, data)
 
   /* istanbul ignore else */
-  if (isDef(hid)) {
+  if (isDef(hid) && !isDeepEqual) {
     vm.$mp.update({
-      [`$root.${vmId}._h.${hid}.${type}`]: data
+      [dataPathStr]: data
     })
   }
 }
@@ -62,7 +89,7 @@ export function createUpdateFn (page) {
   }
 }
 
-export function updateVnodeToMP (vnode, key = 't', value) {
+export function updateVnodeToMP (vnode, key = HOLDER_TYPE_VARS.text, value) {
   const { context, slotContext } = vnode
   const realContext = slotContext || context
   realContext && realContext.$updateMPData(key, value, vnode)
@@ -72,3 +99,4 @@ export function updateVnodeToMP (vnode, key = 't', value) {
     console.warn('update text with no context', key, value, vnode)
   }
 }
+

@@ -5,13 +5,22 @@ import { cloneAST, removeQuotes, uid, escapeText } from '../util'
 import presets from '../../util/presets/index'
 import { baseWarn } from 'compiler/helpers'
 import { capitalize, camelize } from 'shared/util'
-// import { eventTypeMap } from 'mp/util/index'
+import {
+  notEmpty,
+  ROOT_DATA_VAR,
+  LIST_TAIL_SEPS,
+  HOLDER_VAR,
+  FOR_TAIL_VAR,
+  VM_ID_PREFIX,
+  HOLDER_TYPE_VARS
+} from 'mp/util/index'
 
 const vbindReg = /^(v-bind)?:/
 const vonReg = /^v-on:|@/
 const vmodelReg = /^v-model/
+const listTailReg = /'[-|_]'/
 
-const notEmpty = e => e
+let sep = `'${LIST_TAIL_SEPS.wechat}'`
 
 export function compileToTemplate (ast, options = {}): string {
   const templateGenerator = new TemplateGenerator(options)
@@ -32,6 +41,7 @@ export class TemplateGenerator {
     } = options
 
     const preset = presets[target]
+    sep = LIST_TAIL_SEPS[target] ? `'${LIST_TAIL_SEPS[target]}'` : sep
 
     Object.assign(this, {
       name,
@@ -82,7 +92,21 @@ export class TemplateGenerator {
       .join('')
   }
 
+  visit (el) {
+    const { visitors = {}} = this.preset
+
+    if (visitors.all) {
+      visitors.all(el)
+    }
+
+    if (visitors[el.tag]) {
+      visitors[el.tag](el)
+    }
+  }
+
   genElement (el): string {
+    this.visit(el)
+
     if (el.ifConditions && !el.ifConditionsGenerated) {
       return this.genIfConditions(el)
     } else if (this.isVHtml(el)) {
@@ -106,20 +130,20 @@ export class TemplateGenerator {
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
-    let tail = `, $t: ''`
-    // passing parent for tail to slot inside v-for
-    if (/'-'/.test(_cid)) {
-      tail = `, $t: ${extractHidTail(_cid)}`
+    let tail = `, ${FOR_TAIL_VAR}: ''`
+    // passing parent v-for tail to slot inside v-for
+    if (listTailReg.test(_cid)) {
+      tail = `, ${FOR_TAIL_VAR}: ${extractHidTail(_cid)}`
     }
     const data = [
-      `...$root[ cp + ${_cid} ]`,
-      `$root`,
+      `...${ROOT_DATA_VAR}[ ${VM_ID_PREFIX} + ${_cid} ]`,
+      `${ROOT_DATA_VAR}`,
       ...slotsNames
     ].join(', ')
 
     const attrs = [
       ` is="${compName}"`,
-      ` data="{{ ${data}${tail} }}"`,
+      ` data="` + this.wrapTemplateData(`${data}${tail}`) + `"`,
       this.genIf(el),
       this.genFor(el)
     ].filter(notEmpty).join('')
@@ -242,7 +266,7 @@ export class TemplateGenerator {
       return children
     }
 
-    const { tag } = el
+    const { tag, isSelfCloseTag } = el
     const mpTag = TAG_MAP[tag] || tag
     const attrs = this.isTemplate(el) ? [] : [
       this.genVShow(el),
@@ -257,9 +281,9 @@ export class TemplateGenerator {
       this.genIf(el),
       this.genFor(el),
       ...attrs
-    ].join('')}>`
+    ].join('')}` + (isSelfCloseTag ? `/>` : `>`)
 
-    const endTag = `</${mpTag}>`
+    const endTag = isSelfCloseTag ? `` : `</${mpTag}>`
 
     return [startTag, children, endTag].join('')
   }
@@ -273,7 +297,7 @@ export class TemplateGenerator {
       klass.push(staticClass)
     }
     if (classBinding) {
-      klass.push(`{{ _h[ ${this.genHid(el)} ].cl }}`)
+      klass.push(`{{ ${this.genHolder(el, 'class')} }}`)
     }
     // scoped id class
     if (klass.length) {
@@ -293,9 +317,9 @@ export class TemplateGenerator {
       style.push(staticStyle)
     }
     if (styleBinding) {
-      style.push(`{{ _h[ ${this.genHid(el)} ].st }}`)
+      style.push(`{{ ${this.genHolder(el, 'style')} }}`)
     }
-    style = style.filter(e => e).join('; ')
+    style = style.filter(notEmpty).join('; ')
     return style ? ` style="${style}"` : ''
   }
 
@@ -304,7 +328,7 @@ export class TemplateGenerator {
     if (!attrsMap['v-show']) {
       return ''
     }
-    return ` hidden="{{ _h[ ${this.genHid(el)} ].vs }}"`
+    return ` hidden="{{ ${this.genHolder(el, 'vshow')} }}"`
   }
 
   genAttrs (el): string {
@@ -317,14 +341,14 @@ export class TemplateGenerator {
         return ''
       } else if (vbindReg.test(name)) {
         const realName = name.replace(vbindReg, '')
-        return `${realName}="{{ _h[ ${this.genHid(el)} ][ '${realName}' ] }}"`
+        return `${realName}="{{ ${HOLDER_VAR}[ ${this.genHid(el)} ][ '${realName}' ] }}"`
       } else if (vmodelReg.test(name)) {
-        return `value="{{ _h[ ${this.genHid(el)} ].value }}"`
+        return `value="{{ ${this.genHolder(el, 'value')} }}"`
       } else {
         return `${name}="${value}"`
       }
     })
-    attrs = attrs.filter(e => e).join(' ')
+    attrs = attrs.filter(notEmpty).join(' ')
     return attrs ? ` ${attrs}` : ''
   }
 
@@ -344,10 +368,10 @@ export class TemplateGenerator {
     eventAttrs = eventAttrs.join(' ')
 
     /**
-     * when the element is in a slot, it will recieve "$c" as the actual component instance id
+     * when the element is in a slot, it will recieve "_c" as the actual component instance id
      * othewise, using the current scope which usually the parent component in the template
      */
-    return ` data-cid="{{ $c || ${cid} }}" data-hid="{{ ${this.genHid(el)} }}" ${eventAttrs}`
+    return ` data-cid="{{ _c || ${cid} }}" data-hid="{{ ${this.genHid(el)} }}" ${eventAttrs}`
   }
 
   genIfConditions (el): string {
@@ -361,7 +385,7 @@ export class TemplateGenerator {
         const { block } = cond
         return this.genElement(block)
       })
-      .filter(e => e)
+      .filter(notEmpty)
       .join('')
   }
 
@@ -371,9 +395,9 @@ export class TemplateGenerator {
     const ELSE = this.directive('else')
 
     if (el.if) {
-      return ` ${IF}="{{ _h[ ${this.genHid(el)} ]._if }}"`
+      return ` ${IF}="{{ ${this.genHolder(el, 'if')} }}"`
     } else if (el.elseif) {
-      return ` ${ELSE_IF}="{{ _h[ ${this.genHid(el)} ]._if }}"`
+      return ` ${ELSE_IF}="{{ ${this.genHolder(el, 'if')} }}"`
     } else if (el.else) {
       return ` ${ELSE}`
     }
@@ -390,13 +414,13 @@ export class TemplateGenerator {
     const FOR_INDEX = this.directive('forIndex')
 
     const _for = [
-      ` ${FOR}="{{ _h[ ${_forId} ].li }}"`,
+      ` ${FOR}="{{ ${this.genHolder(_forId, 'for')} }}"`,
       this.genForKey(el),
       alias ? ` ${FOR_ITEM}="${alias}"` : /* istanbul ignore next */ ''
     ]
     iterator1 && _for.push(` ${FOR_INDEX}="${iterator1}"`)
 
-    return _for.filter(e => e).join('')
+    return _for.filter(notEmpty).join('')
   }
 
   genForKey (el): string {
@@ -412,7 +436,7 @@ export class TemplateGenerator {
   genText (el): string {
     const { text = '' } = el
     if (el.expression) {
-      return `{{ _h[ ${this.genHid(el)} ].t }}`
+      return `{{ ${this.genHolder(el, 'text')} }}`
     }
     return escapeText(text) || /* istanbul ignore next */ ''
   }
@@ -424,19 +448,46 @@ export class TemplateGenerator {
     const defaultSlotName = `${slotName}$${uid()}`
     const defaultSlotBody = this.genChildren(el)
     const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : /* istanbul ignore next */ ''
-    let tail = `, $t: ($t || '')`
+    let tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '')`
     // sloped-slot inside v-for
-    if (el.hasBindings && /'-'/.test(_hid)) {
-      tail = `, $t: ${extractHidTail(_hid)}`
+    if (el.hasBindings && listTailReg.test(_hid)) {
+      tail = `, ${FOR_TAIL_VAR}: ${extractHidTail(_hid)}`
     }
 
     /**
-     * use "$c" to passing the actual vdom host component instance id to slot template
+     * use "_c" to passing the actual vdom host component instance id to slot template
      *      because the vdom is actually stored in the component's _vnodes
      *      event hanlders searching depends on this id
      */
 
-    return `${defaultSlot}<template is="{{ s_${slotName} || '${defaultSlotName}' }}" data="{{ ...$root[ s ], $root${tail}, $c: c }}"${this.genFor(el)}/>`
+    if (this.target === 'swan') {
+      return [
+        // if
+        `${defaultSlot}`,
+        `<block s-if="s_${slotName}">`,
+        `<template is="{{ s_${slotName} }}" `,
+        `data="`,
+        this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
+        `"${this.genFor(el)}/>`,
+        `</block>`,
+
+        // else use default slot snippet
+        `<block s-else>`,
+        `<template is="{{ '${defaultSlotName}' }}" `,
+        `data="`,
+        this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
+        `"${this.genFor(el)}/>`,
+        `</block>`
+      ].join('')
+    }
+
+    return [
+      `${defaultSlot}`,
+      `<template is="{{ s_${slotName} || '${defaultSlotName}' }}" `,
+      `data="`,
+      this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
+      `"${this.genFor(el)}/>`
+    ].join('')
   }
 
   genChildren (el): string {
@@ -444,6 +495,15 @@ export class TemplateGenerator {
       return ''
     }
     return el.children.map(child => this.genElement(child)).join('')
+  }
+
+  genHolder (el, type): string {
+    const varName = HOLDER_TYPE_VARS[type]
+    const hid = typeof el === 'string' ? el : this.genHid(el)
+    if (!varName) {
+      throw new Error(`${type} holder HOLDER_TYPE_VARS not found`)
+    }
+    return `${HOLDER_VAR}[ ${hid} ].${varName}`
   }
 
   /* istanbul ignore next */
@@ -475,7 +535,7 @@ export class TemplateGenerator {
     return `<template is="${htmlParse.templateName}"${[
       this.genIf(el),
       this.genFor(el)
-    ].join('')} data="{{ nodes: _h[${this.genHid(el)}].html }}"/>`
+    ].join('')} data="{{ nodes: ${this.genHolder(el, 'vhtml')} }}"/>`
   }
 
   isVHtml (el = {}): boolean {
@@ -523,7 +583,7 @@ export class TemplateGenerator {
   genHid (el): string {
     let tail = ''
     if (this.isInSlotSnippet()) {
-      tail = ` + $t`
+      tail = ` + ${FOR_TAIL_VAR}`
     }
     return `${el._hid}${tail}`
   }
@@ -538,13 +598,17 @@ export class TemplateGenerator {
   isInSlotSnippet () {
     return this.slotSnippet > 0
   }
+
+  wrapTemplateData (str) {
+    return this.target === 'swan' ? `{{{ ${str} }}}` : `{{ ${str} }}`
+  }
 }
 
 function extractHidTail (hid = ''): string {
-  const delimiter = `+ '-' +`
+  const delimiter = `+ ${sep} +`
   let parts = hid.split(delimiter)
   parts = parts.slice(1).map(s => s.trim())
-  return `'-' + ${parts.join(delimiter)}`
+  return `${sep} + ${parts.join(delimiter)}`
 }
 
 function pascalize (str = ''): string {

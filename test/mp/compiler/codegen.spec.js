@@ -117,12 +117,12 @@ describe('codegen', () => {
   it('generate v-for directive', () => {
     assertCodegen(
       '<div><li v-for="item in items" :key="item.uid"></li></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},_l((items),function(item,item_i$1,item_i$2){return _c('li',{key:item.uid,attrs:{"_hid":1 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1),"_fk":"uid"}})},1,_self))}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},_l((items),function(item,item_i1,item_i2){return _c('li',{key:item.uid,attrs:{"_hid":1 + '-' + (item_i2 !== undefined ? item_i2 : item_i1),"_fk":"uid"}})},1,_self))}`
     )
     // iterator syntax
     assertCodegen(
       '<div><li v-for="(item, i) in items"></li></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},_l((items),function(item,i,item_i$2){return _c('li',{attrs:{"_hid":1 + '-' + (item_i$2 !== undefined ? item_i$2 : i)}})},1,_self))}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},_l((items),function(item,i,item_i2){return _c('li',{attrs:{"_hid":1 + '-' + (item_i2 !== undefined ? item_i2 : i)}})},1,_self))}`
     )
     // TODO: support for object
     // assertCodegen(
@@ -143,7 +143,7 @@ describe('codegen', () => {
     // v-for with extra element
     assertCodegen(
       '<div><p></p><li v-for="item in items"></li></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},[_c('p',{attrs:{"_hid":1}}),_l((items),function(item,item_i$1,item_i$2){return _c('li',{attrs:{"_hid":2 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1)}})},2,_self)],1)}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},[_c('p',{attrs:{"_hid":1}}),_l((items),function(item,item_i1,item_i2){return _c('li',{attrs:{"_hid":2 + '-' + (item_i2 !== undefined ? item_i2 : item_i1)}})},2,_self)],1)}`
     )
   })
 
@@ -639,7 +639,7 @@ describe('codegen', () => {
     // normalize type: 2
     assertCodegen(
       '<div><child></child><template v-for="item in list">{{ item }}</template></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},[_c('child',{attrs:{"_hid":1,"_cid":0}}),_l((list),function(item,item_i$1,item_i$2){return [_v(_s(item),4 + '-' + (item_i$2 !== undefined ? item_i$2 : item_i$1))]},3,_self)],1)}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},[_c('child',{attrs:{"_hid":1,"_cid":0}}),_l((list),function(item,item_i1,item_i2){return [_v(_s(item),4 + '-' + (item_i2 !== undefined ? item_i2 : item_i1))]},3,_self)],1)}`
     )
   })
 

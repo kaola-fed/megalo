@@ -1,5 +1,6 @@
 import TAG_MAP from './tag-map'
 import { Stack, createUidFn } from './util'
+import { LIST_TAIL_SEPS } from 'mp/util/index'
 
 const iteratorUid = createUidFn('item')
 
@@ -9,9 +10,14 @@ const TYPE = {
   STATIC_TEXT: 3
 }
 
-export function mpify (node) {
+let sep = `'${LIST_TAIL_SEPS.wechat}'`
+
+export function mpify (node, options) {
+  const { target = 'wechat' } = options
+  sep = LIST_TAIL_SEPS[target] ? `'${LIST_TAIL_SEPS[target]}'` : sep
   const state = new State({
-    rootNode: node
+    rootNode: node,
+    target
   })
   walk(node, state)
 }
@@ -45,7 +51,7 @@ function walkFor (node, state) {
   const prefix = /{/.test(alias) ? `${iteratorUid()}` : alias
   // create default iterator1, iterator2 for xml listing,
   // which is needed for _hid generating
-  const { iterator1 = `${prefix}_i$1`, iterator2 = `${prefix}_i$2` } = node
+  const { iterator1 = `${prefix}_i1`, iterator2 = `${prefix}_i2` } = node
   Object.assign(node, {
     mpForWalked: true,
     iterator1,
@@ -69,7 +75,7 @@ function walkFor (node, state) {
 
   const { _hid } = node
   // extract last index
-  const forId = `${_hid}`.split(`+ '-' +`).slice(0, -1).join(`+ '-' +`).trim()
+  const forId = `${_hid}`.split(`+ ${sep} +`).slice(0, -1).join(`+ ${sep} +`).trim()
   node._forId = forId
 
   walk(node, state)
@@ -191,6 +197,7 @@ class State {
     this.compCount = -1
     this.elemCount = -1
     this.compStack = new Stack()
+    this.sep = options.sep || '-'
     // this.listStates = new Stack()
     // init a root component state, like page
     this.pushComp()
@@ -243,8 +250,8 @@ class State {
     const currentListState = this.getCurrentListState()
     let _hid = `${this.getCurrentElemIndex()}`
     if (currentListState) {
-      const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + '-' + `)
-      _hid = `${_hid} + '-' + ${listTail}`
+      const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
+      _hid = `${_hid} + ${sep} + ${listTail}`
     }
     return `${_hid}`
   }
@@ -253,8 +260,8 @@ class State {
     const currentListState = this.getCurrentListState()
     let _cid = `${this.getCurrentCompIndex()}`
     if (currentListState) {
-      const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + '-' + `)
-      _cid = `${_cid} + '-' + ${listTail}`
+      const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
+      _cid = `${_cid} + ${sep} + ${listTail}`
     }
     return `${_cid}`
   }

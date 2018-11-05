@@ -3,7 +3,7 @@ import { createPage, getPageData } from '../../helpers'
 describe('Directive v-for', () => {
   function assertList (page, expectedList = [], hid = '2') {
     expectedList.forEach((expected, i) => {
-      expect(getPageData(page, '0')._h[`${hid}-${i}`].t).toEqual(expected)
+      expect(getPageData(page, '0').h[`${hid}-${i}`].t).toEqual(expected)
     })
   }
 
@@ -27,25 +27,25 @@ describe('Directive v-for', () => {
       }
     })
 
-    expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+    expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
     assertList(page, ['a', 'b', 'c'])
     vm.$set(vm.list, 0, 'd')
     waitForUpdate(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['d', 'b', 'c'])
       vm.list.push('d')
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2, 3])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2, 3])
       assertList(page, ['d', 'b', 'c', 'd'])
       vm.list.splice(1, 2)
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1])
       assertList(page, ['d', 'd'])
       // TODO: try remove spliced items
       assertList(page, ['d', 'd', 'c', 'd'])
       vm.list = ['x', 'y']
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1])
       assertList(page, ['x', 'y'])
       // TODO: try remove spliced items
       assertList(page, ['x', 'y', 'c', 'd'])
@@ -64,25 +64,25 @@ describe('Directive v-for', () => {
       }
     })
 
-    expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+    expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
     assertList(page, ['0-a', '1-b', '2-c'])
     vm.$set(vm.list, 0, 'd')
     waitForUpdate(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['0-d', '1-b', '2-c'])
       vm.list.push('d')
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2, 3])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2, 3])
       assertList(page, ['0-d', '1-b', '2-c', '3-d'])
       vm.list.splice(1, 2)
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1])
       assertList(page, ['0-d', '1-d'])
       // TODO: try remove spliced items
       assertList(page, ['0-d', '1-d', '2-c', '3-d'])
       vm.list = ['x', 'y']
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1])
       assertList(page, ['0-x', '1-y'])
       // TODO: try remove spliced items
       assertList(page, ['0-x', '1-y', '2-c', '3-d'])
@@ -104,7 +104,7 @@ describe('Directive v-for', () => {
         ]
       }
     })
-    expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+    expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
     assertList(page, ['a', 'b', 'c'])
 
     vm.$set(vm.list, 0, { value: 'd' })
@@ -112,21 +112,21 @@ describe('Directive v-for', () => {
       assertList(page, ['d', 'b', 'c'])
       vm.list[0].value = 'e'
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['e', 'b', 'c'])
       vm.list.push({})
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2, 3])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2, 3])
       assertList(page, ['e', 'b', 'c', ''])
       vm.list.splice(1, 2)
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1])
       assertList(page, ['e', ''])
       // TODO: try remove spliced items
       assertList(page, ['e', '', 'c', ''])
       vm.list = [{ value: 'x' }, { value: 'y' }]
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1])
       assertList(page, ['x', 'y'])
       // TODO: try remove spliced items
       assertList(page, ['x', 'y', 'c', ''])
@@ -149,30 +149,30 @@ describe('Directive v-for', () => {
       }
     })
 
-    expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+    expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
     assertList(page, ['0-a', '1-b', '2-c'])
 
     vm.$set(vm.list, 0, { value: 'd' })
     waitForUpdate(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['0-d', '1-b', '2-c'])
       vm.list[0].value = 'e'
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['0-e', '1-b', '2-c'])
       vm.list.push({})
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2, 3])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2, 3])
       assertList(page, ['0-e', '1-b', '2-c', '3-'])
       vm.list.splice(1, 2)
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1])
       assertList(page, ['0-e', '1-', '2-c', '3-'])
       // TODO: try remove spliced items
       assertList(page, ['0-e', '1-', '2-c', '3-'])
       vm.list = [{ value: 'x' }, { value: 'y' }]
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1])
       assertList(page, ['0-x', '1-y'])
       // TODO: try remove spliced items
       assertList(page, ['0-x', '1-y', '2-c', '3-'])
@@ -191,19 +191,19 @@ describe('Directive v-for', () => {
       }
     })
 
-    expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+    expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
     assertList(page, ['0', '1', '2'])
     vm.obj.a = 3
     waitForUpdate(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['3', '1', '2'])
       vm.$set(vm.obj, 'd', 4)
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2, 3])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2, 3])
       assertList(page, ['3', '1', '2', '4'])
       vm.$delete(vm.obj, 'a')
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['1', '2', '4'])
       // TODO: remove spliced items
       assertList(page, ['1', '2', '4', '4'])
@@ -222,19 +222,19 @@ describe('Directive v-for', () => {
       }
     })
 
-    expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+    expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
     assertList(page, ['0-a', '1-b', '2-c'])
     vm.obj.a = 3
     waitForUpdate(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['3-a', '1-b', '2-c'])
       vm.$set(vm.obj, 'd', 4)
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2, 3])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2, 3])
       assertList(page, ['3-a', '1-b', '2-c', '4-d'])
       vm.$delete(vm.obj, 'a')
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['1-b', '2-c', '4-d'])
       // TODO: remove spliced items
       assertList(page, ['1-b', '2-c', '4-d', '4-d'])
@@ -253,19 +253,19 @@ describe('Directive v-for', () => {
       }
     })
 
-    expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+    expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
     assertList(page, ['0-a-0', '1-b-1', '2-c-2'])
     vm.obj.a = 3
     waitForUpdate(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['3-a-0', '1-b-1', '2-c-2'])
       vm.$set(vm.obj, 'd', 4)
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2, 3])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2, 3])
       assertList(page, ['3-a-0', '1-b-1', '2-c-2', '4-d-3'])
       vm.$delete(vm.obj, 'a')
     }).then(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['1-b-0', '2-c-1', '4-d-2', '4-d-3'])
     }).then(done)
   })
@@ -280,11 +280,11 @@ describe('Directive v-for', () => {
       data: { a: 0, b: 1, c: 2 }
     })
 
-    expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+    expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
     assertList(page, ['0-a', '1-b', '2-c'])
     vm.a = 3
     waitForUpdate(() => {
-      expect(getPageData(page, '0')._h['1'].li).toEqual([0, 1, 2])
+      expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['3-a', '1-b', '2-c'])
     }).then(done)
   })
@@ -298,15 +298,15 @@ describe('Directive v-for', () => {
     })
 
     const pageData = getPageData(page, '0')
-    expect(pageData._h['1'].li).toEqual([0, 1, 2])
+    expect(pageData.h['1'].li).toEqual([0, 1, 2])
 
-    expect(pageData._h['1-0']._if).toBeTruthy()
-    expect(pageData._h['2-0'].t).toBe('1')
+    expect(pageData.h['1-0']._if).toBeTruthy()
+    expect(pageData.h['2-0'].t).toBe('1')
 
-    expect(pageData._h['1-1']._if).toBeTruthy()
-    expect(pageData._h['2-1'].t).toBe('2')
+    expect(pageData.h['1-1']._if).toBeTruthy()
+    expect(pageData.h['2-1'].t).toBe('2')
 
-    expect(pageData._h['1-2']._if).toBe(false)
+    expect(pageData.h['1-2']._if).toBe(false)
   })
 
   it('check priorities: v-if after v-for', function () {
@@ -318,15 +318,15 @@ describe('Directive v-for', () => {
     })
 
     const pageData = getPageData(page, '0')
-    expect(pageData._h['1'].li).toEqual([0, 1, 2])
+    expect(pageData.h['1'].li).toEqual([0, 1, 2])
 
-    expect(pageData._h['1-0']._if).toBeTruthy()
-    expect(pageData._h['2-0'].t).toBe('1')
+    expect(pageData.h['1-0']._if).toBeTruthy()
+    expect(pageData.h['2-0'].t).toBe('1')
 
-    expect(pageData._h['1-1']._if).toBeTruthy()
-    expect(pageData._h['2-1'].t).toBe('2')
+    expect(pageData.h['1-1']._if).toBeTruthy()
+    expect(pageData.h['2-1'].t).toBe('2')
 
-    expect(pageData._h['1-2']._if).toBe(false)
+    expect(pageData.h['1-2']._if).toBe(false)
   })
 
   it('range v-for', () => {
@@ -335,7 +335,7 @@ describe('Directive v-for', () => {
     })
 
     const pageData = getPageData(page, '0')
-    expect(pageData._h['1'].li).toEqual([0, 1, 2])
+    expect(pageData.h['1'].li).toEqual([0, 1, 2])
     assertList(page, ['1', '2', '3'])
   })
 
@@ -352,11 +352,11 @@ describe('Directive v-for', () => {
     })
 
     const pageData = getPageData(page, '0')
-    expect(pageData._h['1'].li).toEqual([0, 1, 2])
+    expect(pageData.h['1'].li).toEqual([0, 1, 2])
     assertList(page, ['a', 'b', 'c'])
     vm.items.reverse()
     waitForUpdate(() => {
-      expect(pageData._h['1'].li).toEqual([0, 1, 2])
+      expect(pageData.h['1'].li).toEqual([0, 1, 2])
       assertList(page, ['c', 'b', 'a'])
     }).then(done)
   })
@@ -374,11 +374,11 @@ describe('Directive v-for', () => {
     })
 
     const pageData = getPageData(page, '0')
-    expect(pageData._h['1'].li).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }])
+    expect(pageData.h['1'].li).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }])
     assertList(page, ['a', 'b', 'c'])
     vm.items.reverse()
     waitForUpdate(() => {
-      expect(pageData._h['1'].li).toEqual([{ id: 3 }, { id: 2 }, { id: 1 }])
+      expect(pageData.h['1'].li).toEqual([{ id: 3 }, { id: 2 }, { id: 1 }])
       assertList(page, ['c', 'b', 'a'])
     }).then(done)
   })
@@ -400,9 +400,9 @@ describe('Directive v-for', () => {
     })
 
     const pageData = getPageData(page, '0')
-    expect(pageData._h['1'].li).toEqual([0, 1])
-    expect(pageData._h['2-0'].li).toEqual([0, 1])
-    expect(pageData._h['2-1'].li).toEqual([0, 1])
+    expect(pageData.h['1'].li).toEqual([0, 1])
+    expect(pageData.h['2-0'].li).toEqual([0, 1])
+    expect(pageData.h['2-1'].li).toEqual([0, 1])
     assertList(page, ['0 1 0 1', '1 2 0 1'], '3-0')
     assertList(page, ['0 3 1 2', '1 4 1 2'], '3-1')
   })
@@ -426,7 +426,7 @@ describe('Directive v-for', () => {
     })
 
     const pageData = getPageData(page, '0')
-    expect(pageData._h['1'].li).toEqual([0, 1, 2])
+    expect(pageData.h['1'].li).toEqual([0, 1, 2])
     assertList(page, ['1', '2', '3'], '3')
     assertList(page, ['2', '3', '4'], '5')
     vm.list.reverse()
@@ -463,7 +463,7 @@ describe('Directive v-for', () => {
     })
 
     const pageData = getPageData(page, '0')
-    expect(pageData._h['1'].li).toEqual([{ id: 1, id2: 10 }, { id: 2, id2: 20 }, { id: 3, id2: 30 }])
+    expect(pageData.h['1'].li).toEqual([{ id: 1, id2: 10 }, { id: 2, id2: 20 }, { id: 3, id2: 30 }])
     assertList(page, ['1', '2', '3'], '3')
     assertList(page, ['2', '3', '4'], '5')
     vm.list.reverse()
@@ -508,7 +508,7 @@ describe('Directive v-for', () => {
     const compData1 = getPageData(page, '0,0-0')
     const compData2 = getPageData(page, '0,0-1')
     const compData3 = getPageData(page, '0,0-2')
-    expect(pageData._h['1'].li).toEqual([{ a: 1 }, { a: 2 }, { a: 3 }])
+    expect(pageData.h['1'].li).toEqual([{ a: 1 }, { a: 2 }, { a: 3 }])
     expect(compData1.s).toEqual('0')
     expect(compData2.s).toEqual('0')
     expect(compData3.s).toEqual('0')
@@ -516,14 +516,14 @@ describe('Directive v-for', () => {
     assertList(page, ['1', '2', '3'], '4')
     vm.list.reverse()
     waitForUpdate(() => {
-      expect(pageData._h['1'].li).toEqual([{ a: 3 }, { a: 2 }, { a: 1 }])
+      expect(pageData.h['1'].li).toEqual([{ a: 3 }, { a: 2 }, { a: 1 }])
       expect(compData1.s).toEqual('0')
       expect(compData2.s).toEqual('0')
       // slot
       assertList(page, ['3', '2', '1'], '4')
       vm.list.splice(1, 1)
     }).then(() => {
-      expect(pageData._h['1'].li).toEqual([{ a: 3 }, { a: 1 }])
+      expect(pageData.h['1'].li).toEqual([{ a: 3 }, { a: 1 }])
       expect(compData1.s).toEqual('0')
       expect(compData2.s).toEqual('0')
       // slot
@@ -597,17 +597,17 @@ describe('Directive v-for', () => {
     })
 
     const pageData = getPageData(page, '0')
-    expect(pageData._h['1'].li).toEqual([0])
-    expect(pageData._h['2-0'].li).toEqual([0])
-    expect(pageData._h['3-0-0'].li).toEqual([0])
-    expect(pageData._h['4-0-0-0'].t).toEqual('foo')
+    expect(pageData.h['1'].li).toEqual([0])
+    expect(pageData.h['2-0'].li).toEqual([0])
+    expect(pageData.h['3-0-0'].li).toEqual([0])
+    expect(pageData.h['4-0-0-0'].t).toEqual('foo')
     vm.list[0][0].push('bar')
     waitForUpdate(() => {
-      expect(pageData._h['1'].li).toEqual([0])
-      expect(pageData._h['2-0'].li).toEqual([0])
-      expect(pageData._h['3-0-0'].li).toEqual([0, 1])
-      expect(pageData._h['4-0-0-0'].t).toEqual('foo')
-      expect(pageData._h['4-0-0-1'].t).toEqual('bar')
+      expect(pageData.h['1'].li).toEqual([0])
+      expect(pageData.h['2-0'].li).toEqual([0])
+      expect(pageData.h['3-0-0'].li).toEqual([0, 1])
+      expect(pageData.h['4-0-0-0'].t).toEqual('foo')
+      expect(pageData.h['4-0-0-1'].t).toEqual('bar')
     }).then(done)
   })
 
@@ -624,11 +624,11 @@ describe('Directive v-for', () => {
     })
 
     const pageData = getPageData(page, '0')
-    expect(pageData._h['1'].li).toEqual([0, 1, 2])
+    expect(pageData.h['1'].li).toEqual([0, 1, 2])
     assertList(page, ['f.', 'o.', 'o.'])
     vm.text += 'bar'
     waitForUpdate(() => {
-      expect(pageData._h['1'].li).toEqual([0, 1, 2, 3, 4, 5])
+      expect(pageData.h['1'].li).toEqual([0, 1, 2, 3, 4, 5])
       assertList(page, ['f.', 'o.', 'o.', 'b.', 'a.', 'r.'])
     }).then(done)
   })
@@ -651,7 +651,7 @@ describe('Directive v-for', () => {
     })
 
     const pageData = getPageData(page, '0')
-    expect(pageData._h['1'].li).toEqual([0, 1])
+    expect(pageData.h['1'].li).toEqual([0, 1])
     assertList(page, ['1', '2'])
   })
 
@@ -672,7 +672,7 @@ describe('Directive v-for', () => {
       })
 
       const pageData = getPageData(page, '0')
-      expect(pageData._h['1'].li).toEqual([0])
+      expect(pageData.h['1'].li).toEqual([0])
       assertList(page, ['hi ho 0'])
     })
 
@@ -683,7 +683,7 @@ describe('Directive v-for', () => {
       })
 
       const pageData = getPageData(page, '0')
-      expect(pageData._h['1'].li).toEqual([0, 1])
+      expect(pageData.h['1'].li).toEqual([0, 1])
       assertList(page, ['1 2 0', '3 4 1'])
     })
   }

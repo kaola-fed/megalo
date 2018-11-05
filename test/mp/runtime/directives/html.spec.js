@@ -31,7 +31,7 @@ describe('Directive v-for', () => {
       data: { a: 'hello' }
     })
     const pageData = getPageData(page, '0')
-    expect(pageData._h[0].html).toEqual('hello')
+    expect(pageData.h[0].html).toEqual('hello')
   })
 
   // output depends on the htmlParse plugin
@@ -41,7 +41,7 @@ describe('Directive v-for', () => {
       data: { a: 'hello' }
     })
     const pageData = getPageData(page, '0')
-    expect(pageData._h[0].html).toEqual({
+    expect(pageData.h[0].html).toEqual({
       nodes: 'hello'
     })
   })

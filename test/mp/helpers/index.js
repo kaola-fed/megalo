@@ -19,7 +19,8 @@ export function spyFn (...args) {
   return jasmine.createSpy(...args)
 }
 
-export function getPageData (page, id) {
+export function getPageData (page, id = '') {
+  id = id.replace(/,/g, 'v')
   return page.data.$root[id]
 }
 

@@ -6,7 +6,8 @@ import {
 } from 'shared/util'
 
 import {
-  genClassForVnode
+  genClassForVnode,
+  HOLDER_TYPE_VARS
 } from 'mp/util/index'
 
 import { updateVnodeToMP } from '../instance/index'
@@ -29,8 +30,17 @@ function updateClass (oldVnode: any, vnode: any) {
 
   const { elm = {}} = vnode
   const cls = genClassForVnode(vnode)
-  if (isDef(cls) && elm.class !== cls) {
-    updateVnodeToMP(vnode, 'cl', cls)
+  if (isDef(cls) && elm.class !== cls && !/^vue-component/.test(vnode.tag)) {
+    // don't update empty class string on init
+    if (cls === '' && isUndef(elm.class)) {
+      return
+    }
+    if (!/^vue-component/.test(vnode.tag)) {
+      Object.assign(vnode.elm, {
+        class: cls
+      })
+    }
+    updateVnodeToMP(vnode, HOLDER_TYPE_VARS.class, cls)
   }
 }
 

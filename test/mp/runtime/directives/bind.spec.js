@@ -18,7 +18,7 @@ describe('Directive v-bind', () => {
     const { page, vm } = createPage(options)
 
     function expectAttr (expected) {
-      expect(getPageData(page, '0')._h['1'].test).toEqual(expected)
+      expect(getPageData(page, '0').h['1'].test).toEqual(expected)
     }
 
     expectAttr('ok')
@@ -57,11 +57,11 @@ describe('Directive v-bind', () => {
     }
     const { page, vm } = createPage(options)
 
-    expect(getPageData(page, '0')._h['1'].value).toEqual('ok')
-    expect(getPageData(page, '0')._h['3'].checked).toEqual(false)
+    expect(getPageData(page, '0').h['1'].value).toEqual('ok')
+    expect(getPageData(page, '0').h['3'].checked).toEqual(false)
     vm.bar = true
     waitForUpdate(() => {
-      expect(getPageData(page, '0')._h['3'].checked).toEqual(true)
+      expect(getPageData(page, '0').h['3'].checked).toEqual(true)
     }).then(done)
   })
 
@@ -97,7 +97,7 @@ describe('Directive v-bind', () => {
     })
 
     function expectDraggable (expected) {
-      expect(getPageData(page, '0')._h['1']).toEqual(expected)
+      expect(getPageData(page, '0').h['1']).toEqual(expected)
     }
 
     // expect(vm.$el.firstChild.getAttribute('draggable')).toBe('true')
@@ -156,7 +156,7 @@ describe('Directive v-bind', () => {
     })
 
     function expectInputAttr (attr, expected) {
-      expect(getPageData(page, '0')._h['0'][attr]).toEqual(expected)
+      expect(getPageData(page, '0').h['0'][attr]).toEqual(expected)
     }
 
     // TODO: remove static value
@@ -186,7 +186,7 @@ describe('Directive v-bind', () => {
     })
 
     function expectInputAttr (attr, expected) {
-      expect(getPageData(page, '0')._h['0'][attr]).toEqual(expected)
+      expect(getPageData(page, '0').h['0'][attr]).toEqual(expected)
     }
 
     expectInputAttr('id', 'test')
@@ -217,7 +217,7 @@ describe('Directive v-bind', () => {
     })
 
     function expectInputAttr (attr, expected) {
-      expect(getPageData(page, '0')._h['0'][attr]).toEqual(expected)
+      expect(getPageData(page, '0').h['0'][attr]).toEqual(expected)
     }
 
     expectInputAttr('id', 'test')
@@ -256,7 +256,7 @@ describe('Directive v-bind', () => {
       }
     })
     // check value attribute
-    expect(getPageData(page, '0')._h['1'].value).toBe('val')
+    expect(getPageData(page, '0').h['1'].value).toBe('val')
   })
 
   // a vdom patch edge case where the user has several un-keyed elements of the
@@ -274,16 +274,16 @@ describe('Directive v-bind', () => {
       }
     })
 
-    expect(getPageData(page, '0')._h['1']._if).toBeTruthy()
-    expect(getPageData(page, '0')._h['1'].id).toBe('a')
-    expect(getPageData(page, '0')._h['1']['data-test']).toBe('1')
-    expect(getPageData(page, '0')._h['3']._if).toBeFalsy()
+    expect(getPageData(page, '0').h['1']._if).toBeTruthy()
+    expect(getPageData(page, '0').h['1'].id).toBe('a')
+    expect(getPageData(page, '0').h['1']['data-test']).toBe('1')
+    expect(getPageData(page, '0').h['3']._if).toBeFalsy()
     vm.ok = false
     waitForUpdate(() => {
-      expect(getPageData(page, '0')._h['3']._if).toBeTruthy()
-      expect(getPageData(page, '0')._h['1']._if).toBeFalsy()
-      expect(getPageData(page, '0')._h['1'].id).toBe('a')
-      expect(getPageData(page, '0')._h['1']['data-test']).toBe('1')
+      expect(getPageData(page, '0').h['3']._if).toBeTruthy()
+      expect(getPageData(page, '0').h['1']._if).toBeFalsy()
+      expect(getPageData(page, '0').h['1'].id).toBe('a')
+      expect(getPageData(page, '0').h['1']['data-test']).toBe('1')
     }).then(done)
   })
 
@@ -312,7 +312,7 @@ describe('Directive v-bind', () => {
         value: 'test',
         parentTemp: '<div v-bind="attrs"></div>'
       })
-      expect(getPageData(page, '0')._h['0'].key).toBe('test')
+      expect(getPageData(page, '0').h['0'].key).toBe('test')
     })
 
     it('ref', () => {

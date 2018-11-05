@@ -28,7 +28,7 @@ describe('Component', () => {
     })
 
     const comp1 = getPageData(page, '0,0')
-    expect(comp1._h['1'].t).toBe('123')
+    expect(comp1.h['1'].t).toBe('123')
   })
 
   it('using component in restricted elements', () => {
@@ -45,7 +45,7 @@ describe('Component', () => {
     })
 
     const comp1 = getPageData(page, '0,0')
-    expect(comp1._h['2'].t).toBe('123')
+    expect(comp1.h['2'].t).toBe('123')
   })
 
   // "is" is not supported
@@ -63,7 +63,7 @@ describe('Component', () => {
       }
     })
     const comp1 = getPageData(page, '0,0')
-    expect(comp1._h['2'].t).toBe('123')
+    expect(comp1.h['2'].t).toBe('123')
   })
 
   // inline-template not supported
@@ -108,15 +108,15 @@ describe('Component', () => {
     })
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h['0'].vs).toBe(!false)
-    expect(pageData._h['2'].t).toBe('hello')
-    expect(comp1._h['3'].t).toBe(' world')
+    expect(pageData.h['0'].vs).toBe(!false)
+    expect(pageData.h['2'].t).toBe('hello')
+    expect(comp1.h['3'].t).toBe(' world')
     vm.ok = true
     vm.message = 'bye'
     waitForUpdate(() => {
-      expect(pageData._h['0'].vs).toBe(!true)
-      expect(pageData._h['2'].t).toBe('bye')
-      expect(comp1._h['3'].t).toBe(' world')
+      expect(pageData.h['0'].vs).toBe(!true)
+      expect(pageData.h['2'].t).toBe('bye')
+      expect(comp1.h['3'].t).toBe(' world')
     }).then(done)
   })
 
@@ -141,15 +141,15 @@ describe('Component', () => {
 
     const pageData = getPageData(page, '0')
     let comp1 = getPageData(page, '0,0')
-    expect(pageData._h['0']._if).toBeFalsy()
-    expect(pageData._h['2']).toBeUndefined()
+    expect(pageData.h['0']._if).toBeFalsy()
+    expect(pageData.h['2']).toBeUndefined()
     expect(comp1).toBeUndefined()
     vm.ok = true
     waitForUpdate(() => {
-      expect(pageData._h['0']._if).toBeTruthy()
+      expect(pageData.h['0']._if).toBeTruthy()
       comp1 = getPageData(page, '0,0')
-      expect(pageData._h['2'].t).toBe('hello')
-      expect(comp1._h['3'].t).toBe(' world')
+      expect(pageData.h['2'].t).toBe('hello')
+      expect(comp1.h['3'].t).toBe(' world')
     }).then(done)
   })
 
@@ -169,9 +169,9 @@ describe('Component', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     expect(pageData._h).toBeUndefined()
-    expect(comp1._h['1'].li).toEqual([0, 1])
-    expect(comp1._h['2-0'].t).toEqual('1')
-    expect(comp1._h['2-1'].t).toEqual('2')
+    expect(comp1.h['1'].li).toEqual([0, 1])
+    expect(comp1.h['2-0'].t).toEqual('1')
+    expect(comp1.h['2-1'].t).toEqual('2')
   })
 
   it('should warn when using camelCased props in in-DOM template', () => {
@@ -229,16 +229,16 @@ describe('Component', () => {
       template: `<div>{{a.b}}</div>`
     })
     const pageData = getPageData(page, '0')
-    expect(pageData._h['1'].t).toBe('123')
+    expect(pageData.h['1'].t).toBe('123')
     expect(spy).not.toHaveBeenCalled()
     vm.a = null
     waitForUpdate(() => {
       expect(spy).toHaveBeenCalled()
-      expect(pageData._h['1'].t).toBe('123')
+      expect(pageData.h['1'].t).toBe('123')
       // expect(vm.$el.textContent).toBe('123') // should preserve rendered DOM
       vm.a = { b: 234 }
     }).then(() => {
-      expect(pageData._h['1'].t).toBe('234')
+      expect(pageData.h['1'].t).toBe('234')
       // expect(vm.$el.textContent).toBe('234') // should be able to recover
       Vue.config.errorHandler = null
     }).then(done)

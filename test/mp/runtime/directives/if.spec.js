@@ -10,12 +10,12 @@ describe('Directive v-if', () => {
   })
 
   function assertIf (pageData, expected, hid = '1') {
-    expect(pageData._h[hid]._if).toEqual(expected)
+    expect(pageData.h[hid]._if).toEqual(expected)
   }
 
   function assertList (pageData, expectedList = [], hid = '2') {
     expectedList.forEach((expected, i) => {
-      expect(pageData._h[`${hid}-${i}`].t).toEqual(expected)
+      expect(pageData.h[`${hid}-${i}`].t).toEqual(expected)
     })
   }
 
@@ -272,7 +272,7 @@ describe('Directive v-if', () => {
       // expect(vm.$el.innerHTML.trim()).toBe('<span>bye</span><span>bye</span><span>hello</span><span>hello</span>')
       vm.list.splice(1, 2)
     }).then(() => {
-      expect(pageData._h['1'].li).toEqual([0, 1])
+      expect(pageData.h['1'].li).toEqual([0, 1])
       assertIf(pageData, false, '1-0')
       assertIf(pageData, true, '1-1')
       // expect(vm.$el.innerHTML.trim()).toBe('<span>bye</span><span>hello</span>')
@@ -298,12 +298,12 @@ describe('Directive v-if', () => {
 
     const pageData = getPageData(page, '0')
     assertIf(pageData, false, '1')
-    expect(pageData._h['3'].li).toEqual([0, 1, 2])
+    expect(pageData.h['3'].li).toEqual([0, 1, 2])
     assertList(pageData, ['1', '2', '3'], '4')
     vm.list.reverse()
     waitForUpdate(() => {
       assertIf(pageData, false, '1')
-      expect(pageData._h['3'].li).toEqual([0, 1, 2])
+      expect(pageData.h['3'].li).toEqual([0, 1, 2])
       assertList(pageData, ['3', '2', '1'], '4')
       // expect(vm.$el.textContent.trim()).toBe('321')
     }).then(done)

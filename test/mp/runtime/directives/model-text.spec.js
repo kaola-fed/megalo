@@ -10,7 +10,7 @@ describe('Directive v-model text', () => {
   })
 
   function assertValue (pageData, expected, hid = '0') {
-    expect(pageData._h[hid].value).toBe(expected)
+    expect(pageData.h[hid].value).toBe(expected)
   }
 
   function triggerInput (page, value = '', options = {}) {

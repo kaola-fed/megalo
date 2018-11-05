@@ -15,7 +15,7 @@ export const createCompiler = createCompilerCreator(function baseCompile (
 ): CompiledResult {
   const ast = parse(template.trim(), options)
   optimize(ast, options)
-  mpify(ast)
+  mpify(ast, options)
   const code = generate(ast, options)
   return {
     ast,

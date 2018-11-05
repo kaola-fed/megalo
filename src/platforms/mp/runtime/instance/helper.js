@@ -1,4 +1,5 @@
 import { isDef } from 'core/util/index'
+import { VM_ID_SEP } from 'mp/util/index'
 
 export function getHid (vm, vnode = {}) {
   const { data = {}} = vnode
@@ -35,7 +36,7 @@ export function getVMId (vm) {
     prev = cursor
     cursor = cursor.$parent
   }
-  return res.join(',')
+  return res.join(VM_ID_SEP)
 }
 
 function isSlotParent (parent, child) {

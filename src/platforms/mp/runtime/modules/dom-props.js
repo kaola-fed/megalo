@@ -2,6 +2,7 @@
 
 import { isDef, isUndef, extend, toNumber } from 'shared/util'
 import { updateVnodeToMP } from '../instance/index'
+import { HOLDER_TYPE_VARS } from 'mp/util/index'
 
 function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   if (isUndef(oldVnode.data.domProps) && isUndef(vnode.data.domProps)) {
@@ -39,9 +40,9 @@ function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
         const { $htmlParse } = vnode.context
         if ($htmlParse) {
           const htmlNodes = $htmlParse(cur)
-          updateVnodeToMP(vnode, 'html', htmlNodes)
+          updateVnodeToMP(vnode, HOLDER_TYPE_VARS.vhtml, htmlNodes)
         } else {
-          updateVnodeToMP(vnode, 'html', cur)
+          updateVnodeToMP(vnode, HOLDER_TYPE_VARS.vhtml, cur)
         }
         return
       }
@@ -54,10 +55,12 @@ function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
       // avoid resetting cursor position when value is the same
       const strCur = isUndef(cur) ? '' : String(cur)
       if (shouldUpdateValue(elm, strCur)) {
-        elm.value = strCur
-        updateVnodeToMP(vnode, key, strCur)
+        if (elm.value !== strCur) {
+          elm.value = strCur
+          updateVnodeToMP(vnode, key, strCur)
+        }
       }
-    } else {
+    } else if (elm[key] !== cur) {
       elm[key] = cur
       updateVnodeToMP(vnode, key, cur)
     }

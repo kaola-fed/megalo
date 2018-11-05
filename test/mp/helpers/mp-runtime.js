@@ -62,6 +62,8 @@ class MPPage extends MPBase {
       cid: '0'
     }, detail } = el
 
+    dataset.cid = dataset.cid.replace(/,/g, 'v')
+
     Object.assign(el, {
       dataset
     })

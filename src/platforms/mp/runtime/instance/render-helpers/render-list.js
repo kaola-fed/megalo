@@ -1,7 +1,8 @@
 /* @flow */
 
-import { isObject, isDef } from 'core/util/index'
+import { isObject } from 'core/util/index'
 import { updateVnodeToMP } from '../update'
+import { HOLDER_TYPE_VARS, getValue } from 'mp/util/index'
 
 /**
  * Runtime helper for rendering v-for lists.
@@ -97,16 +98,5 @@ function updateListToMP (vnodeList = [], val, forId, context) {
     })
   }
 
-  updateVnodeToMP(cloneVnode, 'li', list)
-}
-
-function getValue (obj = {}, path = '') {
-  const paths = path.split('.')
-  return paths.reduce((prev, k) => {
-    /* istanbul ignore if */
-    if (prev && isDef(prev)) {
-      prev = prev[k]
-    }
-    return prev
-  }, obj)
+  updateVnodeToMP(cloneVnode, HOLDER_TYPE_VARS.for, list)
 }
