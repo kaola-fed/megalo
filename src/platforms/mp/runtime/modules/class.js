@@ -31,6 +31,12 @@ function updateClass (oldVnode: any, vnode: any) {
   const { elm = {}} = vnode
   const cls = genClassForVnode(vnode)
   if (isDef(cls) && elm.class !== cls) {
+    // don't update empty class string on init
+    if (cls === '' && isUndef(elm.class)) {
+      return
+    }
+    elm.class = cls
+    vnode.elm = elm
     updateVnodeToMP(vnode, VARS.class, cls)
   }
 }
