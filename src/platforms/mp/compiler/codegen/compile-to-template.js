@@ -8,11 +8,11 @@ import { capitalize, camelize } from 'shared/util'
 import {
   notEmpty,
   ROOT_DATA_VAR,
-  NODE_ID_SEPS,
+  LIST_TAIL_SEPS,
   HOLDER_VAR,
   FOR_TAIL_VAR,
   VM_ID_PREFIX,
-  VARS
+  HOLDER_TYPE_VARS
 } from 'mp/util/index'
 
 const vbindReg = /^(v-bind)?:/
@@ -20,7 +20,7 @@ const vonReg = /^v-on:|@/
 const vmodelReg = /^v-model/
 const listTailReg = /'[-|_]'/
 
-let sep = `'${NODE_ID_SEPS.wechat}'`
+let sep = `'${LIST_TAIL_SEPS.wechat}'`
 
 export function compileToTemplate (ast, options = {}): string {
   const templateGenerator = new TemplateGenerator(options)
@@ -41,7 +41,7 @@ export class TemplateGenerator {
     } = options
 
     const preset = presets[target]
-    sep = NODE_ID_SEPS[target] ? `'${NODE_ID_SEPS[target]}'` : sep
+    sep = LIST_TAIL_SEPS[target] ? `'${LIST_TAIL_SEPS[target]}'` : sep
 
     Object.assign(this, {
       name,
@@ -468,8 +468,7 @@ export class TemplateGenerator {
         `<template is="{{ s_${slotName} }}" `,
         `data="`,
         this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
-        `" `,
-        `${this.genFor(el)}/>`,
+        `"${this.genFor(el)}/>`,
         `</block>`,
 
         // else use default slot snippet
@@ -477,8 +476,7 @@ export class TemplateGenerator {
         `<template is="{{ '${defaultSlotName}' }}" `,
         `data="`,
         this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
-        `" `,
-        `${this.genFor(el)}/>`,
+        `"${this.genFor(el)}/>`,
         `</block>`
       ].join('')
     }
@@ -488,8 +486,7 @@ export class TemplateGenerator {
       `<template is="{{ s_${slotName} || '${defaultSlotName}' }}" `,
       `data="`,
       this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
-      `" `,
-      `${this.genFor(el)}/>`
+      `"${this.genFor(el)}/>`
     ].join('')
   }
 
@@ -501,10 +498,10 @@ export class TemplateGenerator {
   }
 
   genHolder (el, type): string {
-    const varName = VARS[type]
+    const varName = HOLDER_TYPE_VARS[type]
     const hid = typeof el === 'string' ? el : this.genHid(el)
     if (!varName) {
-      throw new Error(`${type} holder VARS not found`)
+      throw new Error(`${type} holder HOLDER_TYPE_VARS not found`)
     }
     return `${HOLDER_VAR}[ ${hid} ].${varName}`
   }
@@ -538,7 +535,7 @@ export class TemplateGenerator {
     return `<template is="${htmlParse.templateName}"${[
       this.genIf(el),
       this.genFor(el)
-    ].join('')} data="{{ nodes: ${this.genHolder(el, 'html')} }}"/>`
+    ].join('')} data="{{ nodes: ${this.genHolder(el, 'vhtml')} }}"/>`
   }
 
   isVHtml (el = {}): boolean {

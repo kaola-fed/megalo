@@ -1,11 +1,12 @@
 import { makeMap } from 'shared/util'
+import { isDef } from 'core/util/index'
 
 export * from './class'
 export * from './throttle'
 export * from './aop'
 export * from './buffer'
 
-export const ROOT_DATA_VAR = 'r'
+export const ROOT_DATA_VAR = '$root'
 export const HOLDER_VAR = 'h'
 export const FOR_TAIL_VAR = '_t'
 export const VM_ID_VAR = 'c'
@@ -15,14 +16,14 @@ export const VM_ID_SEP = 'v'
 export const VM_ID_SEP_REG = /v/
 export const SLOT_CONTEXT_ID_VAR = 's'
 
-export const NODE_ID_SEPS = {
+export const LIST_TAIL_SEPS = {
   swan: '_',
   wechat: '-',
   alipay: '-'
 }
-export const NODE_ID_SEP_REG = /[\-|_]/
+export const LIST_TAIL_SEP_REG = /(\-|_)/
 
-export const VARS = {
+export const HOLDER_TYPE_VARS = {
   text: 't',
   if: '_if',
   for: 'li',
@@ -80,4 +81,35 @@ export const eventTypeMap = {
   scrolltoupper: ['scrolltoupper'],
   scrolltolower: ['scrolltolower'],
   scroll: ['scroll']
+}
+
+export function getValue (obj = {}, path = '') {
+  const paths = typeof path === 'string' ? path.split('.') : path
+  return paths.reduce((prev, k) => {
+    /* istanbul ignore if */
+    if (prev && isDef(prev)) {
+      prev = prev[k]
+    }
+    return prev
+  }, obj)
+}
+
+export function deepEqual (a, b) {
+  const aType = typeof a
+  const bType = typeof b
+  if (aType !== 'object' || bType !== 'object' || aType !== bType) {
+    return a === b
+  } else {
+    if (Array.isArray(a)) {
+      if (a.length !== b.length) {
+        return false
+      }
+    }
+    for (const k in a) {
+      if (!deepEqual(a[k], b[k])) {
+        return false
+      }
+    }
+  }
+  return true
 }

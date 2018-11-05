@@ -1,6 +1,6 @@
 import TAG_MAP from './tag-map'
 import { Stack, createUidFn } from './util'
-import { NODE_ID_SEPS } from 'mp/util/index'
+import { LIST_TAIL_SEPS } from 'mp/util/index'
 
 const iteratorUid = createUidFn('item')
 
@@ -10,11 +10,11 @@ const TYPE = {
   STATIC_TEXT: 3
 }
 
-let sep = `'${NODE_ID_SEPS.wechat}'`
+let sep = `'${LIST_TAIL_SEPS.wechat}'`
 
 export function mpify (node, options) {
   const { target = 'wechat' } = options
-  sep = NODE_ID_SEPS[target] ? `'${NODE_ID_SEPS[target]}'` : sep
+  sep = LIST_TAIL_SEPS[target] ? `'${LIST_TAIL_SEPS[target]}'` : sep
   const state = new State({
     rootNode: node,
     target
