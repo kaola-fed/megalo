@@ -1,14 +1,15 @@
 /* @flow */
 
 import { updateVnodeToMP } from '../instance/index'
+import { VARS } from 'mp/util/index'
 
 export default {
   bind (el: any, { value }: VNodeDirective, vnode: VNodeWithData) {
-    updateVnodeToMP(vnode, 'vs', !value)
+    updateVnodeToMP(vnode, VARS.vshow, !value)
   },
 
   update (el: any, { value, oldValue }: VNodeDirective, vnode: VNodeWithData) {
-    updateVnodeToMP(vnode, 'vs', !value)
+    updateVnodeToMP(vnode, VARS.vshow, !value)
   },
 
   unbind (

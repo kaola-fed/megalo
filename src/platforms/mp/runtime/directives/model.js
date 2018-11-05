@@ -6,6 +6,8 @@
  */
 
 import { updateVnodeToMP } from '../instance/index'
+import { VARS } from 'mp/util/index'
+
 // import { isTextInputType } from 'mp/util/element'
 // import { looseEqual, looseIndexOf } from 'shared/util'
 // import { mergeVNodeHook } from 'core/vdom/helpers/index'
@@ -24,7 +26,7 @@ import { updateVnodeToMP } from '../instance/index'
 
 const directive = {
   update (el: any, { value, oldValue }: VNodeDirective, vnode: VNodeWithData) {
-    updateVnodeToMP(vnode, 'value', value)
+    updateVnodeToMP(vnode, VARS.value, value)
   },
 
   inserted (el, binding, vnode, oldVnode) {

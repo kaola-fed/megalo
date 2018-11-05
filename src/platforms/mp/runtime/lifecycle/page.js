@@ -1,5 +1,6 @@
 import { initRootVM, proxyEvent } from 'mp/runtime/instance/index'
 import { callHook } from './call-hook'
+import { ROOT_DATA_VAR } from 'mp/util/index'
 
 const page = {}
 
@@ -7,7 +8,7 @@ page.init = function init (opt) {
   Page({
     // 生命周期函数--监听页面加载
     data: {
-      $root: {}
+      [ROOT_DATA_VAR]: {}
     },
     onLoad (options) {
       const rootVM = this.rootVM = initRootVM(this, opt)

@@ -1,4 +1,5 @@
 import { updateVnodeToMP } from '../index'
+import { VARS } from 'mp/util/index'
 
 export function renderIf (
   ...args
@@ -12,6 +13,6 @@ export function renderIf (
         attrs: { _hid }
       }
     }
-    updateVnodeToMP(cloneVnode, '_if', cond)
+    updateVnodeToMP(cloneVnode, VARS.if, cond)
   }
 }

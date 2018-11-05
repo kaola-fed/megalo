@@ -5,8 +5,15 @@ export * from './throttle'
 export * from './aop'
 export * from './buffer'
 
-export const COMP_ID_SEP = 'v'
-export const COMP_ID_SEP_REG = /v/
+export const ROOT_DATA_VAR = 'r'
+export const HOLDER_VAR = 'h'
+export const FOR_TAIL_VAR = '_t'
+export const VM_ID_VAR = 'c'
+export const VM_ID_PREFIX = 'cp'
+
+export const VM_ID_SEP = 'v'
+export const VM_ID_SEP_REG = /v/
+export const SLOT_CONTEXT_ID_VAR = 's'
 
 export const NODE_ID_SEPS = {
   swan: '_',
@@ -14,6 +21,17 @@ export const NODE_ID_SEPS = {
   alipay: '-'
 }
 export const NODE_ID_SEP_REG = /[\-|_]/
+
+export const VARS = {
+  text: 't',
+  if: '_if',
+  for: 'li',
+  class: 'cl',
+  style: 'st',
+  value: 'value',
+  vhtml: 'html',
+  vshow: 'vs'
+}
 
 export const notEmpty = e => !!e
 export const isPreTag = (tag) => tag === 'pre'

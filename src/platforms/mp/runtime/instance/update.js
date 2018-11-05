@@ -1,6 +1,16 @@
 import { isDef } from 'core/util/index'
 import { getVMId, getHid } from './helper'
-import { throttle, Buffer, COMP_ID_SEP } from 'mp/util/index'
+import {
+  throttle,
+  Buffer,
+  VM_ID_SEP,
+  VM_ID_VAR,
+  VM_ID_PREFIX,
+  ROOT_DATA_VAR,
+  HOLDER_VAR,
+  SLOT_CONTEXT_ID_VAR,
+  VARS
+} from 'mp/util/index'
 
 function isEmptyObj (obj = {}) {
   return Object.keys(obj).length === 0
@@ -11,12 +21,14 @@ export function initVMToMP (vm) {
   const cid = getVMId(vm)
   const info = {
     cid,
-    cpath: `${cid}${COMP_ID_SEP}`
+    cpath: `${cid}${VM_ID_SEP}`
   }
 
+  const prefix = `${ROOT_DATA_VAR}.${cid}`
+
   vm.$mp.update({
-    [`$root.${cid}.c`]: info.cid,
-    [`$root.${cid}.cp`]: info.cpath
+    [`${prefix}.${VM_ID_VAR}`]: info.cid,
+    [`${prefix}.${VM_ID_PREFIX}`]: info.cpath
   })
 }
 
@@ -27,20 +39,27 @@ export function updateSlotId (vm, sid) {
   /* istanbul ignore else */
   if (isDef(sid)) {
     vm.$mp.update({
-      [`$root.${vmId}.s`]: sid
+      [`${ROOT_DATA_VAR}.${vmId}.${SLOT_CONTEXT_ID_VAR}`]: sid
     })
   }
 }
 
-export function updateMPData (type = 't', data, vnode) {
+export function updateMPData (type = VARS.text, data, vnode) {
   const vm = this
   const vmId = getVMId(vm)
   const hid = getHid(vm, vnode)
+  const dataPath = [
+    ROOT_DATA_VAR,
+    vmId,
+    HOLDER_VAR,
+    hid,
+    type
+  ].join('.')
 
   /* istanbul ignore else */
   if (isDef(hid)) {
     vm.$mp.update({
-      [`$root.${vmId}._h.${hid}.${type}`]: data
+      [dataPath]: data
     })
   }
 }
@@ -61,7 +80,7 @@ export function createUpdateFn (page) {
   }
 }
 
-export function updateVnodeToMP (vnode, key = 't', value) {
+export function updateVnodeToMP (vnode, key = VARS.text, value) {
   const { context, slotContext } = vnode
   const realContext = slotContext || context
   realContext && realContext.$updateMPData(key, value, vnode)

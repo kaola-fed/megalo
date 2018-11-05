@@ -2,6 +2,7 @@
 
 import { isObject, isDef } from 'core/util/index'
 import { updateVnodeToMP } from '../update'
+import { VARS } from 'mp/util/index'
 
 /**
  * Runtime helper for rendering v-for lists.
@@ -97,7 +98,7 @@ function updateListToMP (vnodeList = [], val, forId, context) {
     })
   }
 
-  updateVnodeToMP(cloneVnode, 'li', list)
+  updateVnodeToMP(cloneVnode, VARS.for, list)
 }
 
 function getValue (obj = {}, path = '') {

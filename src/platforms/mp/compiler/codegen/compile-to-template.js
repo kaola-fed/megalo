@@ -7,8 +7,11 @@ import { baseWarn } from 'compiler/helpers'
 import { capitalize, camelize } from 'shared/util'
 import {
   notEmpty,
+  ROOT_DATA_VAR,
   NODE_ID_SEPS,
   HOLDER_VAR,
+  FOR_TAIL_VAR,
+  VM_ID_PREFIX,
   VARS
 } from 'mp/util/index'
 
@@ -127,14 +130,14 @@ export class TemplateGenerator {
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
-    let tail = `, _t: ''`
-    // passing parent for tail to slot inside v-for
+    let tail = `, ${FOR_TAIL_VAR}: ''`
+    // passing parent v-for tail to slot inside v-for
     if (listTailReg.test(_cid)) {
-      tail = `, _t: ${extractHidTail(_cid)}`
+      tail = `, ${FOR_TAIL_VAR}: ${extractHidTail(_cid)}`
     }
     const data = [
-      `...$root[ cp + ${_cid} ]`,
-      `$root`,
+      `...${ROOT_DATA_VAR}[ ${VM_ID_PREFIX} + ${_cid} ]`,
+      `${ROOT_DATA_VAR}`,
       ...slotsNames
     ].join(', ')
 
@@ -365,10 +368,10 @@ export class TemplateGenerator {
     eventAttrs = eventAttrs.join(' ')
 
     /**
-     * when the element is in a slot, it will recieve "$c" as the actual component instance id
+     * when the element is in a slot, it will recieve "_c" as the actual component instance id
      * othewise, using the current scope which usually the parent component in the template
      */
-    return ` data-cid="{{ $c || ${cid} }}" data-hid="{{ ${this.genHid(el)} }}" ${eventAttrs}`
+    return ` data-cid="{{ _c || ${cid} }}" data-hid="{{ ${this.genHid(el)} }}" ${eventAttrs}`
   }
 
   genIfConditions (el): string {
@@ -445,14 +448,14 @@ export class TemplateGenerator {
     const defaultSlotName = `${slotName}$${uid()}`
     const defaultSlotBody = this.genChildren(el)
     const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : /* istanbul ignore next */ ''
-    let tail = `, _t: (_t || '')`
+    let tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '')`
     // sloped-slot inside v-for
     if (el.hasBindings && listTailReg.test(_hid)) {
-      tail = `, _t: ${extractHidTail(_hid)}`
+      tail = `, ${FOR_TAIL_VAR}: ${extractHidTail(_hid)}`
     }
 
     /**
-     * use "$c" to passing the actual vdom host component instance id to slot template
+     * use "_c" to passing the actual vdom host component instance id to slot template
      *      because the vdom is actually stored in the component's _vnodes
      *      event hanlders searching depends on this id
      */
@@ -464,7 +467,7 @@ export class TemplateGenerator {
         `<block s-if="s_${slotName}">`,
         `<template is="{{ s_${slotName} }}" `,
         `data="`,
-        this.wrapTemplateData(`...$root[ s ], $root${tail}, $c: c`),
+        this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
         `" `,
         `${this.genFor(el)}/>`,
         `</block>`,
@@ -473,7 +476,7 @@ export class TemplateGenerator {
         `<block s-else>`,
         `<template is="{{ '${defaultSlotName}' }}" `,
         `data="`,
-        this.wrapTemplateData(`...$root[ s ], $root${tail}, $c: c`),
+        this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
         `" `,
         `${this.genFor(el)}/>`,
         `</block>`
@@ -484,7 +487,7 @@ export class TemplateGenerator {
       `${defaultSlot}`,
       `<template is="{{ s_${slotName} || '${defaultSlotName}' }}" `,
       `data="`,
-      this.wrapTemplateData(`...$root[ s ], $root${tail}, $c: c`),
+      this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
       `" `,
       `${this.genFor(el)}/>`
     ].join('')
@@ -583,7 +586,7 @@ export class TemplateGenerator {
   genHid (el): string {
     let tail = ''
     if (this.isInSlotSnippet()) {
-      tail = ` + _t`
+      tail = ` + ${FOR_TAIL_VAR}`
     }
     return `${el._hid}${tail}`
   }

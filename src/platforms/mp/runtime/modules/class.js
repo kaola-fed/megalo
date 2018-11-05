@@ -6,7 +6,8 @@ import {
 } from 'shared/util'
 
 import {
-  genClassForVnode
+  genClassForVnode,
+  VARS
 } from 'mp/util/index'
 
 import { updateVnodeToMP } from '../instance/index'
@@ -30,7 +31,7 @@ function updateClass (oldVnode: any, vnode: any) {
   const { elm = {}} = vnode
   const cls = genClassForVnode(vnode)
   if (isDef(cls) && elm.class !== cls) {
-    updateVnodeToMP(vnode, 'cl', cls)
+    updateVnodeToMP(vnode, VARS.class, cls)
   }
 }
 
