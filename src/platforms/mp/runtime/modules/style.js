@@ -1,7 +1,7 @@
 /* @flow */
 
 import { getStyle, normalizeStyleBinding } from 'mp/util/style'
-import { VARS, notEmpty } from 'mp/util/index'
+import { HOLDER_TYPE_VARS, notEmpty } from 'mp/util/index'
 import {
   cached,
   // camelize,
@@ -115,7 +115,7 @@ function updateStyle (oldVnode: VNodeWithData, vnode: VNodeWithData) {
     .filter(notEmpty)
     .join('; ')
 
-  updateVnodeToMP(vnode, VARS.style, cur)
+  updateVnodeToMP(vnode, HOLDER_TYPE_VARS.style, cur)
 }
 
 export default {

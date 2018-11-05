@@ -2,6 +2,8 @@ import { isDef } from 'core/util/index'
 import { getVMId, getHid } from './helper'
 import {
   throttle,
+  getValue,
+  deepEqual,
   Buffer,
   VM_ID_SEP,
   VM_ID_VAR,
@@ -9,7 +11,7 @@ import {
   ROOT_DATA_VAR,
   HOLDER_VAR,
   SLOT_CONTEXT_ID_VAR,
-  VARS
+  HOLDER_TYPE_VARS
 } from 'mp/util/index'
 
 function isEmptyObj (obj = {}) {
@@ -35,31 +37,38 @@ export function initVMToMP (vm) {
 export function updateSlotId (vm, sid) {
   vm = vm || this
   const vmId = getVMId(vm)
+  const dataPaths = [ROOT_DATA_VAR, vmId, SLOT_CONTEXT_ID_VAR]
+  const curValue = getValue(vm.$mp.page.data, dataPaths)
+  const dataPathStr = dataPaths.join('.')
 
   /* istanbul ignore else */
-  if (isDef(sid)) {
+  if (isDef(sid) && curValue !== sid) {
     vm.$mp.update({
-      [`${ROOT_DATA_VAR}.${vmId}.${SLOT_CONTEXT_ID_VAR}`]: sid
+      [dataPathStr]: sid
     })
   }
 }
 
-export function updateMPData (type = VARS.text, data, vnode) {
+export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
   const vm = this
   const vmId = getVMId(vm)
   const hid = getHid(vm, vnode)
-  const dataPath = [
+  const dataPaths = [
     ROOT_DATA_VAR,
     vmId,
     HOLDER_VAR,
     hid,
     type
-  ].join('.')
+  ]
+  const dataPathStr = dataPaths.join('.')
+
+  const curValue = getValue(vm.$mp.page.data, dataPaths)
+  const isDeepEqual = deepEqual(curValue, data)
 
   /* istanbul ignore else */
-  if (isDef(hid)) {
+  if (isDef(hid) && !isDeepEqual) {
     vm.$mp.update({
-      [dataPath]: data
+      [dataPathStr]: data
     })
   }
 }
@@ -80,7 +89,7 @@ export function createUpdateFn (page) {
   }
 }
 
-export function updateVnodeToMP (vnode, key = VARS.text, value) {
+export function updateVnodeToMP (vnode, key = HOLDER_TYPE_VARS.text, value) {
   const { context, slotContext } = vnode
   const realContext = slotContext || context
   realContext && realContext.$updateMPData(key, value, vnode)
@@ -90,3 +99,4 @@ export function updateVnodeToMP (vnode, key = VARS.text, value) {
     console.warn('update text with no context', key, value, vnode)
   }
 }
+

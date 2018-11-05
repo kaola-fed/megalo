@@ -1,6 +1,6 @@
 /* @flow */
 import { updateVnodeToMP } from './instance/index'
-import { VARS } from 'mp/util/index'
+import { HOLDER_TYPE_VARS } from 'mp/util/index'
 
 export function createElement (tagName: string, vnode: VNode): Element {
   return {
@@ -15,7 +15,7 @@ export /* istanbul ignore next */ function createElementNS (namespace: string, t
 }
 
 export function createTextNode (text: string, vnode: VNode): Text {
-  updateVnodeToMP(vnode, VARS.text, text)
+  updateVnodeToMP(vnode, HOLDER_TYPE_VARS.text, text)
   return {
     text
   }
@@ -49,7 +49,7 @@ export /* istanbul ignore next */ function tagName (node: Element): string {
 }
 
 export function setTextContent (node: Node, text: string, vnode: VNode) {
-  updateVnodeToMP(vnode, VARS.text, text)
+  updateVnodeToMP(vnode, HOLDER_TYPE_VARS.text, text)
   return {}
 }
 

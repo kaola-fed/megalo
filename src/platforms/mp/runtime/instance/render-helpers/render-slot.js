@@ -2,7 +2,7 @@
 
 // import { extend, warn, isObject } from 'core/util/index'
 import { getVMId, updateSlotId } from '../../instance/index'
-import { VM_ID_SEP_REG, NODE_ID_SEP_REG } from 'mp/util/index'
+import { LIST_TAIL_SEP_REG } from 'mp/util/index'
 /**
  * Runtime helper for rendering <slot>
  */
@@ -33,10 +33,10 @@ export function afterRenderSlot (
 
   // scopedSlotFn with v-for
   const scopedSlotFn = this.$scopedSlots[name]
-  if (scopedSlotFn && NODE_ID_SEP_REG.test(_hid)) {
+  if (scopedSlotFn && LIST_TAIL_SEP_REG.test(_hid)) {
     const tail = _hid.replace(/^\d+/, '')
     updateNodesHid(nodes, tail)
-  } else if (VM_ID_SEP_REG.test(componentCid)) {
+  } else if (LIST_TAIL_SEP_REG.test(componentCid)) {
     const tail = componentCid.replace(/^\d+/, '')
     updateNodesHid(nodes, tail)
   }
