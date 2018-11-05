@@ -5,12 +5,17 @@ import { cloneAST, removeQuotes, uid, escapeText } from '../util'
 import presets from '../../util/presets/index'
 import { baseWarn } from 'compiler/helpers'
 import { capitalize, camelize } from 'shared/util'
-import { NODE_ID_SEPS, notEmpty } from 'mp/util/index'
+import {
+  notEmpty,
+  NODE_ID_SEPS,
+  HOLDER_VAR,
+  VARS
+} from 'mp/util/index'
 
 const vbindReg = /^(v-bind)?:/
 const vonReg = /^v-on:|@/
 const vmodelReg = /^v-model/
-const hidTailReg = /'[-|_]'/
+const listTailReg = /'[-|_]'/
 
 let sep = `'${NODE_ID_SEPS.wechat}'`
 
@@ -85,7 +90,7 @@ export class TemplateGenerator {
   }
 
   visit (el) {
-    const { visitors } = this.preset
+    const { visitors = {}} = this.preset
 
     if (visitors.all) {
       visitors.all(el)
@@ -124,7 +129,7 @@ export class TemplateGenerator {
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
     let tail = `, _t: ''`
     // passing parent for tail to slot inside v-for
-    if (hidTailReg.test(_cid)) {
+    if (listTailReg.test(_cid)) {
       tail = `, _t: ${extractHidTail(_cid)}`
     }
     const data = [
@@ -289,7 +294,7 @@ export class TemplateGenerator {
       klass.push(staticClass)
     }
     if (classBinding) {
-      klass.push(`{{ _h[ ${this.genHid(el)} ].cl }}`)
+      klass.push(`{{ ${this.genHolder(el, 'class')} }}`)
     }
     // scoped id class
     if (klass.length) {
@@ -309,7 +314,7 @@ export class TemplateGenerator {
       style.push(staticStyle)
     }
     if (styleBinding) {
-      style.push(`{{ _h[ ${this.genHid(el)} ].st }}`)
+      style.push(`{{ ${this.genHolder(el, 'style')} }}`)
     }
     style = style.filter(notEmpty).join('; ')
     return style ? ` style="${style}"` : ''
@@ -320,7 +325,7 @@ export class TemplateGenerator {
     if (!attrsMap['v-show']) {
       return ''
     }
-    return ` hidden="{{ _h[ ${this.genHid(el)} ].vs }}"`
+    return ` hidden="{{ ${this.genHolder(el, 'vshow')} }}"`
   }
 
   genAttrs (el): string {
@@ -333,9 +338,9 @@ export class TemplateGenerator {
         return ''
       } else if (vbindReg.test(name)) {
         const realName = name.replace(vbindReg, '')
-        return `${realName}="{{ _h[ ${this.genHid(el)} ][ '${realName}' ] }}"`
+        return `${realName}="{{ ${HOLDER_VAR}[ ${this.genHid(el)} ][ '${realName}' ] }}"`
       } else if (vmodelReg.test(name)) {
-        return `value="{{ _h[ ${this.genHid(el)} ].value }}"`
+        return `value="{{ ${this.genHolder(el, 'value')} }}"`
       } else {
         return `${name}="${value}"`
       }
@@ -387,9 +392,9 @@ export class TemplateGenerator {
     const ELSE = this.directive('else')
 
     if (el.if) {
-      return ` ${IF}="{{ _h[ ${this.genHid(el)} ]._if }}"`
+      return ` ${IF}="{{ ${this.genHolder(el, 'if')} }}"`
     } else if (el.elseif) {
-      return ` ${ELSE_IF}="{{ _h[ ${this.genHid(el)} ]._if }}"`
+      return ` ${ELSE_IF}="{{ ${this.genHolder(el, 'if')} }}"`
     } else if (el.else) {
       return ` ${ELSE}`
     }
@@ -406,7 +411,7 @@ export class TemplateGenerator {
     const FOR_INDEX = this.directive('forIndex')
 
     const _for = [
-      ` ${FOR}="{{ _h[ ${_forId} ].li }}"`,
+      ` ${FOR}="{{ ${this.genHolder(_forId, 'for')} }}"`,
       this.genForKey(el),
       alias ? ` ${FOR_ITEM}="${alias}"` : /* istanbul ignore next */ ''
     ]
@@ -428,7 +433,7 @@ export class TemplateGenerator {
   genText (el): string {
     const { text = '' } = el
     if (el.expression) {
-      return `{{ _h[ ${this.genHid(el)} ].t }}`
+      return `{{ ${this.genHolder(el, 'text')} }}`
     }
     return escapeText(text) || /* istanbul ignore next */ ''
   }
@@ -442,7 +447,7 @@ export class TemplateGenerator {
     const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : /* istanbul ignore next */ ''
     let tail = `, _t: (_t || '')`
     // sloped-slot inside v-for
-    if (el.hasBindings && hidTailReg.test(_hid)) {
+    if (el.hasBindings && listTailReg.test(_hid)) {
       tail = `, _t: ${extractHidTail(_hid)}`
     }
 
@@ -492,6 +497,15 @@ export class TemplateGenerator {
     return el.children.map(child => this.genElement(child)).join('')
   }
 
+  genHolder (el, type): string {
+    const varName = VARS[type]
+    const hid = typeof el === 'string' ? el : this.genHid(el)
+    if (!varName) {
+      throw new Error(`${type} holder VARS not found`)
+    }
+    return `${HOLDER_VAR}[ ${hid} ].${varName}`
+  }
+
   /* istanbul ignore next */
   genError (err: Error) {
     return `<template name="${this.name}">compile error: ${err.toString()}\n${err.stack}</template>`
@@ -521,7 +535,7 @@ export class TemplateGenerator {
     return `<template is="${htmlParse.templateName}"${[
       this.genIf(el),
       this.genFor(el)
-    ].join('')} data="{{ nodes: _h[${this.genHid(el)}].html }}"/>`
+    ].join('')} data="{{ nodes: ${this.genHolder(el, 'html')} }}"/>`
   }
 
   isVHtml (el = {}): boolean {
