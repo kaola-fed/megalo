@@ -7,7 +7,7 @@ import { compileToTemplate as doCompileToTemplate } from './codegen/compile-to-t
 const { compile, compileToFunctions } = createCompiler(baseOptions)
 
 function compileToTemplate (template, options) {
-  const compiled = compile(template)
+  const compiled = compile(template, options)
   const result = doCompileToTemplate(compiled.ast, options)
   return result
 }

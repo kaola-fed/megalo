@@ -5,13 +5,14 @@ import { cloneAST, removeQuotes, uid, escapeText } from '../util'
 import presets from '../../util/presets/index'
 import { baseWarn } from 'compiler/helpers'
 import { capitalize, camelize } from 'shared/util'
-// import { eventTypeMap } from 'mp/util/index'
+import { NODE_ID_SEPS, notEmpty } from 'mp/util/index'
 
 const vbindReg = /^(v-bind)?:/
 const vonReg = /^v-on:|@/
 const vmodelReg = /^v-model/
+const hidTailReg = /'[-|_]'/
 
-const notEmpty = e => e
+let sep = `'${NODE_ID_SEPS.wechat}'`
 
 export function compileToTemplate (ast, options = {}): string {
   const templateGenerator = new TemplateGenerator(options)
@@ -32,6 +33,7 @@ export class TemplateGenerator {
     } = options
 
     const preset = presets[target]
+    sep = NODE_ID_SEPS[target] ? `'${NODE_ID_SEPS[target]}'` : sep
 
     Object.assign(this, {
       name,
@@ -82,7 +84,21 @@ export class TemplateGenerator {
       .join('')
   }
 
+  visit (el) {
+    const { visitors } = this.preset
+
+    if (visitors.all) {
+      visitors.all(el)
+    }
+
+    if (visitors[el.tag]) {
+      visitors[el.tag](el)
+    }
+  }
+
   genElement (el): string {
+    this.visit(el)
+
     if (el.ifConditions && !el.ifConditionsGenerated) {
       return this.genIfConditions(el)
     } else if (this.isVHtml(el)) {
@@ -106,10 +122,10 @@ export class TemplateGenerator {
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
-    let tail = `, $t: ''`
+    let tail = `, _t: ''`
     // passing parent for tail to slot inside v-for
-    if (/'-'/.test(_cid)) {
-      tail = `, $t: ${extractHidTail(_cid)}`
+    if (hidTailReg.test(_cid)) {
+      tail = `, _t: ${extractHidTail(_cid)}`
     }
     const data = [
       `...$root[ cp + ${_cid} ]`,
@@ -119,7 +135,7 @@ export class TemplateGenerator {
 
     const attrs = [
       ` is="${compName}"`,
-      ` data="{{ ${data}${tail} }}"`,
+      ` data="` + this.wrapTemplateData(`${data}${tail}`) + `"`,
       this.genIf(el),
       this.genFor(el)
     ].filter(notEmpty).join('')
@@ -242,7 +258,7 @@ export class TemplateGenerator {
       return children
     }
 
-    const { tag } = el
+    const { tag, isSelfCloseTag } = el
     const mpTag = TAG_MAP[tag] || tag
     const attrs = this.isTemplate(el) ? [] : [
       this.genVShow(el),
@@ -257,9 +273,9 @@ export class TemplateGenerator {
       this.genIf(el),
       this.genFor(el),
       ...attrs
-    ].join('')}>`
+    ].join('')}` + (isSelfCloseTag ? `/>` : `>`)
 
-    const endTag = `</${mpTag}>`
+    const endTag = isSelfCloseTag ? `` : `</${mpTag}>`
 
     return [startTag, children, endTag].join('')
   }
@@ -295,7 +311,7 @@ export class TemplateGenerator {
     if (styleBinding) {
       style.push(`{{ _h[ ${this.genHid(el)} ].st }}`)
     }
-    style = style.filter(e => e).join('; ')
+    style = style.filter(notEmpty).join('; ')
     return style ? ` style="${style}"` : ''
   }
 
@@ -324,7 +340,7 @@ export class TemplateGenerator {
         return `${name}="${value}"`
       }
     })
-    attrs = attrs.filter(e => e).join(' ')
+    attrs = attrs.filter(notEmpty).join(' ')
     return attrs ? ` ${attrs}` : ''
   }
 
@@ -361,7 +377,7 @@ export class TemplateGenerator {
         const { block } = cond
         return this.genElement(block)
       })
-      .filter(e => e)
+      .filter(notEmpty)
       .join('')
   }
 
@@ -396,7 +412,7 @@ export class TemplateGenerator {
     ]
     iterator1 && _for.push(` ${FOR_INDEX}="${iterator1}"`)
 
-    return _for.filter(e => e).join('')
+    return _for.filter(notEmpty).join('')
   }
 
   genForKey (el): string {
@@ -424,10 +440,10 @@ export class TemplateGenerator {
     const defaultSlotName = `${slotName}$${uid()}`
     const defaultSlotBody = this.genChildren(el)
     const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : /* istanbul ignore next */ ''
-    let tail = `, $t: ($t || '')`
+    let tail = `, _t: (_t || '')`
     // sloped-slot inside v-for
-    if (el.hasBindings && /'-'/.test(_hid)) {
-      tail = `, $t: ${extractHidTail(_hid)}`
+    if (el.hasBindings && hidTailReg.test(_hid)) {
+      tail = `, _t: ${extractHidTail(_hid)}`
     }
 
     /**
@@ -436,7 +452,37 @@ export class TemplateGenerator {
      *      event hanlders searching depends on this id
      */
 
-    return `${defaultSlot}<template is="{{ s_${slotName} || '${defaultSlotName}' }}" data="{{ ...$root[ s ], $root${tail}, $c: c }}"${this.genFor(el)}/>`
+    if (this.target === 'swan') {
+      return [
+        // if
+        `${defaultSlot}`,
+        `<block s-if="s_${slotName}">`,
+        `<template is="{{ s_${slotName} }}" `,
+        `data="`,
+        this.wrapTemplateData(`...$root[ s ], $root${tail}, $c: c`),
+        `" `,
+        `${this.genFor(el)}/>`,
+        `</block>`,
+
+        // else use default slot snippet
+        `<block s-else>`,
+        `<template is="{{ '${defaultSlotName}' }}" `,
+        `data="`,
+        this.wrapTemplateData(`...$root[ s ], $root${tail}, $c: c`),
+        `" `,
+        `${this.genFor(el)}/>`,
+        `</block>`
+      ].join('')
+    }
+
+    return [
+      `${defaultSlot}`,
+      `<template is="{{ s_${slotName} || '${defaultSlotName}' }}" `,
+      `data="`,
+      this.wrapTemplateData(`...$root[ s ], $root${tail}, $c: c`),
+      `" `,
+      `${this.genFor(el)}/>`
+    ].join('')
   }
 
   genChildren (el): string {
@@ -523,7 +569,7 @@ export class TemplateGenerator {
   genHid (el): string {
     let tail = ''
     if (this.isInSlotSnippet()) {
-      tail = ` + $t`
+      tail = ` + _t`
     }
     return `${el._hid}${tail}`
   }
@@ -538,13 +584,17 @@ export class TemplateGenerator {
   isInSlotSnippet () {
     return this.slotSnippet > 0
   }
+
+  wrapTemplateData (str) {
+    return this.target === 'swan' ? `{{{ ${str} }}}` : `{{ ${str} }}`
+  }
 }
 
 function extractHidTail (hid = ''): string {
-  const delimiter = `+ '-' +`
+  const delimiter = `+ ${sep} +`
   let parts = hid.split(delimiter)
   parts = parts.slice(1).map(s => s.trim())
-  return `'-' + ${parts.join(delimiter)}`
+  return `${sep} + ${parts.join(delimiter)}`
 }
 
 function pascalize (str = ''): string {

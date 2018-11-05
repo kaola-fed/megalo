@@ -1,7 +1,6 @@
 import { isDef } from 'core/util/index'
 import { getVMId, getHid } from './helper'
-import { throttle } from 'mp/util/throttle'
-import { Buffer } from 'mp/util/buffer'
+import { throttle, Buffer, COMP_ID_SEP } from 'mp/util/index'
 
 function isEmptyObj (obj = {}) {
   return Object.keys(obj).length === 0
@@ -12,7 +11,7 @@ export function initVMToMP (vm) {
   const cid = getVMId(vm)
   const info = {
     cid,
-    cpath: `${cid},`
+    cpath: `${cid}${COMP_ID_SEP}`
   }
 
   vm.$mp.update({

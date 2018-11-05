@@ -120,7 +120,6 @@ export default {
   'object': 'view',
   'param': 'view',
 
-  // https://mp.weixin.qq.com/debug/wxadoc/dev/component/
   'view': 'view',
   'scroll-view': 'scroll-view',
   'swiper': 'swiper',

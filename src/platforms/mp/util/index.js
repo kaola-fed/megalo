@@ -3,7 +3,19 @@ import { makeMap } from 'shared/util'
 export * from './class'
 export * from './throttle'
 export * from './aop'
+export * from './buffer'
 
+export const COMP_ID_SEP = 'v'
+export const COMP_ID_SEP_REG = /v/
+
+export const NODE_ID_SEPS = {
+  swan: '_',
+  wechat: '-',
+  alipay: '-'
+}
+export const NODE_ID_SEP_REG = /[\-|_]/
+
+export const notEmpty = e => !!e
 export const isPreTag = (tag) => tag === 'pre'
 
 export const isReservedTag = makeMap(
@@ -36,7 +48,6 @@ export function mustUseProp () { /* console.log('mustUseProp') */ }
 export function getTagNamespace () { /* console.log('getTagNamespace') */ }
 export function isUnknownElement () { /* console.log('isUnknownElement') */ }
 
-// 用于小程序的 event type 到 web 的 event
 export const eventTypeMap = {
   tap: ['tap', 'click'],
   touchstart: ['touchstart'],
