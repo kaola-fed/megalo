@@ -35,7 +35,14 @@ describe(':class', () => {
         }
       })
       const { page } = createPage(options)
-      expect(getPageData(page, '0')._h['0'].cl).toEqual(expected)
+      if (expected) {
+        expect(getPageData(page, '0').h['0'].cl).toEqual(expected)
+      } else {
+        expect(
+          getPageData(page, '0').h === undefined ||
+          getPageData(page, '0').h['0'].cl === ''
+        ).toBeTruthy()
+      }
     })
   }
 
@@ -102,7 +109,7 @@ describe(':class', () => {
     }).then(done)
 
     function expectClass (page) {
-      return expect(getPageData(page, '0,0')._h['0'].cl)
+      return expect(getPageData(page, '0,0').h['0'].cl)
     }
   })
 
@@ -153,7 +160,7 @@ describe(':class', () => {
     }).then(() => {
       vm.componentClass2 = 'c2'
     }).then(() => {
-      expect(getPageData(page, '0')._h['0']).toEqual(1)
+      expect(getPageData(page, '0').h['0']).toEqual(1)
     }).then(() => {
       // expectClass(page).toBe('componentClass3 c2 c1')
       // vm.componentClass3 = 'c3'
@@ -162,7 +169,7 @@ describe(':class', () => {
     }).then(done)
 
     function expectClass (page) {
-      return expect(getPageData(page, '0')._h['0'].cl)
+      return expect(getPageData(page, '0').h['0'].cl)
     }
   })
 
@@ -184,7 +191,7 @@ describe(':class', () => {
     }).then(done)
 
     function expectClass (page) {
-      return expect(getPageData(page, '0')._h['0'].cl)
+      return expect(getPageData(page, '0').h['0'].cl)
     }
   })
 

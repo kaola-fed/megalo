@@ -10,7 +10,7 @@ describe('Directive v-show', () => {
   })
 
   function asserVShow (pageData, expected, hid = '1') {
-    expect(pageData._h[hid].vs).toEqual(expected)
+    expect(pageData.h[hid].vs).toEqual(expected)
   }
 
   it('should check show value is truthy', () => {

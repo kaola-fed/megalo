@@ -12,7 +12,10 @@ describe('Directive v-model component', () => {
   function triggerInput (page, value = '', options = {}) {
     const { cid = '0', hid = '0', type = 'input' } = options
     const input = {
-      dataset: { cid, hid },
+      dataset: {
+        cid,
+        hid
+      },
       detail: { value }
     }
     page._triggerEvent(input, type)
@@ -46,11 +49,11 @@ describe('Directive v-model component', () => {
       // triggerEvent(input, 'input')
     }).then(() => {
       expect(vm.msg).toEqual('world')
-      expect(pageData._h['2'].t).toEqual('world')
+      expect(pageData.h['2'].t).toEqual('world')
       vm.msg = 'changed'
     }).then(() => {
       expect(vm.msg).toEqual('changed')
-      expect(pageData._h['2'].t).toEqual('changed')
+      expect(pageData.h['2'].t).toEqual('changed')
     }).then(() => {
       // document.body.removeChild(vm.$el)
     }).then(done)
@@ -81,11 +84,11 @@ describe('Directive v-model component', () => {
       triggerInput(page, 'world', { cid: '0,0', hid: '0' })
     }).then(() => {
       expect(vm.msg).toEqual('world')
-      expect(pageData._h['2'].t).toEqual('world')
+      expect(pageData.h['2'].t).toEqual('world')
       vm.msg = 'changed'
     }).then(() => {
       expect(vm.msg).toEqual('changed')
-      expect(pageData._h['2'].t).toEqual('changed')
+      expect(pageData.h['2'].t).toEqual('changed')
     }).then(() => {
       // document.body.removeChild(vm.$el)
     }).then(done)
@@ -124,12 +127,12 @@ describe('Directive v-model component', () => {
       triggerInput(page, 'world', { cid: '0,0', hid: '0' })
     }).then(() => {
       expect(vm.msg).toEqual('world')
-      expect(pageData._h['2'].t).toEqual('world')
+      expect(pageData.h['2'].t).toEqual('world')
       expect(spy).toHaveBeenCalledWith('world')
       vm.msg = 'changed'
     }).then(() => {
       expect(vm.msg).toEqual('changed')
-      expect(pageData._h['2'].t).toEqual('changed')
+      expect(pageData.h['2'].t).toEqual('changed')
     }).then(() => {
       // document.body.removeChild(vm.$el)
     }).then(done)

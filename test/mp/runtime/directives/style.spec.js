@@ -25,7 +25,7 @@ describe(':style', () => {
   })
 
   function expectStyle (expected) {
-    return expect(getPageData(page, '0')._h['0'].st).toEqual(expected)
+    return expect(getPageData(page, '0').h['0'].st).toEqual(expected)
   }
 
   it('string', done => {
@@ -160,7 +160,7 @@ describe(':style', () => {
 describe('style other', () => {
   let page
   function expectStyle (expected) {
-    return expect(getPageData(page, '0')._h['0'].st).toEqual(expected)
+    return expect(getPageData(page, '0').h['0'].st).toEqual(expected)
   }
 
   beforeEach(() => {
@@ -204,7 +204,7 @@ describe('style other', () => {
     page = createPage(pageOptions).page
     // const { rootVM: vm } = page
     // const child = vm.$children[0]
-    const style = getPageData(page, '0,0')._h['0'].st
+    const style = getPageData(page, '0,0').h['0'].st
     const css = style.replace(/\s/g, '')
     expect(css).toContain('margin-right:20px;')
     expect(css).toContain('margin-left:16px;')

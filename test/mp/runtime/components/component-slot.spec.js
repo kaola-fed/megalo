@@ -53,11 +53,11 @@ describe('Component slot', () => {
     })
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h['4'].t).toBe('parent message')
+    expect(pageData.h['4'].t).toBe('parent message')
     expect(comp1.s).toBe('0')
     vm.msg = 'changed'
     waitForUpdate(() => {
-      expect(pageData._h['4'].t).toBe('changed')
+      expect(pageData.h['4'].t).toBe('changed')
       expect(comp1.s).toBe('0')
       // expect(child.$el.children[0].textContent).toBe('changed')
     }).then(done)
@@ -70,14 +70,14 @@ describe('Component slot', () => {
     })
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h['4'].t).toBe('parent message')
+    expect(pageData.h['4'].t).toBe('parent message')
     expect(comp1.s).toBe('0')
     // expect(child.$el.tagName).toBe('DIV')
     // expect(child.$el.children[0].tagName).toBe('P')
     // expect(child.$el.children[0].textContent).toBe('parent message')
     vm.msg = 'changed'
     waitForUpdate(() => {
-      expect(pageData._h['4'].t).toBe('changed')
+      expect(pageData.h['4'].t).toBe('changed')
       expect(comp1.s).toBe('0')
       // expect(child.$el.children[0].textContent).toBe('changed')
     }).then(done)
@@ -90,14 +90,14 @@ describe('Component slot', () => {
     })
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h['4'].t).toBe('parent message')
+    expect(pageData.h['4'].t).toBe('parent message')
     expect(comp1.s).toBe('0')
     // expect(child.$el.tagName).toBe('DIV')
     // expect(child.$el.children[0].tagName).toBe('P')
     // expect(child.$el.children[0].textContent).toBe('parent message')
     vm.msg = 'changed'
     waitForUpdate(() => {
-      expect(pageData._h['4'].t).toBe('changed')
+      expect(pageData.h['4'].t).toBe('changed')
       expect(comp1.s).toBe('0')
       // expect(child.$el.children[0].textContent).toBe('changed')
     }).then(done)
@@ -111,7 +111,7 @@ describe('Component slot', () => {
     const comp1 = getPageData(page, '0,0')
     expect(pageData._h).toBeUndefined()
     expect(comp1.s).toBeUndefined()
-    expect(comp1._h[4].t).toBe('child message')
+    expect(comp1.h[4].t).toBe('child message')
     // expect(child.$el.children[0].tagName).toBe('P')
     // expect(child.$el.textContent).toBe('child message')
   })
@@ -129,7 +129,7 @@ describe('Component slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     // static text is compiled to template
-    expect(pageData._h[4].t).toBe('slot bparent message')
+    expect(pageData.h[4].t).toBe('slot bparent message')
     expect(comp1.s).toBe('0')
   })
 
@@ -146,7 +146,7 @@ describe('Component slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     // static text is compiled to template
-    expect(pageData._h[4].t).toBe('slot bparent message')
+    expect(pageData.h[4].t).toBe('slot bparent message')
     expect(comp1.s).toBe('0')
   })
 
@@ -158,8 +158,8 @@ describe('Component slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     // static text is compiled to template
-    expect(pageData._h[4].t).toBe('parent message1')
-    expect(pageData._h[7].t).toBe('parent message2')
+    expect(pageData.h[4].t).toBe('parent message1')
+    expect(pageData.h[7].t).toBe('parent message2')
     expect(comp1.s).toBe('0')
   })
 
@@ -177,9 +177,9 @@ describe('Component slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     // static text is compiled to template
-    expect(pageData._h[4].t).toBe('parent messagefoo')
-    expect(pageData._h[6].t).toBe('parent message1')
-    expect(pageData._h[8].t).toBe('parent message2')
+    expect(pageData.h[4].t).toBe('parent messagefoo')
+    expect(pageData.h[6].t).toBe('parent message1')
+    expect(pageData.h[8].t).toBe('parent message2')
     expect(comp1.s).toBe('0')
   })
 
@@ -201,7 +201,7 @@ describe('Component slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     // static text is compiled to template
-    expect(pageData._h[5].t).toBe('select bparent message')
+    expect(pageData.h[5].t).toBe('select bparent message')
     expect(comp1.s).toBe('0')
   })
 
@@ -213,7 +213,7 @@ describe('Component slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     // static text is compiled to template
-    expect(pageData._h[6].t).toBe('twoparent message')
+    expect(pageData.h[6].t).toBe('twoparent message')
     expect(comp1.s).toBe('0')
   })
 
@@ -235,25 +235,25 @@ describe('Component slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
 
-    expect(pageData._h[3].t).toBe('2')
-    expect(pageData._h[5].t).toBe('1')
-    expect(comp1._h[0]._if).toBeTruthy()
+    expect(pageData.h[3].t).toBe('2')
+    expect(pageData.h[5].t).toBe('1')
+    expect(comp1.h[0]._if).toBeTruthy()
     vm.a = 2
     waitForUpdate(() => {
-      expect(pageData._h[3].t).toBe('2')
-      expect(pageData._h[5].t).toBe('2')
-      expect(comp1._h[0]._if).toBeTruthy()
+      expect(pageData.h[3].t).toBe('2')
+      expect(pageData.h[5].t).toBe('2')
+      expect(comp1.h[0]._if).toBeTruthy()
       vm.show = false
     }).then(() => {
-      expect(pageData._h[3].t).toBe('2')
-      expect(pageData._h[5].t).toBe('2')
-      expect(comp1._h[0]._if).toBeFalsy()
+      expect(pageData.h[3].t).toBe('2')
+      expect(pageData.h[5].t).toBe('2')
+      expect(comp1.h[0]._if).toBeFalsy()
       vm.show = true
       vm.a = 3
     }).then(() => {
-      expect(pageData._h[3].t).toBe('2')
-      expect(pageData._h[5].t).toBe('3')
-      expect(comp1._h[0]._if).toBeTruthy()
+      expect(pageData.h[3].t).toBe('2')
+      expect(pageData.h[5].t).toBe('3')
+      expect(comp1.h[0]._if).toBeTruthy()
     }).then(done)
   })
 
@@ -268,7 +268,7 @@ describe('Component slot', () => {
     // const pageData = getPageData(page, '0')
     // const comp1 = getPageData(page, '0,0')
     // static text is compiled to template
-    // expect(pageData._h[6].t).toBe('twoparent message')
+    // expect(pageData.h[6].t).toBe('twoparent message')
     // expect(comp1.s).toBe('0')
     // expect(child.$el.innerHTML).toBe('<p>0</p><p>1</p><p>2</p>')
   })
@@ -293,12 +293,12 @@ describe('Component slot', () => {
     const comp1 = getPageData(page, '0,0')
     const comp2 = getPageData(page, '0,1')
 
-    expect(pageData._h[5].t).toBe('foo')
+    expect(pageData.h[5].t).toBe('foo')
     expect(comp1.s).toBe('0')
     expect(comp2.s).toBe('0')
     vm.msg = 'bar'
     waitForUpdate(() => {
-      expect(pageData._h[5].t).toBe('bar')
+      expect(pageData.h[5].t).toBe('bar')
     }).then(done)
   })
 
@@ -321,18 +321,18 @@ describe('Component slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
 
-    expect(pageData._h[2]._if).toBeTruthy()
-    expect(pageData._h[3].t).toBe('hi')
+    expect(pageData.h[2]._if).toBeTruthy()
+    expect(pageData.h[3].t).toBe('hi')
     expect(comp1.s).toBe('0')
     vm.ok = false
     waitForUpdate(() => {
-      expect(pageData._h[2]._if).toBeFalsy()
-      expect(pageData._h[3].t).toBe('hi')
+      expect(pageData.h[2]._if).toBeFalsy()
+      expect(pageData.h[3].t).toBe('hi')
       vm.ok = true
       vm.msg = 'bye'
     }).then(() => {
-      expect(pageData._h[2]._if).toBeTruthy()
-      expect(pageData._h[3].t).toBe('bye')
+      expect(pageData.h[2]._if).toBeTruthy()
+      expect(pageData.h[3].t).toBe('bye')
     }).then(done)
   })
 
@@ -350,7 +350,7 @@ describe('Component slot', () => {
     })
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h[3].t).toBe('hello')
+    expect(pageData.h[3].t).toBe('hello')
     expect(comp1.s).toBe('0')
   })
 
@@ -367,11 +367,12 @@ describe('Component slot', () => {
     const comp1 = getPageData(page, '0,0-0')
     const comp2 = getPageData(page, '0,0-0')
     const comp3 = getPageData(page, '0,0-0')
-    // expect(pageData._h[1].li).toEqual([1, 2, 3])
-    expect(pageData._h[1].li.length).toBe(3)
-    expect(pageData._h['3-0'].t).toBe('1')
-    expect(pageData._h['3-1'].t).toBe('2')
-    expect(pageData._h['3-2'].t).toBe('3')
+    // expect(pageData.h[1].li).toEqual([1, 2, 3])
+    console.log(pageData.h)
+    expect(pageData.h[1].li.length).toBe(3)
+    expect(pageData.h['3-0'].t).toBe('1')
+    expect(pageData.h['3-1'].t).toBe('2')
+    expect(pageData.h['3-2'].t).toBe('3')
     expect(comp1.s).toBe('0')
     expect(comp2.s).toBe('0')
     expect(comp3.s).toBe('0')
@@ -389,8 +390,8 @@ describe('Component slot', () => {
     // expect(child.$el.innerHTML).toBe('foo')
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h[3].t).toBe('parent message')
-    expect(comp1._h[1]._if).toBeTruthy()
+    expect(pageData.h[3].t).toBe('parent message')
+    expect(comp1.h[1]._if).toBeTruthy()
   })
 
   it('default slot should use fallback content if has only whitespace', () => {
@@ -406,9 +407,9 @@ describe('Component slot', () => {
     })
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h[4].t).toBe('parent message1')
-    expect(pageData._h[7].t).toBe('parent message2')
-    expect(pageData._h[10].t).toBe('parent message2+')
+    expect(pageData.h[4].t).toBe('parent message1')
+    expect(pageData.h[7].t).toBe('parent message2')
+    expect(pageData.h[10].t).toBe('parent message2+')
     expect(comp1.s).toBe('0')
   })
 
@@ -442,7 +443,7 @@ describe('Component slot', () => {
       }
     })
     const pageData = getPageData(page, '0')
-    expect(pageData._h[5].t).toBe('Chello')
+    expect(pageData.h[5].t).toBe('Chello')
   })
 
   it('warn if user directly returns array', () => {
@@ -486,7 +487,7 @@ describe('Component slot', () => {
     })
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h[3].t).toBe('hellofoo')
+    expect(pageData.h[3].t).toBe('hellofoo')
     expect(comp1.s).toBe('0')
     // expect(vm.$el.querySelector('.default').textContent).toBe('foo')
     // expect(vm.$el.querySelector('.named').textContent).toBe('')
@@ -518,12 +519,12 @@ describe('Component slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     expect(comp1.s).toBe('0')
-    expect(pageData._h[3].t).toBe('hellofoo')
-    expect(comp1._h[3].t).toBe('1')
+    expect(pageData.h[3].t).toBe('hellofoo')
+    expect(comp1.h[3].t).toBe('1')
     vm.$children[0].a = 2
     waitForUpdate(() => {
-      expect(pageData._h[3].t).toBe('hellofoo')
-      expect(comp1._h[3].t).toBe('2')
+      expect(pageData.h[3].t).toBe('hellofoo')
+      expect(comp1.h[3].t).toBe('2')
     }).then(done)
   })
 
@@ -634,7 +635,7 @@ describe('Component slot', () => {
     })
 
     const comp1 = getPageData(page, '0,0')
-    expect(comp1._h[0]._if).toBeTruthy()
+    expect(comp1.h[0]._if).toBeTruthy()
     // expect(vm.$el.textContent).toBe('hi')
     vm.$children[0].toggle = false
     waitForUpdate(() => {
@@ -676,10 +677,10 @@ describe('Component slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     const comp2 = getPageData(page, '0,0,0')
-    expect(pageData._h[2].t).toBe('hellobar')
-    expect(comp1._h[2].t).toBe('worldfoo')
-    expect(comp2._h[1].t).toBe('1')
-    // expect(comp1._h[0]._if).toBeTruthy()
+    expect(pageData.h[2].t).toBe('hellobar')
+    expect(comp1.h[2].t).toBe('worldfoo')
+    expect(comp2.h[1].t).toBe('1')
+    // expect(comp1.h[0]._if).toBeTruthy()
 
     // expect(vm.$el.textContent).toBe('1foobar')
     vm.$refs.wrap.$refs.inner.a++
@@ -703,14 +704,14 @@ describe('Component slot', () => {
 
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData._h['4-0'].t).toBe('1')
+    expect(pageData.h['4-0'].t).toBe('1')
     expect(comp1.s).toBe('0')
     // const input = vm.$el.querySelector('input')
     // input.value = 'b'
     vm.n++
     waitForUpdate(() => {
-      expect(pageData._h['4-0'].t).toBe('1')
-      expect(pageData._h['4-1'].t).toBe('2')
+      expect(pageData.h['4-0'].t).toBe('1')
+      expect(pageData.h['4-1'].t).toBe('2')
       // expect(vm.$el.innerHTML).toBe('<div><span>1</span><span>2</span><input value="a"></div>')
       // expect(vm.$el.querySelector('input')).toBe(input)
       // expect(vm.$el.querySelector('input').value).toBe('b')
