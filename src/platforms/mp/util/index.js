@@ -68,19 +68,7 @@ export function getTagNamespace () { /* console.log('getTagNamespace') */ }
 export function isUnknownElement () { /* console.log('isUnknownElement') */ }
 
 export const eventTypeMap = {
-  tap: ['tap', 'click'],
-  touchstart: ['touchstart'],
-  touchmove: ['touchmove'],
-  touchcancel: ['touchcancel'],
-  touchend: ['touchend'],
-  longtap: ['longtap'],
-  input: ['input'],
-  blur: ['change', 'blur'],
-  submit: ['submit'],
-  focus: ['focus'],
-  scrolltoupper: ['scrolltoupper'],
-  scrolltolower: ['scrolltolower'],
-  scroll: ['scroll']
+  tap: ['tap', 'click']
 }
 
 export function getValue (obj = {}, path = '') {

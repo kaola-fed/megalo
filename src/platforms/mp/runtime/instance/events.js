@@ -48,10 +48,16 @@ function getVnode (vnode = {}, hid) {
   }
 }
 
-function getHandlers (vm, type, hid) {
+// TODO: unit test for @touchstart and @touchStart
+function getHandlers (vm, rawType, hid) {
+  const type = rawType.toLowerCase()
   let res = []
 
   const eventTypes = eventTypeMap[type] || [type]
+  if (type !== rawType) {
+    eventTypes.push(rawType)
+  }
+
   /* istanbul ignore if */
   if (!vm) return res
 
