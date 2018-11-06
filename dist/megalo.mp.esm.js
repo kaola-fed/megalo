@@ -4396,220 +4396,6 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
 
 Vue.version = '0.1.3-1';
 
-function getHid (vm, vnode) {
-  if ( vnode === void 0 ) vnode = {};
-
-  var data = vnode.data; if ( data === void 0 ) data = {};
-  return data._hid || (data.attrs && data.attrs._hid)
-}
-
-function getVM (vm, id) {
-  if ( vm === void 0 ) vm = {};
-
-  var res;
-  if (getVMId(vm) === ("" + id)) {
-    return vm
-  }
-  var $children = vm.$children;
-  for (var i = 0; i < $children.length; ++i) {
-    res = getVM($children[i], id);
-    /* istanbul ignore else */
-    if (res) {
-      return res
-    }
-  }
-}
-
-function getVMMarker (vm) {
-  return vm && vm.$attrs && vm.$attrs['_cid'] ? vm.$attrs['_cid'] : '0'
-}
-
-function getVMId (vm) {
-  var res = [];
-  var cursor = vm;
-  var prev;
-  while (cursor) {
-    if (cursor === vm || !isSlotParent(cursor, prev)) {
-      res.unshift(getVMMarker(cursor));
-    }
-    prev = cursor;
-    cursor = cursor.$parent;
-  }
-  return res.join(',')
-}
-
-function isSlotParent (parent, child) {
-  var ref = child || {};
-  var $vnode = ref.$vnode; if ( $vnode === void 0 ) $vnode = {};
-  var childSlotParentUId = $vnode._mpSlotParentUId;
-  return isDef(childSlotParentUId) && childSlotParentUId === parent._uid
-}
-
-// export function getVMParentId (vm) {
-//   if (vm.$parent) {
-//     return getVMId(vm.$parent)
-//   }
-//   return ''
-// }
-
-/**
- * 频率控制 返回函数连续调用时，func 执行频率限定为 次 / wait
- *
- * @param  {function}   func      传入函数
- * @param  {number}     wait      表示时间窗口的间隔
- * @param  {object}     [options] 如果想忽略开始边界上的调用，传入{leading: false}。
- * @param  {boolean}    [options.leading=true] 如果想忽略开始边界上的调用，传入{leading: false}。
- * @param  {number|boolean}    [options.leadingDelay=false] 开始边界上的调用延时，传入{leadingDelay: 0}。
- * @param  {boolean}    [options.trailing=true] 如果想忽略结尾边界上的调用，传入{trailing: false}
- *
- * @return {Function}
- *
- * @example
- * const throttleCallback = throttle(callback, 100);
- *
- */
-function throttle (func, wait, options) {
-  if ( options === void 0 ) options = {};
-
-  var context, args, result;
-  var timeout = null;
-  var leadingDelay = options.leadingDelay === undefined ? false : options.leadingDelay;
-  // 上次执行时间点
-  var previous = 0;
-  // 延迟执行函数
-  var later = function () {
-    // 若设定了开始边界不执行选项，上次执行时间始终为0
-    previous = options.leading === false ? 0 : (+new Date());
-    timeout = null;
-    // $flow-disable-line
-    result = func.apply(context, args);
-    if (!timeout) {
-      context = args = null;
-    }
-  };
-  return function () {
-    var now = (+new Date());
-    // 首次执行时，如果设定了开始边界不执行选项，将上次执行时间设定为当前时间。
-    if (!previous && options.leading === false) {
-      previous = now;
-    }
-    // 延迟执行时间间隔
-    var remaining = wait - (now - previous);
-    context = this;
-        args = arguments; // eslint-disable-line
-    // 延迟时间间隔remaining小于等于0，表示上次执行至此所间隔时间已经超过一个时间窗口
-    // remaining大于时间窗口wait，表示客户端系统时间被调整过
-    if (remaining <= 0 || remaining > wait) {
-      clearTimeout(timeout);
-      timeout = null;
-      previous = now;
-      if (leadingDelay === false) {
-        result = func.apply(context, args);
-      } else {
-        setTimeout(function () {
-          result = func.apply(context, args);
-        }, leadingDelay);
-      }
-      if (!timeout) {
-        context = args = null;
-      }
-      // 如果延迟执行不存在，且没有设定结尾边界不执行选项
-    } else if (!timeout && options.trailing !== false) {
-      timeout = setTimeout(later, remaining);
-    }
-    return result
-  }
-}
-
-var Buffer = function Buffer () {
-  this.buff = {};
-};
-
-Buffer.prototype.push = function push (data) {
-  Object.assign(this.buff, data);
-};
-
-Buffer.prototype.pop = function pop () {
-  var data = Object.assign({}, this.buff);
-  this.buff = {};
-  return data
-};
-
-function isEmptyObj (obj) {
-  if ( obj === void 0 ) obj = {};
-
-  return Object.keys(obj).length === 0
-}
-
-function initVMToMP (vm) {
-  var obj;
-
-  vm = vm || this;
-  var cid = getVMId(vm);
-  var info = {
-    cid: cid,
-    cpath: (cid + ",")
-  };
-
-  vm.$mp.update(( obj = {}, obj[("$root." + cid + ".c")] = info.cid, obj[("$root." + cid + ".cp")] = info.cpath, obj));
-}
-
-function updateSlotId (vm, sid) {
-  var obj;
-
-  vm = vm || this;
-  var vmId = getVMId(vm);
-
-  /* istanbul ignore else */
-  if (isDef(sid)) {
-    vm.$mp.update(( obj = {}, obj[("$root." + vmId + ".s")] = sid, obj));
-  }
-}
-
-function updateMPData (type, data, vnode) {
-  var obj;
-
-  if ( type === void 0 ) type = 't';
-  var vm = this;
-  var vmId = getVMId(vm);
-  var hid = getHid(vm, vnode);
-
-  /* istanbul ignore else */
-  if (isDef(hid)) {
-    vm.$mp.update(( obj = {}, obj[("$root." + vmId + "._h." + hid + "." + type)] = data, obj));
-  }
-}
-
-function createUpdateFn (page) {
-  var buffer = new Buffer();
-  var throttleSetData = throttle(function () {
-    var data = buffer.pop();
-
-    if (!isEmptyObj(data) && page.setData) {
-      page.setData(data);
-    }
-  }, 50, { leadingDelay: 0 });
-
-  return function update (data) {
-    buffer.push(data);
-    throttleSetData();
-  }
-}
-
-function updateVnodeToMP (vnode, key, value) {
-  if ( key === void 0 ) key = 't';
-
-  var context = vnode.context;
-  var slotContext = vnode.slotContext;
-  var realContext = slotContext || context;
-  realContext && realContext.$updateMPData(key, value, vnode);
-
-  /* istanbul ignore if */
-  if (!realContext) {
-    console.warn('update text with no context', key, value, vnode);
-  }
-}
-
 /*  */
 
 function genClassForVnode (vnode) {
@@ -4691,6 +4477,75 @@ function stringifyObject (value) {
   return res
 }
 
+/**
+ * 频率控制 返回函数连续调用时，func 执行频率限定为 次 / wait
+ *
+ * @param  {function}   func      传入函数
+ * @param  {number}     wait      表示时间窗口的间隔
+ * @param  {object}     [options] 如果想忽略开始边界上的调用，传入{leading: false}。
+ * @param  {boolean}    [options.leading=true] 如果想忽略开始边界上的调用，传入{leading: false}。
+ * @param  {number|boolean}    [options.leadingDelay=false] 开始边界上的调用延时，传入{leadingDelay: 0}。
+ * @param  {boolean}    [options.trailing=true] 如果想忽略结尾边界上的调用，传入{trailing: false}
+ *
+ * @return {Function}
+ *
+ * @example
+ * const throttleCallback = throttle(callback, 100);
+ *
+ */
+function throttle (func, wait, options) {
+  if ( options === void 0 ) options = {};
+
+  var context, args, result;
+  var timeout = null;
+  var leadingDelay = options.leadingDelay === undefined ? false : options.leadingDelay;
+  // 上次执行时间点
+  var previous = 0;
+  // 延迟执行函数
+  var later = function () {
+    // 若设定了开始边界不执行选项，上次执行时间始终为0
+    previous = options.leading === false ? 0 : (+new Date());
+    timeout = null;
+    // $flow-disable-line
+    result = func.apply(context, args);
+    if (!timeout) {
+      context = args = null;
+    }
+  };
+  return function () {
+    var now = (+new Date());
+    // 首次执行时，如果设定了开始边界不执行选项，将上次执行时间设定为当前时间。
+    if (!previous && options.leading === false) {
+      previous = now;
+    }
+    // 延迟执行时间间隔
+    var remaining = wait - (now - previous);
+    context = this;
+        args = arguments; // eslint-disable-line
+    // 延迟时间间隔remaining小于等于0，表示上次执行至此所间隔时间已经超过一个时间窗口
+    // remaining大于时间窗口wait，表示客户端系统时间被调整过
+    if (remaining <= 0 || remaining > wait) {
+      clearTimeout(timeout);
+      timeout = null;
+      previous = now;
+      if (leadingDelay === false) {
+        result = func.apply(context, args);
+      } else {
+        setTimeout(function () {
+          result = func.apply(context, args);
+        }, leadingDelay);
+      }
+      if (!timeout) {
+        context = args = null;
+      }
+      // 如果延迟执行不存在，且没有设定结尾边界不执行选项
+    } else if (!timeout && options.trailing !== false) {
+      timeout = setTimeout(later, remaining);
+    }
+    return result
+  }
+}
+
 function aop (fn, options) {
   if ( options === void 0 ) options = {};
 
@@ -4723,6 +4578,47 @@ function aop (fn, options) {
   }
 }
 
+var Buffer = function Buffer () {
+  this.buff = {};
+};
+
+Buffer.prototype.push = function push (data) {
+  Object.assign(this.buff, data);
+};
+
+Buffer.prototype.pop = function pop () {
+  var data = Object.assign({}, this.buff);
+  this.buff = {};
+  return data
+};
+
+var ROOT_DATA_VAR = '$root';
+var HOLDER_VAR = 'h';
+
+var VM_ID_VAR = 'c';
+var VM_ID_PREFIX = 'cp';
+
+var VM_ID_SEP = 'v';
+
+var SLOT_CONTEXT_ID_VAR = 's';
+
+
+var LIST_TAIL_SEP_REG = /(\-|_)/;
+
+var HOLDER_TYPE_VARS = {
+  text: 't',
+  if: '_if',
+  for: 'li',
+  class: 'cl',
+  style: 'st',
+  value: 'value',
+  vhtml: 'html',
+  vshow: 'vs'
+};
+
+var notEmpty = function (e) { return !!e; };
+
+
 var isReservedTag = makeMap(
   'template,script,style,element,content,slot,link,meta,svg,view,' +
   'a,div,img,image,text,span,richtext,input,switch,textarea,spinner,select,' +
@@ -4753,7 +4649,6 @@ function mustUseProp () { /* console.log('mustUseProp') */ }
 function getTagNamespace () { /* console.log('getTagNamespace') */ }
 function isUnknownElement () { /* console.log('isUnknownElement') */ }
 
-// 用于小程序的 event type 到 web 的 event
 var eventTypeMap = {
   tap: ['tap', 'click'],
   touchstart: ['touchstart'],
@@ -4769,6 +4664,187 @@ var eventTypeMap = {
   scrolltolower: ['scrolltolower'],
   scroll: ['scroll']
 };
+
+function getValue (obj, path) {
+  if ( obj === void 0 ) obj = {};
+  if ( path === void 0 ) path = '';
+
+  var paths = typeof path === 'string' ? path.split('.') : path;
+  return paths.reduce(function (prev, k) {
+    /* istanbul ignore if */
+    if (prev && isDef(prev)) {
+      prev = prev[k];
+    }
+    return prev
+  }, obj)
+}
+
+function deepEqual (a, b) {
+  var aType = typeof a;
+  var bType = typeof b;
+  if (aType !== 'object' || bType !== 'object' || aType !== bType) {
+    return a === b
+  } else {
+    if (Array.isArray(a)) {
+      if (a.length !== b.length) {
+        return false
+      }
+    }
+    for (var k in a) {
+      if (!deepEqual(a[k], b[k])) {
+        return false
+      }
+    }
+  }
+  return true
+}
+
+function getHid (vm, vnode) {
+  if ( vnode === void 0 ) vnode = {};
+
+  var data = vnode.data; if ( data === void 0 ) data = {};
+  return data._hid || (data.attrs && data.attrs._hid)
+}
+
+function getVM (vm, id) {
+  if ( vm === void 0 ) vm = {};
+
+  var res;
+  if (getVMId(vm) === ("" + id)) {
+    return vm
+  }
+  var $children = vm.$children;
+  for (var i = 0; i < $children.length; ++i) {
+    res = getVM($children[i], id);
+    /* istanbul ignore else */
+    if (res) {
+      return res
+    }
+  }
+}
+
+function getVMMarker (vm) {
+  return vm && vm.$attrs && vm.$attrs['_cid'] ? vm.$attrs['_cid'] : '0'
+}
+
+function getVMId (vm) {
+  var res = [];
+  var cursor = vm;
+  var prev;
+  while (cursor) {
+    if (cursor === vm || !isSlotParent(cursor, prev)) {
+      res.unshift(getVMMarker(cursor));
+    }
+    prev = cursor;
+    cursor = cursor.$parent;
+  }
+  return res.join(VM_ID_SEP)
+}
+
+function isSlotParent (parent, child) {
+  var ref = child || {};
+  var $vnode = ref.$vnode; if ( $vnode === void 0 ) $vnode = {};
+  var childSlotParentUId = $vnode._mpSlotParentUId;
+  return isDef(childSlotParentUId) && childSlotParentUId === parent._uid
+}
+
+// export function getVMParentId (vm) {
+//   if (vm.$parent) {
+//     return getVMId(vm.$parent)
+//   }
+//   return ''
+// }
+
+function isEmptyObj (obj) {
+  if ( obj === void 0 ) obj = {};
+
+  return Object.keys(obj).length === 0
+}
+
+function initVMToMP (vm) {
+  var obj;
+
+  vm = vm || this;
+  var cid = getVMId(vm);
+  var info = {
+    cid: cid,
+    cpath: ("" + cid + VM_ID_SEP)
+  };
+
+  var prefix = ROOT_DATA_VAR + "." + cid;
+
+  vm.$mp.update(( obj = {}, obj[(prefix + "." + VM_ID_VAR)] = info.cid, obj[(prefix + "." + VM_ID_PREFIX)] = info.cpath, obj));
+}
+
+function updateSlotId (vm, sid) {
+  var obj;
+
+  vm = vm || this;
+  var vmId = getVMId(vm);
+  var dataPaths = [ROOT_DATA_VAR, vmId, SLOT_CONTEXT_ID_VAR];
+  var curValue = getValue(vm.$mp.page.data, dataPaths);
+  var dataPathStr = dataPaths.join('.');
+
+  /* istanbul ignore else */
+  if (isDef(sid) && curValue !== sid) {
+    vm.$mp.update(( obj = {}, obj[dataPathStr] = sid, obj));
+  }
+}
+
+function updateMPData (type, data, vnode) {
+  var obj;
+
+  if ( type === void 0 ) type = HOLDER_TYPE_VARS.text;
+  var vm = this;
+  var vmId = getVMId(vm);
+  var hid = getHid(vm, vnode);
+  var dataPaths = [
+    ROOT_DATA_VAR,
+    vmId,
+    HOLDER_VAR,
+    hid,
+    type
+  ];
+  var dataPathStr = dataPaths.join('.');
+
+  var curValue = getValue(vm.$mp.page.data, dataPaths);
+  var isDeepEqual = deepEqual(curValue, data);
+
+  /* istanbul ignore else */
+  if (isDef(hid) && !isDeepEqual) {
+    vm.$mp.update(( obj = {}, obj[dataPathStr] = data, obj));
+  }
+}
+
+function createUpdateFn (page) {
+  var buffer = new Buffer();
+  var throttleSetData = throttle(function () {
+    var data = buffer.pop();
+
+    if (!isEmptyObj(data) && page.setData) {
+      page.setData(data);
+    }
+  }, 50, { leadingDelay: 0 });
+
+  return function update (data) {
+    buffer.push(data);
+    throttleSetData();
+  }
+}
+
+function updateVnodeToMP (vnode, key, value) {
+  if ( key === void 0 ) key = HOLDER_TYPE_VARS.text;
+
+  var context = vnode.context;
+  var slotContext = vnode.slotContext;
+  var realContext = slotContext || context;
+  realContext && realContext.$updateMPData(key, value, vnode);
+
+  /* istanbul ignore if */
+  if (!realContext) {
+    console.warn('update text with no context', key, value, vnode);
+  }
+}
 
 function proxyEvent (rootVM, event) {
   var type = event.type;
@@ -4888,10 +4964,10 @@ function afterRenderSlot (
 
   // scopedSlotFn with v-for
   var scopedSlotFn = this.$scopedSlots[name];
-  if (scopedSlotFn && /\-/.test(_hid)) {
+  if (scopedSlotFn && LIST_TAIL_SEP_REG.test(_hid)) {
     var tail = _hid.replace(/^\d+/, '');
     updateNodesHid(nodes, tail);
-  } else if (/\-/.test(componentCid)) {
+  } else if (LIST_TAIL_SEP_REG.test(componentCid)) {
     var tail$1 = componentCid.replace(/^\d+/, '');
     updateNodesHid(nodes, tail$1);
   }
@@ -4945,7 +5021,7 @@ function renderIf () {
         attrs: { _hid: _hid }
       }
     };
-    updateVnodeToMP(cloneVnode, '_if', cond);
+    updateVnodeToMP(cloneVnode, HOLDER_TYPE_VARS.if, cond);
   }
 }
 
@@ -5045,21 +5121,7 @@ function updateListToMP (vnodeList, val, forId, context) {
     });
   }
 
-  updateVnodeToMP(cloneVnode, 'li', list);
-}
-
-function getValue (obj, path) {
-  if ( obj === void 0 ) obj = {};
-  if ( path === void 0 ) path = '';
-
-  var paths = path.split('.');
-  return paths.reduce(function (prev, k) {
-    /* istanbul ignore if */
-    if (prev && isDef(prev)) {
-      prev = prev[k];
-    }
-    return prev
-  }, obj)
+  updateVnodeToMP(cloneVnode, HOLDER_TYPE_VARS.for, list);
 }
 
 function initRootVM (mpVM, opt) {
@@ -5081,217 +5143,82 @@ function initRootVM (mpVM, opt) {
   return rootVM
 }
 
-function walkInTree (vm, fn, options) {
-  if ( options === void 0 ) options = {};
+/*  */
+function createElement$1 (tagName, vnode) {
+  return {
+    on: {
 
-  var result;
-  var bottomToTop = options.bottomToTop; if ( bottomToTop === void 0 ) bottomToTop = false;
-
-  if (!bottomToTop) {
-    result = fn(vm);
-  }
-
-  /* istanbul ignore else */
-  if (vm.$children) {
-    for (var i = vm.$children.length - 1; i >= 0; i--) {
-      var child = vm.$children[i];
-      result = walkInTree(child, fn, options) || result;
     }
   }
-
-  if (bottomToTop) {
-    result = fn(vm);
-  }
-
-  return result
 }
 
-function callHook$1 (vm, hook, options) {
-  /* istanbul ignore if */
-  if (!vm) {
-    return
-  }
-
-  var result;
-
-  if (hook === 'onReady') {
-    result = walkInTree(vm, function (_vm) {
-      var handler = _vm.$options[hook];
-      handler && handler.call(_vm, options);
-    }, { bottomToTop: true });
-  } else {
-    result = walkInTree(vm, function (_vm) {
-      var handler = _vm.$options[hook];
-      return handler && handler.call(_vm, options)
-    });
-  }
-
-  if (hook === 'onUnload') {
-    var rootVM = vm.$root;
-    rootVM.$destroy();
-  }
-
-  return result
+function createElementNS (namespace, tagName) {
+  return {}
 }
 
-var page = {};
-
-page.init = function init (opt) {
-  Page({
-    // 生命周期函数--监听页面加载
-    data: {
-      $root: {}
-    },
-    onLoad: function onLoad (options) {
-      var rootVM = this.rootVM = initRootVM(this, opt);
-
-      callHook$1(rootVM, 'onLoad', options);
-    },
-    // 生命周期函数--监听页面初次渲染完成
-    onReady: function onReady (options) {
-      var rootVM = this.rootVM;
-      var mp = rootVM.$mp;
-
-      mp.status = 'ready';
-      rootVM.$mount();
-
-      callHook$1(rootVM, 'onReady', options);
-    },
-    // 生命周期函数--监听页面显示
-    onShow: function onShow (options) {
-      var rootVM = this.rootVM;
-      var mp = rootVM.$mp;
-
-      mp.status = 'show';
-      callHook$1(rootVM, 'onShow', options);
-    },
-    // 生命周期函数--监听页面隐藏
-    onHide: function onHide (options) {
-      var rootVM = this.rootVM;
-      var mp = rootVM.$mp;
-
-      mp.status = 'hide';
-      callHook$1(rootVM, 'onHide', options);
-    },
-    // 生命周期函数--监听页面卸载
-    onUnload: function onUnload (options) {
-      var rootVM = this.rootVM;
-      var mp = rootVM.$mp;
-
-      mp.status = 'unload';
-      callHook$1(rootVM, 'onUnload', options);
-    },
-    // 页面相关事件处理函数--监听用户下拉动作
-    onPullDownRefresh: function onPullDownRefresh (options) {
-      var rootVM = this.rootVM;
-
-      callHook$1(rootVM, 'onPullDownRefresh', options);
-    },
-    // 页面上拉触底事件的处理函数
-    onReachBottom: function onReachBottom (options) {
-      var rootVM = this.rootVM;
-
-      callHook$1(rootVM, 'onReachBottom', options);
-    },
-    // 用户点击右上角转发
-    onShareAppMessage: function onShareAppMessage (options) {
-      var rootVM = this.rootVM;
-
-      return callHook$1(rootVM, 'onShareAppMessage', options)
-    },
-    // 页面滚动触发事件的处理函数
-    onPageScroll: function onPageScroll (options) {
-      var rootVM = this.rootVM;
-
-      callHook$1(rootVM, 'onPageScroll', options);
-    },
-    // 当前是 tab 页时，点击 tab 时触发
-    onTabItemTap: function onTabItemTap (options) {
-      var rootVM = this.rootVM;
-
-      callHook$1(rootVM, 'onTabItemTap', options);
-    },
-    // 支付宝小程序: 标题被点击
-    onTitleClick: function onTitleClick () {
-      var rootVM = this.rootVM;
-
-      callHook$1(rootVM, 'onTitleClick');
-    },
-    _pe: function _pe (e) {
-      this.proxyEvent(e);
-    },
-    proxyEvent: function proxyEvent$1 (e) {
-      var rootVM = this.rootVM;
-      proxyEvent(rootVM, e);
-    }
-  });
-};
-
-var app = {};
-
-app.init = function (opt) {
-  var _App;
-
-  try {
-    _App = App;
-  } catch (err) {
-    // 支付宝小程序中 App() 必须在 app.js 里调用，且不能调用多次。
-    _App = my.__megalo.App; // eslint-disable-line
-  }
-
-  _App({
-    data: {
-      $root: {}
-    },
-    //	Function	生命周期函数--监听小程序初始化	当小程序初始化完成时，会触发 onLaunch（全局只触发一次）
-    onLaunch: function onLaunch (options) {
-      var rootVM = this.rootVM = initRootVM(this, opt);
-
-      rootVM.$mount();
-
-      callHook$1(rootVM, 'onLaunch', options);
-    },
-    //	Function	生命周期函数--监听小程序显示	当小程序启动，或从后台进入前台显示，会触发 onShow
-    onShow: function onShow (options) {
-      var rootVM = this.rootVM;
-
-      callHook$1(rootVM, 'onShow', options);
-    },
-    //	Function	生命周期函数--监听小程序隐藏	当小程序从前台进入后台，会触发 onHide
-    onHide: function onHide () {
-      var rootVM = this.rootVM;
-
-      callHook$1(rootVM, 'onHide');
-    },
-    //	Function	错误监听函数	当小程序发生脚本错误，或者 api 调用失败时，会触发 onError 并带上错误信息
-    onError: function onError (msg) {
-      var rootVM = this.rootVM;
-      callHook$1(rootVM, 'onError', msg);
-    },
-    //	Function	页面不存在监听函数	当小程序出现要打开的页面不存在的情况，会带上页面信息回调该函数，详见下文
-    onPageNotFound: function onPageNotFound (options) {
-      var rootVM = this.rootVM;
-      callHook$1(rootVM, 'onPageNotFound', options);
-    }
-  });
-};
-
-function initMP (vm, options) {
-  var mpType = options.mpType; if ( mpType === void 0 ) mpType = 'page';
-
-  /* istanbul ignore else */
-  if (mpType === 'app') {
-    app.init({
-      Component: vm.constructor,
-      options: options
-    });
-  } else if (mpType === 'page') {
-    page.init({
-      Component: vm.constructor,
-      options: options
-    });
+function createTextNode (text, vnode) {
+  updateVnodeToMP(vnode, HOLDER_TYPE_VARS.text, text);
+  return {
+    text: text
   }
 }
+
+function createComment (text) {
+  return {
+    text: text
+  }
+}
+
+function insertBefore (parentNode, newNode, referenceNode) {
+}
+
+function removeChild (node, child) {
+}
+
+function appendChild (node, child) {
+}
+
+function parentNode (node) {
+  return {}
+}
+
+function nextSibling (node) {
+  return {}
+}
+
+function tagName (node) {
+  return '#'
+}
+
+function setTextContent (node, text, vnode) {
+  updateVnodeToMP(vnode, HOLDER_TYPE_VARS.text, text);
+  return {}
+}
+
+function setStyleScope (node, scopeId, vnode) {
+  return {}
+}
+
+function setAttribute (node, scopeId, v, vnode) {
+  return {}
+}
+
+
+var nodeOps = Object.freeze({
+	createElement: createElement$1,
+	createElementNS: createElementNS,
+	createTextNode: createTextNode,
+	createComment: createComment,
+	insertBefore: insertBefore,
+	removeChild: removeChild,
+	appendChild: appendChild,
+	parentNode: parentNode,
+	nextSibling: nextSibling,
+	tagName: tagName,
+	setTextContent: setTextContent,
+	setStyleScope: setStyleScope,
+	setAttribute: setAttribute
+});
 
 /*  */
 
@@ -5974,83 +5901,6 @@ function normalizeChildren$1 (children) {
 }
 
 /*  */
-function createElement$1 (tagName, vnode) {
-  return {
-    on: {
-
-    }
-  }
-}
-
-function createElementNS (namespace, tagName) {
-  return {}
-}
-
-function createTextNode (text, vnode) {
-  updateVnodeToMP(vnode, 't', text);
-  return {
-    text: text
-  }
-}
-
-function createComment (text) {
-  return {
-    text: text
-  }
-}
-
-function insertBefore (parentNode, newNode, referenceNode) {
-}
-
-function removeChild (node, child) {
-}
-
-function appendChild (node, child) {
-}
-
-function parentNode (node) {
-  return {}
-}
-
-function nextSibling (node) {
-  return {}
-}
-
-function tagName (node) {
-  return '#'
-}
-
-function setTextContent (node, text, vnode) {
-  updateVnodeToMP(vnode, 't', text);
-  return {}
-}
-
-function setStyleScope (node, scopeId, vnode) {
-  return {}
-}
-
-function setAttribute (node, scopeId, v, vnode) {
-  return {}
-}
-
-
-var nodeOps = Object.freeze({
-	createElement: createElement$1,
-	createElementNS: createElementNS,
-	createTextNode: createTextNode,
-	createComment: createComment,
-	insertBefore: insertBefore,
-	removeChild: removeChild,
-	appendChild: appendChild,
-	parentNode: parentNode,
-	nextSibling: nextSibling,
-	tagName: tagName,
-	setTextContent: setTextContent,
-	setStyleScope: setStyleScope,
-	setAttribute: setAttribute
-});
-
-/*  */
 
 
 
@@ -6132,14 +5982,14 @@ function _update (oldVnode, vnode) {
     dir = newDirs[key];
     if (!oldDir) {
       // new directive, bind
-      callHook$2(dir, 'bind', vnode, oldVnode);
+      callHook$1(dir, 'bind', vnode, oldVnode);
       if (dir.def && dir.def.inserted) {
         dirsWithInsert.push(dir);
       }
     } else {
       // existing directive, update
       dir.oldValue = oldDir.value;
-      callHook$2(dir, 'update', vnode, oldVnode);
+      callHook$1(dir, 'update', vnode, oldVnode);
       if (dir.def && dir.def.componentUpdated) {
         dirsWithPostpatch.push(dir);
       }
@@ -6149,7 +5999,7 @@ function _update (oldVnode, vnode) {
   if (dirsWithInsert.length) {
     var callInsert = function () {
       for (var i = 0; i < dirsWithInsert.length; i++) {
-        callHook$2(dirsWithInsert[i], 'inserted', vnode, oldVnode);
+        callHook$1(dirsWithInsert[i], 'inserted', vnode, oldVnode);
       }
     };
     if (isCreate) {
@@ -6162,7 +6012,7 @@ function _update (oldVnode, vnode) {
   if (dirsWithPostpatch.length) {
     mergeVNodeHook(vnode, 'postpatch', function () {
       for (var i = 0; i < dirsWithPostpatch.length; i++) {
-        callHook$2(dirsWithPostpatch[i], 'componentUpdated', vnode, oldVnode);
+        callHook$1(dirsWithPostpatch[i], 'componentUpdated', vnode, oldVnode);
       }
     });
   }
@@ -6171,7 +6021,7 @@ function _update (oldVnode, vnode) {
     for (key in oldDirs) {
       if (!newDirs[key]) {
         // no longer present, unbind
-        callHook$2(oldDirs[key], 'unbind', oldVnode, oldVnode, isDestroy);
+        callHook$1(oldDirs[key], 'unbind', oldVnode, oldVnode, isDestroy);
       }
     }
   }
@@ -6206,7 +6056,7 @@ function getRawDirName (dir) {
   return dir.rawName || ((dir.name) + "." + (Object.keys(dir.modifiers || {}).join('.')))
 }
 
-function callHook$2 (dir, hook, vnode, oldVnode, isDestroy) {
+function callHook$1 (dir, hook, vnode, oldVnode, isDestroy) {
   var fn = dir.def && dir.def[hook];
   if (fn) {
     try {
@@ -6284,8 +6134,17 @@ function updateClass (oldVnode, vnode) {
 
   var elm = vnode.elm; if ( elm === void 0 ) elm = {};
   var cls = genClassForVnode(vnode);
-  if (isDef(cls) && elm.class !== cls) {
-    updateVnodeToMP(vnode, 'cl', cls);
+  if (isDef(cls) && elm.class !== cls && !/^vue-component/.test(vnode.tag)) {
+    // don't update empty class string on init
+    if (cls === '' && isUndef(elm.class)) {
+      return
+    }
+    if (!/^vue-component/.test(vnode.tag)) {
+      Object.assign(vnode.elm, {
+        class: cls
+      });
+    }
+    updateVnodeToMP(vnode, HOLDER_TYPE_VARS.class, cls);
   }
 }
 
@@ -6333,9 +6192,9 @@ function updateDOMProps (oldVnode, vnode) {
         var $htmlParse = ref.$htmlParse;
         if ($htmlParse) {
           var htmlNodes = $htmlParse(cur);
-          updateVnodeToMP(vnode, 'html', htmlNodes);
+          updateVnodeToMP(vnode, HOLDER_TYPE_VARS.vhtml, htmlNodes);
         } else {
-          updateVnodeToMP(vnode, 'html', cur);
+          updateVnodeToMP(vnode, HOLDER_TYPE_VARS.vhtml, cur);
         }
         return
       }
@@ -6348,10 +6207,12 @@ function updateDOMProps (oldVnode, vnode) {
       // avoid resetting cursor position when value is the same
       var strCur = isUndef(cur) ? '' : String(cur);
       if (shouldUpdateValue(elm, strCur)) {
-        elm.value = strCur;
-        updateVnodeToMP(vnode, key, strCur);
+        if (elm.value !== strCur) {
+          elm.value = strCur;
+          updateVnodeToMP(vnode, key, strCur);
+        }
       }
-    } else {
+    } else if (elm[key] !== cur) {
       elm[key] = cur;
       updateVnodeToMP(vnode, key, cur);
     }
@@ -6579,10 +6440,10 @@ function updateStyle (oldVnode, vnode) {
       }
       return res
     }, res)
-    .filter(function (e) { return e; })
+    .filter(notEmpty)
     .join('; ');
 
-  updateVnodeToMP(vnode, 'st', cur);
+  updateVnodeToMP(vnode, HOLDER_TYPE_VARS.style, cur);
 }
 
 var style = {
@@ -6670,6 +6531,220 @@ var modules = platformModules.concat(baseModules);
 
 var patch = createPatchFunction({ nodeOps: nodeOps, modules: modules });
 
+function walkInTree (vm, fn, options) {
+  if ( options === void 0 ) options = {};
+
+  var result;
+  var bottomToTop = options.bottomToTop; if ( bottomToTop === void 0 ) bottomToTop = false;
+
+  if (!bottomToTop) {
+    result = fn(vm);
+  }
+
+  /* istanbul ignore else */
+  if (vm.$children) {
+    for (var i = vm.$children.length - 1; i >= 0; i--) {
+      var child = vm.$children[i];
+      result = walkInTree(child, fn, options) || result;
+    }
+  }
+
+  if (bottomToTop) {
+    result = fn(vm);
+  }
+
+  return result
+}
+
+function callHook$2 (vm, hook, options) {
+  /* istanbul ignore if */
+  if (!vm) {
+    return
+  }
+
+  var result;
+
+  if (hook === 'onReady') {
+    result = walkInTree(vm, function (_vm) {
+      var handler = _vm.$options[hook];
+      handler && handler.call(_vm, options);
+    }, { bottomToTop: true });
+  } else {
+    result = walkInTree(vm, function (_vm) {
+      var handler = _vm.$options[hook];
+      return handler && handler.call(_vm, options)
+    });
+  }
+
+  if (hook === 'onUnload') {
+    var rootVM = vm.$root;
+    rootVM.$destroy();
+  }
+
+  return result
+}
+
+var page = {};
+
+page.init = function init (opt) {
+  var obj;
+
+  Page({
+    // 生命周期函数--监听页面加载
+    data: ( obj = {}, obj[ROOT_DATA_VAR] = {}, obj),
+    onLoad: function onLoad (options) {
+      var rootVM = this.rootVM = initRootVM(this, opt);
+
+      callHook$2(rootVM, 'onLoad', options);
+    },
+    // 生命周期函数--监听页面初次渲染完成
+    onReady: function onReady (options) {
+      var rootVM = this.rootVM;
+      var mp = rootVM.$mp;
+
+      mp.status = 'ready';
+      rootVM.$mount();
+
+      callHook$2(rootVM, 'onReady', options);
+    },
+    // 生命周期函数--监听页面显示
+    onShow: function onShow (options) {
+      var rootVM = this.rootVM;
+      var mp = rootVM.$mp;
+
+      mp.status = 'show';
+      callHook$2(rootVM, 'onShow', options);
+    },
+    // 生命周期函数--监听页面隐藏
+    onHide: function onHide (options) {
+      var rootVM = this.rootVM;
+      var mp = rootVM.$mp;
+
+      mp.status = 'hide';
+      callHook$2(rootVM, 'onHide', options);
+    },
+    // 生命周期函数--监听页面卸载
+    onUnload: function onUnload (options) {
+      var rootVM = this.rootVM;
+      var mp = rootVM.$mp;
+
+      mp.status = 'unload';
+      callHook$2(rootVM, 'onUnload', options);
+    },
+    // 页面相关事件处理函数--监听用户下拉动作
+    onPullDownRefresh: function onPullDownRefresh (options) {
+      var rootVM = this.rootVM;
+
+      callHook$2(rootVM, 'onPullDownRefresh', options);
+    },
+    // 页面上拉触底事件的处理函数
+    onReachBottom: function onReachBottom (options) {
+      var rootVM = this.rootVM;
+
+      callHook$2(rootVM, 'onReachBottom', options);
+    },
+    // 用户点击右上角转发
+    onShareAppMessage: function onShareAppMessage (options) {
+      var rootVM = this.rootVM;
+
+      return callHook$2(rootVM, 'onShareAppMessage', options)
+    },
+    // 页面滚动触发事件的处理函数
+    onPageScroll: function onPageScroll (options) {
+      var rootVM = this.rootVM;
+
+      callHook$2(rootVM, 'onPageScroll', options);
+    },
+    // 当前是 tab 页时，点击 tab 时触发
+    onTabItemTap: function onTabItemTap (options) {
+      var rootVM = this.rootVM;
+
+      callHook$2(rootVM, 'onTabItemTap', options);
+    },
+    // 支付宝小程序: 标题被点击
+    onTitleClick: function onTitleClick () {
+      var rootVM = this.rootVM;
+
+      callHook$2(rootVM, 'onTitleClick');
+    },
+    _pe: function _pe (e) {
+      this.proxyEvent(e);
+    },
+    proxyEvent: function proxyEvent$1 (e) {
+      var rootVM = this.rootVM;
+      proxyEvent(rootVM, e);
+    }
+  });
+};
+
+var app = {};
+
+app.init = function (opt) {
+  var obj;
+
+  var _App;
+
+  try {
+    _App = App;
+  } catch (err) {
+    // 支付宝小程序中 App() 必须在 app.js 里调用，且不能调用多次。
+    _App = my.__megalo.App; // eslint-disable-line
+  }
+
+  _App({
+    data: ( obj = {}, obj[ROOT_DATA_VAR] = {}, obj),
+    //	Function	生命周期函数--监听小程序初始化	当小程序初始化完成时，会触发 onLaunch（全局只触发一次）
+    onLaunch: function onLaunch (options) {
+      var rootVM = this.rootVM = initRootVM(this, opt);
+      var ref = rootVM.$options;
+      var globalData = ref.globalData; if ( globalData === void 0 ) globalData = function () {};
+      rootVM.$mount();
+      callHook$2(rootVM, 'onLaunch', options);
+      this.globalData = globalData && (typeof globalData === 'function'
+        ? globalData.call(rootVM, options)
+        : globalData) || {};
+    },
+    //	Function	生命周期函数--监听小程序显示	当小程序启动，或从后台进入前台显示，会触发 onShow
+    onShow: function onShow (options) {
+      var rootVM = this.rootVM;
+      callHook$2(rootVM, 'onShow', options);
+    },
+    //	Function	生命周期函数--监听小程序隐藏	当小程序从前台进入后台，会触发 onHide
+    onHide: function onHide () {
+      var rootVM = this.rootVM;
+      callHook$2(rootVM, 'onHide');
+    },
+    //	Function	错误监听函数	当小程序发生脚本错误，或者 api 调用失败时，会触发 onError 并带上错误信息
+    onError: function onError (msg) {
+      var rootVM = this.rootVM;
+      callHook$2(rootVM, 'onError', msg);
+    },
+    //	Function	页面不存在监听函数	当小程序出现要打开的页面不存在的情况，会带上页面信息回调该函数，详见下文
+    onPageNotFound: function onPageNotFound (options) {
+      var rootVM = this.rootVM;
+      callHook$2(rootVM, 'onPageNotFound', options);
+    },
+    globalData: {}
+  });
+};
+
+function initMP (vm, options) {
+  var mpType = options.mpType; if ( mpType === void 0 ) mpType = 'page';
+
+  /* istanbul ignore else */
+  if (mpType === 'app') {
+    app.init({
+      Component: vm.constructor,
+      options: options
+    });
+  } else if (mpType === 'page') {
+    page.init({
+      Component: vm.constructor,
+      options: options
+    });
+  }
+}
+
 /*  */
 
 /**
@@ -6698,7 +6773,9 @@ var directive = {
     var value = ref.value;
     var oldValue = ref.oldValue;
 
-    updateVnodeToMP(vnode, 'value', value);
+    if (oldValue !== value) {
+      updateVnodeToMP(vnode, HOLDER_TYPE_VARS.value, value);
+    }
   },
 
   inserted: function inserted (el, binding, vnode, oldVnode) {
@@ -6758,15 +6835,20 @@ var directive = {
 var show = {
   bind: function bind (el, ref, vnode) {
     var value = ref.value;
+    var oldValue = ref.oldValue;
 
-    updateVnodeToMP(vnode, 'vs', !value);
+    if (value !== oldValue) {
+      updateVnodeToMP(vnode, HOLDER_TYPE_VARS.vshow, !value);
+    }
   },
 
   update: function update (el, ref, vnode) {
     var value = ref.value;
     var oldValue = ref.oldValue;
 
-    updateVnodeToMP(vnode, 'vs', !value);
+    if (value !== oldValue) {
+      updateVnodeToMP(vnode, HOLDER_TYPE_VARS.vshow, !value);
+    }
   },
 
   unbind: function unbind (

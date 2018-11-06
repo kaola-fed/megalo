@@ -1,28 +1,15 @@
 /* @flow */
 
 import Vue from 'core/index'
-// import config from 'core/config'
-import {
-  extend
-  // noop
-} from 'shared/util'
-import { mountComponent } from 'core/instance/lifecycle'
-
-import { initMP } from 'mp/runtime/lifecycle/index'
-import { updateMPData, initVMToMP, afterRenderSlot, renderIf, afterRenderList } from 'mp/runtime/instance/index'
-import { createTextVNode, beforeCreateElement } from 'mp/runtime/vdom/index'
-
-import {
-  aop,
-  mustUseProp,
-  isReservedTag,
-  isReservedAttr,
-  getTagNamespace,
-  isUnknownElement
-} from 'mp/util/index'
-
 import { patch } from './patch'
+// import config from 'core/config'
+import { extend } from 'shared/util'
+import { initMP } from 'mp/runtime/lifecycle/index'
 import platformDirectives from './directives/index'
+import { mountComponent } from 'core/instance/lifecycle'
+import { createTextVNode, beforeCreateElement } from 'mp/runtime/vdom/index'
+import { updateMPData, initVMToMP, afterRenderSlot, renderIf, afterRenderList } from 'mp/runtime/instance/index'
+import { aop, mustUseProp, isReservedTag, isReservedAttr, getTagNamespace, isUnknownElement } from 'mp/util/index'
 // import platformComponents from './components/index'
 
 // install platform specific utils
