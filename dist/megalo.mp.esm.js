@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.2.0';
+Vue.version = '0.2.0-1';
 
 /*  */
 
@@ -4655,19 +4655,7 @@ function getTagNamespace () { /* console.log('getTagNamespace') */ }
 function isUnknownElement () { /* console.log('isUnknownElement') */ }
 
 var eventTypeMap = {
-  tap: ['tap', 'click'],
-  touchstart: ['touchstart'],
-  touchmove: ['touchmove'],
-  touchcancel: ['touchcancel'],
-  touchend: ['touchend'],
-  longtap: ['longtap'],
-  input: ['input'],
-  blur: ['change', 'blur'],
-  submit: ['submit'],
-  focus: ['focus'],
-  scrolltoupper: ['scrolltoupper'],
-  scrolltolower: ['scrolltolower'],
-  scroll: ['scroll']
+  tap: ['tap', 'click']
 };
 
 function getValue (obj, path) {
@@ -4903,10 +4891,16 @@ function getVnode (vnode, hid) {
   }
 }
 
-function getHandlers (vm, type, hid) {
+// TODO: unit test for @touchstart and @touchStart
+function getHandlers (vm, rawType, hid) {
+  var type = rawType.toLowerCase();
   var res = [];
 
   var eventTypes = eventTypeMap[type] || [type];
+  if (type !== rawType) {
+    eventTypes.push(rawType);
+  }
+
   /* istanbul ignore if */
   if (!vm) { return res }
 
