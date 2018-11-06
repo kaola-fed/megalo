@@ -5,6 +5,7 @@ import { HOLDER_TYPE_VARS } from 'mp/util/index'
 
 export default {
   bind (el: any, { value, oldValue }: VNodeDirective, vnode: VNodeWithData) {
+    /* istanbul ignore else */
     if (value !== oldValue) {
       updateVnodeToMP(vnode, HOLDER_TYPE_VARS.vshow, !value)
     }

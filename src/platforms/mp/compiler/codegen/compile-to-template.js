@@ -500,6 +500,7 @@ export class TemplateGenerator {
   genHolder (el, type): string {
     const varName = HOLDER_TYPE_VARS[type]
     const hid = typeof el === 'string' ? el : this.genHid(el)
+    /* istanbul ignore next */
     if (!varName) {
       throw new Error(`${type} holder HOLDER_TYPE_VARS not found`)
     }
