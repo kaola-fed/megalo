@@ -558,7 +558,7 @@ if (typeof Set !== 'undefined' && isNative(Set)) {
   _Set = Set;
 } else {
   // a non-standard Set polyfill that only works with primitive keys.
-  _Set = /*@__PURE__*/(function () {
+  _Set = (function () {
     function Set () {
       this.set = Object.create(null);
     }
@@ -2050,10 +2050,12 @@ function updateComponentListeners (
 function eventsMixin (Vue) {
   var hookRE = /^hook:/;
   Vue.prototype.$on = function (event, fn) {
+    var this$1 = this;
+
     var vm = this;
     if (Array.isArray(event)) {
       for (var i = 0, l = event.length; i < l; i++) {
-        this.$on(event[i], fn);
+        this$1.$on(event[i], fn);
       }
     } else {
       (vm._events[event] || (vm._events[event] = [])).push(fn);
@@ -2078,6 +2080,8 @@ function eventsMixin (Vue) {
   };
 
   Vue.prototype.$off = function (event, fn) {
+    var this$1 = this;
+
     var vm = this;
     // all
     if (!arguments.length) {
@@ -2087,7 +2091,7 @@ function eventsMixin (Vue) {
     // array of events
     if (Array.isArray(event)) {
       for (var i = 0, l = event.length; i < l; i++) {
-        this.$off(event[i], fn);
+        this$1.$off(event[i], fn);
       }
       return vm
     }
@@ -2699,11 +2703,13 @@ Watcher.prototype.addDep = function addDep (dep) {
  * Clean up for dependency collection.
  */
 Watcher.prototype.cleanupDeps = function cleanupDeps () {
+    var this$1 = this;
+
   var i = this.deps.length;
   while (i--) {
-    var dep = this.deps[i];
-    if (!this.newDepIds.has(dep.id)) {
-      dep.removeSub(this);
+    var dep = this$1.deps[i];
+    if (!this$1.newDepIds.has(dep.id)) {
+      dep.removeSub(this$1);
     }
   }
   var tmp = this.depIds;
@@ -2775,9 +2781,11 @@ Watcher.prototype.evaluate = function evaluate () {
  * Depend on all deps collected by this watcher.
  */
 Watcher.prototype.depend = function depend () {
+    var this$1 = this;
+
   var i = this.deps.length;
   while (i--) {
-    this.deps[i].depend();
+    this$1.deps[i].depend();
   }
 };
 
@@ -2785,6 +2793,8 @@ Watcher.prototype.depend = function depend () {
  * Remove self from all dependencies' subscriber list.
  */
 Watcher.prototype.teardown = function teardown () {
+    var this$1 = this;
+
   if (this.active) {
     // remove self from vm's watcher list
     // this is a somewhat expensive operation so we skip it
@@ -2794,7 +2804,7 @@ Watcher.prototype.teardown = function teardown () {
     }
     var i = this.deps.length;
     while (i--) {
-      this.deps[i].removeSub(this);
+      this$1.deps[i].removeSub(this$1);
     }
     this.active = false;
   }
@@ -4270,8 +4280,10 @@ var KeepAlive = {
   },
 
   destroyed: function destroyed () {
-    for (var key in this.cache) {
-      pruneCacheEntry(this.cache, key, this.keys);
+    var this$1 = this;
+
+    for (var key in this$1.cache) {
+      pruneCacheEntry(this$1.cache, key, this$1.keys);
     }
   },
 
@@ -4394,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.1.3-1';
+Vue.version = '0.2.0';
 
 /*  */
 
@@ -4551,27 +4563,20 @@ function aop (fn, options) {
 
   var before = options.before;
   var after = options.after;
-  var argsCount = options.argsCount;
   return function () {
     var args = [], len = arguments.length;
     while ( len-- ) args[ len ] = arguments[ len ];
 
     var self = this;
-    var ag = new Array(argsCount || 0);
-    Object.assign(ag, args);
-
-    if (argsCount !== undefined) {
-      ag = ag.slice(0, argsCount);
-    }
 
     if (before) {
-      before.call.apply(before, [ self ].concat( ag, [ag] ));
+      before.call.apply(before, [ self, args ].concat( args ));
     }
 
-    var ret = fn.call.apply(fn, [ self ].concat( ag, [ag] ));
+    var ret = fn.call.apply(fn, [ self ].concat( args ));
 
     if (after) {
-      after.call.apply(after, [ self ].concat( ag, [ret] ));
+      after.call.apply(after, [ self, ret ].concat( args, [ret] ));
     }
 
     return ret
@@ -4938,11 +4943,11 @@ function getHandlers (vm, type, hid) {
  * Runtime helper for rendering <slot>
  */
 function afterRenderSlot (
+  nodes,
   name,
   fallback,
   props,
-  bindObject,
-  nodes
+  bindObject
 ) {
   var componentVnode = this.$vnode;
   var componentCid = componentVnode.data.attrs._cid;
@@ -5009,6 +5014,7 @@ function markComponents (nodes, parentUId) {
 }
 
 function renderIf () {
+  var this$1 = this;
   var args = [], len$1 = arguments.length;
   while ( len$1-- ) args[ len$1 ] = arguments[ len$1 ];
 
@@ -5016,7 +5022,7 @@ function renderIf () {
     var cond = args[i];
     var _hid = args[i + 1];
     var cloneVnode = {
-      context: this,
+      context: this$1,
       data: {
         attrs: { _hid: _hid }
       }
@@ -5031,11 +5037,11 @@ function renderIf () {
  * Runtime helper for rendering v-for lists.
  */
 function afterRenderList (
+  ret,
   val,
   render,
   forId,
-  context,
-  ret
+  context
 ) {
   updateListToMP(ret, val, forId, context);
 }
@@ -5867,13 +5873,13 @@ function createTextVNode$1 (val, _hid) {
 // wrapper function for providing a more flexible interface
 // without getting yelled at by flow
 function beforeCreateElement (
+  args,
   context,
   tag,
   data,
   children,
   normalizationType,
-  alwaysNormalize,
-  args
+  alwaysNormalize
 ) {
   var childrenIndex = 3;
   if (Array.isArray(data) || isPrimitive(data)) {
@@ -5882,6 +5888,7 @@ function beforeCreateElement (
     children = data;
     data = undefined;
   }
+
   args[childrenIndex] = normalizeChildren$1(children);
 }
 
@@ -6837,6 +6844,7 @@ var show = {
     var value = ref.value;
     var oldValue = ref.oldValue;
 
+    /* istanbul ignore else */
     if (value !== oldValue) {
       updateVnodeToMP(vnode, HOLDER_TYPE_VARS.vshow, !value);
     }
@@ -6892,7 +6900,6 @@ Vue.prototype._ri = renderIf;
 Vue.prototype.$updateMPData = updateMPData;
 
 Vue.prototype._l = aop(Vue.prototype._l, {
-  argsCount: 4,
   after: afterRenderList
 });
 
@@ -6910,12 +6917,10 @@ Vue.prototype._init = function (options) {
     oInit.call(this, options);
 
     this._t = aop(this._t, {
-      argsCount: 4,
       after: afterRenderSlot
     });
 
     this._c = aop(this._c, {
-      argsCount: 6,
       before: beforeCreateElement
     });
 

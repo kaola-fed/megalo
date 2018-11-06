@@ -1,11 +1,11 @@
 {
   "name": "megalo",
-  "version": "0.1.3-1",
+  "version": "0.2.0-0",
   "description": "Reactive, component-oriented view layer for modern web interfaces.",
-  "main": "dist/vue.runtime.common.js",
+  "main": "dist/megalo.mp.esm.js",
   "module": "dist/megalo.mp.esm.js",
-  "unpkg": "dist/vue.js",
-  "jsdelivr": "dist/vue.js",
+  "unpkg": "dist/megalo.mp.esm.js",
+  "jsdelivr": "dist/megalo.mp.esm.js",
   "typings": "types/index.d.ts",
   "files": [
     "src",
@@ -66,7 +66,7 @@
   "keywords": [
     "vue"
   ],
-  "author": "Evan You",
+  "author": "kaola-fed",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/vuejs/vue/issues"

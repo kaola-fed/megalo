@@ -4747,6 +4747,20 @@ var createCompiler = createCompilerCreator(function baseCompile (
   }
 });
 
+function createFindEventTypeFn (eventTypeMap) {
+  return function findEventType (type) {
+    var res = '';
+    Object.keys(eventTypeMap)
+      .some(function (mpType) {
+        if (eventTypeMap[ mpType ].indexOf(type) > -1) {
+          res = mpType;
+          return true
+        }
+      });
+    return res
+  }
+}
+
 var prefix = "wx:";
 
 var eventTypeMap$1 = {
@@ -4765,18 +4779,7 @@ var eventTypeMap$1 = {
   scroll: ['scroll']
 };
 
-function findEventType (type) {
-  var this$1 = this;
-
-  var res = '';
-  Object.keys(this.eventTypeMap)
-    .forEach(function (mpType) {
-      if (this$1.eventTypeMap[ mpType ].indexOf(type) > -1) {
-        res = mpType;
-      }
-    });
-  return res
-}
+var findEventType = createFindEventTypeFn(eventTypeMap$1);
 
 var wechat = {
   prefix: prefix,
@@ -4861,20 +4864,9 @@ var eventTypeMap$2 = {
   RightItemClick: ['rightitemclick'],
   Select: ['select'],
   MonthChange: ['monthchange']
-
 };
 
-function findEventType$1 (type) {
-  var res = '';
-  Object.keys(eventTypeMap$2)
-    .some(function (mpType) {
-      if (eventTypeMap$2[ mpType ].indexOf(type) > -1) {
-        res = mpType;
-        return true
-      }
-    });
-  return res
-}
+var findEventType$1 = createFindEventTypeFn(eventTypeMap$2);
 
 var alipay = {
   prefix: prefix$1,
@@ -4930,18 +4922,7 @@ var eventTypeMap$3 = {
   scroll: ['scroll']
 };
 
-function findEventType$2 (type) {
-  var this$1 = this;
-
-  var res = '';
-  Object.keys(this.eventTypeMap)
-    .forEach(function (mpType) {
-      if (this$1.eventTypeMap[ mpType ].indexOf(type) > -1) {
-        res = mpType;
-      }
-    });
-  return res
-}
+var findEventType$2 = createFindEventTypeFn(eventTypeMap$3);
 
 var swan = {
   prefix: prefix$2,
@@ -5499,6 +5480,7 @@ TemplateGenerator.prototype.genChildren = function genChildren (el) {
 TemplateGenerator.prototype.genHolder = function genHolder (el, type) {
   var varName = HOLDER_TYPE_VARS[type];
   var hid = typeof el === 'string' ? el : this.genHid(el);
+  /* istanbul ignore next */
   if (!varName) {
     throw new Error((type + " holder HOLDER_TYPE_VARS not found"))
   }
