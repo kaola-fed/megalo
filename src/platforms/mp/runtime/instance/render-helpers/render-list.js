@@ -8,6 +8,7 @@ import { HOLDER_TYPE_VARS, getValue } from 'mp/util/index'
  * Runtime helper for rendering v-for lists.
  */
 export function afterRenderList (
+  ret: Array<VNode>,
   val: any,
   render: (
     val: any,
@@ -15,8 +16,7 @@ export function afterRenderList (
     index?: number
   ) => VNode,
   forId: string | number,
-  context: Vue,
-  ret: Array<VNode>
+  context: Vue
 ) {
   updateListToMP(ret, val, forId, context)
 }

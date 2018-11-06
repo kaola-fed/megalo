@@ -7,13 +7,13 @@ import {
 // wrapper function for providing a more flexible interface
 // without getting yelled at by flow
 export function beforeCreateElement (
+  args,
   context: Component,
   tag: any,
   data: any,
   children: any,
   normalizationType: any,
-  alwaysNormalize: boolean,
-  args
+  alwaysNormalize: boolean
 ): VNode | Array<VNode> {
   let childrenIndex = 3
   if (Array.isArray(data) || isPrimitive(data)) {
@@ -22,6 +22,7 @@ export function beforeCreateElement (
     children = data
     data = undefined
   }
+
   args[childrenIndex] = normalizeChildren(children)
 }
 

@@ -30,7 +30,6 @@ Vue.prototype._ri = renderIf
 Vue.prototype.$updateMPData = updateMPData
 
 Vue.prototype._l = aop(Vue.prototype._l, {
-  argsCount: 4,
   after: afterRenderList
 })
 
@@ -47,12 +46,10 @@ Vue.prototype._init = function (options) {
     oInit.call(this, options)
 
     this._t = aop(this._t, {
-      argsCount: 4,
       after: afterRenderSlot
     })
 
     this._c = aop(this._c, {
-      argsCount: 6,
       before: beforeCreateElement
     })
 

@@ -7,11 +7,11 @@ import { LIST_TAIL_SEP_REG } from 'mp/util/index'
  * Runtime helper for rendering <slot>
  */
 export function afterRenderSlot (
+  nodes: ?Array<VNode>,
   name: string,
   fallback: ?Array<VNode>,
   props: ?Object,
-  bindObject: ?Object,
-  nodes: ?Array<VNode>
+  bindObject: ?Object
 ): ?Array<VNode> {
   const componentVnode = this.$vnode
   const componentCid = componentVnode.data.attrs._cid
