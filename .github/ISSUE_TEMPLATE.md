@@ -1,16 +1,9 @@
 <!--
-IMPORTANT: Please use the following link to create a new issue:
+[文档地址](https://kaola-fed.github.io/megalo-docs/#/)
 
-  https://new-issue.vuejs.org/
+目前文档、配套设施包括脚手架、应用方案等都在完善中，欢迎通过 issue 或钉钉、微信群向我们提意见或建议。
 
-If your issue was not created using the app above, it will be closed immediately.
+发现 bug 时，希望您能够提供完善的可复现代码，最好的方式是在您的 github 上建一个最小可复现仓库，把地址和对应的平台提供给我们，我们会尽快修复。
 
-中文用户请注意：
-请使用上面的链接来创建新的 issue。如果不是用上述工具创建的 issue 会被自动关闭。
--->
-
-<!--
-Love vuejs? Please consider supporting us via Patreon or OpenCollective:
-👉  https://www.patreon.com/evanyou
-👉  https://opencollective.com/vuejs/donate
+也欢迎大家提 PR，一起完善功能特性、文档等。
 -->
