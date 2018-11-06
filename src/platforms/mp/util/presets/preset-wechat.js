@@ -1,3 +1,5 @@
+import { createFindEventTypeFn } from './helper'
+
 const prefix = `wx:`
 
 export const eventTypeMap = {
@@ -16,16 +18,7 @@ export const eventTypeMap = {
   scroll: ['scroll']
 }
 
-export function findEventType (type) {
-  let res = ''
-  Object.keys(this.eventTypeMap)
-    .forEach(mpType => {
-      if (this.eventTypeMap[ mpType ].indexOf(type) > -1) {
-        res = mpType
-      }
-    })
-  return res
-}
+export const findEventType = createFindEventTypeFn(eventTypeMap)
 
 export default {
   prefix,
