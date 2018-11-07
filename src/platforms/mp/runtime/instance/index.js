@@ -8,13 +8,15 @@ export * from './render-helpers/render-if'
 export * from './render-helpers/render-list'
 
 export function initRootVM (mpVM, opt = {}) {
-  const { options } = opt
-  const { Component } = opt
+  const { options, Component, platform } = opt
+  const mpVMOptions = mpVM && mpVM.options || {}
   const $mp = {
+    platform,
     page: mpVM,
     status: 'load',
-    options: mpVM && mpVM.options,
-    update: createUpdateFn(mpVM)
+    query: mpVMOptions,
+    options: mpVMOptions,
+    _update: createUpdateFn(mpVM)
   }
 
   Object.assign(options, { $mp })

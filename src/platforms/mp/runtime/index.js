@@ -8,9 +8,22 @@ import { initMP } from 'mp/runtime/lifecycle/index'
 import platformDirectives from './directives/index'
 import { mountComponent } from 'core/instance/lifecycle'
 import { createTextVNode, beforeCreateElement } from 'mp/runtime/vdom/index'
-import { updateMPData, initVMToMP, afterRenderSlot, renderIf, afterRenderList } from 'mp/runtime/instance/index'
-import { aop, mustUseProp, isReservedTag, isReservedAttr, getTagNamespace, isUnknownElement } from 'mp/util/index'
-// import platformComponents from './components/index'
+import {
+  updateMPData,
+  initVMToMP,
+  afterRenderSlot,
+  renderIf,
+  afterRenderList
+} from 'mp/runtime/instance/index'
+import {
+  aop,
+  mustUseProp,
+  isReservedTag,
+  isReservedAttr,
+  getTagNamespace,
+  isUnknownElement,
+  getMPPlatform
+} from 'mp/util/index'
 
 // install platform specific utils
 Vue.config.mustUseProp = mustUseProp
@@ -21,7 +34,6 @@ Vue.config.isUnknownElement = isUnknownElement
 
 // install platform runtime directives & components
 extend(Vue.options.directives, platformDirectives)
-// extend(Vue.options.components, platformComponents)
 
 // install platform patch function
 Vue.prototype.__patch__ = patch
@@ -35,6 +47,10 @@ Vue.prototype._l = aop(Vue.prototype._l, {
 
 const oInit = Vue.prototype._init
 Vue.prototype._init = function (options) {
+  if (!Vue.prototype._mpPlatform) {
+    Vue.prototype._mpPlatform = getMPPlatform()
+  }
+
   let { $mp } = options
   const { parent = {}, mpType = '' } = options
   $mp = $mp || parent.$mp

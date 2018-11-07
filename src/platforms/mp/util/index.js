@@ -5,6 +5,7 @@ export * from './class'
 export * from './throttle'
 export * from './aop'
 export * from './buffer'
+export * from './platform'
 
 export const ROOT_DATA_VAR = '$root'
 export const HOLDER_VAR = 'h'
