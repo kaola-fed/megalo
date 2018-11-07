@@ -18,8 +18,6 @@
 
 **Megalo** 目前支持**微信小程序**，**支付宝小程序**，**百度智能小程序**。
 
-注：百度小程序支持需要将各个依赖 `megalo`、`@megalo/target`、`@megalo/template-compiler` 更新到 `0.2.0-0` 预览版，很快我们会发布正式版。
-
 ## 配套设施
 
 - [文档](https://kaola-fed.github.io/megalo-docs/#/)
