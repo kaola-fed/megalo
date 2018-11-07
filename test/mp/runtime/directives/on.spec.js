@@ -585,4 +585,32 @@ describe('Directive v-on', () => {
     page._triggerEvent(button2, 'tap')
     expect(spy2.calls.count()).toBe(1)
   })
+
+  it('listen event with camelCase', () => {
+    const onTouchStart = jasmine.createSpy('touchStart')
+    const { page } = createPage({
+      template: `<div @touchStart="onTouchStart">foo</div>`,
+      methods: {
+        onTouchStart
+      }
+    })
+
+    page._triggerEvent(undefined, 'touchStart')
+    expect(onTouchStart.calls.count()).toBe(1)
+  })
+
+  it('listen event with minus-event-name', () => {
+    const onTouchStart = jasmine.createSpy('touchStart')
+    const { page } = createPage({
+      template: `<div @touch-start="onTouchStart">foo</div>`,
+      created () {
+      },
+      methods: {
+        onTouchStart
+      }
+    })
+
+    page._triggerEvent(undefined, 'touch-start')
+    expect(onTouchStart.calls.count()).toBe(1)
+  })
 })

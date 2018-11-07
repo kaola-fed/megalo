@@ -368,7 +368,6 @@ describe('Component slot', () => {
     const comp2 = getPageData(page, '0,0-0')
     const comp3 = getPageData(page, '0,0-0')
     // expect(pageData.h[1].li).toEqual([1, 2, 3])
-    console.log(pageData.h)
     expect(pageData.h[1].li.length).toBe(3)
     expect(pageData.h['3-0'].t).toBe('1')
     expect(pageData.h['3-1'].t).toBe('2')
