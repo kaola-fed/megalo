@@ -3,7 +3,10 @@ import {
   App,
   Page,
   Vue,
-  spyFn
+  spyFn,
+  resetVue,
+  setMPPlatform,
+  resetMPPlatform
 } from '../helpers'
 
 initMPEnvironment()
@@ -58,6 +61,9 @@ describe('lifecycle', () => {
   })
 
   it('Page lifecycle', () => {
+    resetVue()
+    setMPPlatform('wechat')
+
     const pageOptions = {
       mpType: 'page',
       template: `<div></div>`,
@@ -94,6 +100,8 @@ describe('lifecycle', () => {
     // access $mp
     expect(rootVM.$mp.page).toBe(page)
     expect(rootVM.$mp.options).toBe(page.options)
+    expect(rootVM.$mp.query).toBe(page.options)
+    expect(rootVM.$mp.platform).toBe('wechat')
     // hook called
     expect(pageOptions.beforeCreate).toHaveBeenCalledTimes(1)
     expect(pageOptions.created).toHaveBeenCalledTimes(1)
@@ -146,6 +154,8 @@ describe('lifecycle', () => {
     page._callHook('onUnload')
     expect(pageOptions.onUnload).toHaveBeenCalledTimes(1)
     expect(pageOptions.destroyed).toHaveBeenCalledTimes(1)
+
+    resetMPPlatform()
   })
 
   it('Component lifecycle', () => {

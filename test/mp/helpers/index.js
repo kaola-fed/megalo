@@ -9,6 +9,28 @@ export function initMPEnvironment () {
 
 initMPEnvironment()
 
+const platformAPI = {
+  wechat: 'wx',
+  alipay: 'my',
+  swan: 'swan'
+}
+export function setMPPlatform (platform) {
+  if (platformAPI[platform]) {
+    resetMPPlatform()
+    global[platformAPI[platform]] = {}
+  }
+}
+
+export function resetMPPlatform () {
+  Object.keys(platformAPI).forEach(key => {
+    delete global[platformAPI[key]]
+  })
+}
+
+export function resetVue () {
+  delete Vue.prototype._mpPlatform
+}
+
 export function tick (delay) {
   jasmine.clock().install()
   jasmine.clock().tick(delay)
