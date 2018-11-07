@@ -28,7 +28,7 @@ export function initVMToMP (vm) {
 
   const prefix = `${ROOT_DATA_VAR}.${cid}`
 
-  vm.$mp.update({
+  vm.$mp._update({
     [`${prefix}.${VM_ID_VAR}`]: info.cid,
     [`${prefix}.${VM_ID_PREFIX}`]: info.cpath
   })
@@ -43,7 +43,7 @@ export function updateSlotId (vm, sid) {
 
   /* istanbul ignore else */
   if (isDef(sid) && curValue !== sid) {
-    vm.$mp.update({
+    vm.$mp._update({
       [dataPathStr]: sid
     })
   }
@@ -67,7 +67,7 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
 
   /* istanbul ignore else */
   if (isDef(hid) && !isDeepEqual) {
-    vm.$mp.update({
+    vm.$mp._update({
       [dataPathStr]: data
     })
   }
