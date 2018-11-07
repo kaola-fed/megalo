@@ -4597,6 +4597,32 @@ Buffer.prototype.pop = function pop () {
   return data
 };
 
+function getMPPlatform () {
+  var platform = '';
+  try {
+    /* eslint-disable */
+    if (!platform && wx) {
+      platform = 'wechat';
+    }
+    /* eslint-enable */
+  } catch (e) {}
+  try {
+    /* eslint-disable */
+    if (!platform && my) {
+      platform = 'alipay';
+    }
+    /* eslint-enable */
+  } catch (e) {}
+  try {
+    /* eslint-disable */
+    if (!platform && swan) {
+      platform = 'swan';
+    }
+    /* eslint-enable */
+  } catch (e) {}
+  return platform || 'unknown'
+}
+
 var ROOT_DATA_VAR = '$root';
 var HOLDER_VAR = 'h';
 
@@ -4766,7 +4792,7 @@ function initVMToMP (vm) {
 
   var prefix = ROOT_DATA_VAR + "." + cid;
 
-  vm.$mp.update(( obj = {}, obj[(prefix + "." + VM_ID_VAR)] = info.cid, obj[(prefix + "." + VM_ID_PREFIX)] = info.cpath, obj));
+  vm.$mp._update(( obj = {}, obj[(prefix + "." + VM_ID_VAR)] = info.cid, obj[(prefix + "." + VM_ID_PREFIX)] = info.cpath, obj));
 }
 
 function updateSlotId (vm, sid) {
@@ -4780,7 +4806,7 @@ function updateSlotId (vm, sid) {
 
   /* istanbul ignore else */
   if (isDef(sid) && curValue !== sid) {
-    vm.$mp.update(( obj = {}, obj[dataPathStr] = sid, obj));
+    vm.$mp._update(( obj = {}, obj[dataPathStr] = sid, obj));
   }
 }
 
@@ -4805,7 +4831,7 @@ function updateMPData (type, data, vnode) {
 
   /* istanbul ignore else */
   if (isDef(hid) && !isDeepEqual) {
-    vm.$mp.update(( obj = {}, obj[dataPathStr] = data, obj));
+    vm.$mp._update(( obj = {}, obj[dataPathStr] = data, obj));
   }
 }
 
@@ -5129,11 +5155,15 @@ function initRootVM (mpVM, opt) {
 
   var options = opt.options;
   var Component = opt.Component;
+  var platform = opt.platform;
+  var mpVMOptions = mpVM && mpVM.options || {};
   var $mp = {
+    platform: platform,
     page: mpVM,
     status: 'load',
-    options: mpVM && mpVM.options,
-    update: createUpdateFn(mpVM)
+    query: mpVMOptions,
+    options: mpVMOptions,
+    _update: createUpdateFn(mpVM)
   };
 
   Object.assign(options, { $mp: $mp });
@@ -6731,17 +6761,20 @@ app.init = function (opt) {
 
 function initMP (vm, options) {
   var mpType = options.mpType; if ( mpType === void 0 ) mpType = 'page';
+  var _mpPlatform = vm._mpPlatform;
 
   /* istanbul ignore else */
   if (mpType === 'app') {
     app.init({
       Component: vm.constructor,
-      options: options
+      options: options,
+      platform: _mpPlatform
     });
   } else if (mpType === 'page') {
     page.init({
       Component: vm.constructor,
-      options: options
+      options: options,
+      platform: _mpPlatform
     });
   }
 }
@@ -6874,8 +6907,6 @@ var platformDirectives = {
 /*  */
 
 // import config from 'core/config'
-// import platformComponents from './components/index'
-
 // install platform specific utils
 Vue.config.mustUseProp = mustUseProp;
 Vue.config.isReservedTag = isReservedTag;
@@ -6885,7 +6916,6 @@ Vue.config.isUnknownElement = isUnknownElement;
 
 // install platform runtime directives & components
 extend(Vue.options.directives, platformDirectives);
-// extend(Vue.options.components, platformComponents)
 
 // install platform patch function
 Vue.prototype.__patch__ = patch;
@@ -6899,6 +6929,10 @@ Vue.prototype._l = aop(Vue.prototype._l, {
 
 var oInit = Vue.prototype._init;
 Vue.prototype._init = function (options) {
+  if (!Vue.prototype._mpPlatform) {
+    Vue.prototype._mpPlatform = getMPPlatform();
+  }
+
   var $mp = options.$mp;
   var parent = options.parent; if ( parent === void 0 ) parent = {};
   var mpType = options.mpType; if ( mpType === void 0 ) mpType = '';

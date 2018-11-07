@@ -4924,7 +4924,7 @@ var eventTypeMap$3 = {
 
 var findEventType$2 = createFindEventTypeFn(eventTypeMap$3);
 
-var swan = {
+var swan$1 = {
   prefix: prefix$2,
   ext: "swan",
   directives: {
@@ -4969,7 +4969,7 @@ var swan = {
 var presets = {
   wechat: wechat,
   alipay: alipay,
-  swan: swan
+  swan: swan$1
 }
 
 /*  */
