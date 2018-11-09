@@ -2,6 +2,7 @@ import TAG_MAP from './tag-map'
 import { Stack, createUidFn } from './util'
 import { LIST_TAIL_SEPS } from 'mp/util/index'
 
+const vbindReg = /^(v-bind:?|:)/
 const iteratorUid = createUidFn('item')
 
 const TYPE = {
@@ -84,6 +85,7 @@ function walkFor (node, state) {
 }
 
 function walkElem (node, state) {
+  processAttrs(node)
   if (node.key) {
     const key = node.key.replace(/^\w*\./, '')
     addAttr(node, '_fk', `"${key}"`)
@@ -167,6 +169,30 @@ function walkChildren (node, state) {
       const slot = scopedSlots[k]
       walk(slot, state)
     })
+  }
+}
+
+function processAttrs (node) {
+  const { attrsList = [], attrs = [], attrsMap = {}} = node
+  const bindingAttrs = []
+
+  attrsList.forEach((attr, i) => {
+    if (!vbindReg.test(attr.name)) {
+      // set default true, <div enable></div> -> <div enable="true"></div>
+      if (attr.value === '') {
+        attr.value = 'true'
+        attrs[i].value = '"true"'
+        attrsMap[attr.name] = 'true'
+      }
+    } else {
+      // collect dynamic attrs, only update daynamic attrs in runtime
+      const realName = attr.name.replace(vbindReg, '') || 'value'
+      bindingAttrs.push(realName)
+    }
+  })
+
+  if (bindingAttrs.length) {
+    addAttr(node, '_batrs', `"${bindingAttrs.join(',')}"`)
   }
 }
 
