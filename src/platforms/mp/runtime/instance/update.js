@@ -60,13 +60,16 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
     hid,
     type
   ]
-  const dataPathStr = dataPaths.join('.')
+  let dataPathStr = dataPaths.join('.')
 
   const curValue = getValue(vm.$mp.page.data, dataPaths)
   const isDeepEqual = deepEqual(curValue, data)
 
   /* istanbul ignore else */
   if (isDef(hid) && !isDeepEqual) {
+    if (vm.$mp.platform === 'swan' && /[^A-Za-z0-9_]/.test(type)) {
+      dataPathStr = dataPathStr.replace(/\.[^\.]*$/, `['${type}']`)
+    }
     vm.$mp._update({
       [dataPathStr]: data
     })
