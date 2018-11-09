@@ -144,6 +144,7 @@ describe('Directive v-bind', () => {
 
   // TODO: need supprt of template
   it('bind object with overwrite', done => {
+    pending()
     const { page, vm } = createPage({
       template: '<input v-bind="test" id="foo" :class="test.value">',
       data: {
@@ -174,6 +175,7 @@ describe('Directive v-bind', () => {
 
   // TODO: need supprt of template compiler
   it('bind object with class/style', done => {
+    pending()
     const { page, vm } = createPage({
       template: '<input class="a" style="color:red" v-bind="test">',
       data: {
@@ -275,15 +277,16 @@ describe('Directive v-bind', () => {
     })
 
     expect(getPageData(page, '0').h['1']._if).toBeTruthy()
-    expect(getPageData(page, '0').h['1'].id).toBe('a')
-    expect(getPageData(page, '0').h['1']['data-test']).toBe('1')
+    // static attributes is not supposed to be updated throw setData
+    // expect(getPageData(page, '0').h['1'].id).toBe('a')
+    // expect(getPageData(page, '0').h['1']['data-test']).toBe('1')
     expect(getPageData(page, '0').h['3']._if).toBeFalsy()
     vm.ok = false
     waitForUpdate(() => {
       expect(getPageData(page, '0').h['3']._if).toBeTruthy()
       expect(getPageData(page, '0').h['1']._if).toBeFalsy()
-      expect(getPageData(page, '0').h['1'].id).toBe('a')
-      expect(getPageData(page, '0').h['1']['data-test']).toBe('1')
+      // expect(getPageData(page, '0').h['1'].id).toBe('a')
+      // expect(getPageData(page, '0').h['1']['data-test']).toBe('1')
     }).then(done)
   })
 

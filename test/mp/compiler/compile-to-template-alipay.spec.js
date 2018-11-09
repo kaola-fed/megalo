@@ -163,7 +163,15 @@ describe('compilteToTemplate: wechat', () => {
   it('generate attributes', () => {
     assertCodegen(
       `<div disable></div>`,
-      `<view class="_div" disable=""></view>`
+      `<view class="_div" disable="true"></view>`
+    )
+    assertCodegen(
+      `<div disable=""></div>`,
+      `<view class="_div" disable="true"></view>`
+    )
+    assertCodegen(
+      `<div disable="false"></div>`,
+      `<view class="_div" disable="false"></view>`
     )
     assertCodegen(
       `<div data-store="123"></div>`,

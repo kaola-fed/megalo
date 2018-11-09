@@ -103,7 +103,7 @@ describe('codegen', () => {
   it('generate filters', () => {
     assertCodegen(
       '<div :id="a | b | c">{{ d | e | f }}</div>',
-      `with(this){return _c('div',{attrs:{"id":_f("c")(_f("b")(a)),"_hid":0}},[_v(_s(_f("f")(_f("e")(d))),1)])}`
+      `with(this){return _c('div',{attrs:{"id":_f("c")(_f("b")(a)),"_hid":0,"_batrs":"id"}},[_v(_s(_f("f")(_f("e")(d))),1)])}`
     )
   })
 
@@ -199,7 +199,7 @@ describe('codegen', () => {
   it('generate v-bind directive', () => {
     assertCodegen(
       '<p v-bind="test"></p>',
-      `with(this){return _c('p',_b({attrs:{"_hid":0}},'p',test,false))}`
+      `with(this){return _c('p',_b({attrs:{"_hid":0,"_batrs":"value"}},'p',test,false))}`
     )
   })
 
@@ -305,23 +305,23 @@ describe('codegen', () => {
     // input + value
     assertCodegen(
       '<input :value="msg">',
-      `with(this){return _c('input',{attrs:{"value":msg,"_hid":0}})}`
+      `with(this){return _c('input',{attrs:{"value":msg,"_hid":0,"_batrs":"value"}})}`
     )
     // non input
     assertCodegen(
       '<p :value="msg"/>',
-      `with(this){return _c('p',{attrs:{"value":msg,"_hid":0}})}`
+      `with(this){return _c('p',{attrs:{"value":msg,"_hid":0,"_batrs":"value"}})}`
     )
   })
 
   it('generate attrs with v-bind directive', () => {
     assertCodegen(
       '<input :name="field1">',
-      `with(this){return _c('input',{attrs:{"name":field1,"_hid":0}})}`
+      `with(this){return _c('input',{attrs:{"name":field1,"_hid":0,"_batrs":"name"}})}`
     )
     assertCodegen(
       '<input :data-name="field1">',
-      `with(this){return _c('input',{attrs:{"data-name":field1,"_hid":0}})}`
+      `with(this){return _c('input',{attrs:{"data-name":field1,"_hid":0,"_batrs":"data-name"}})}`
     )
   })
 
@@ -582,7 +582,7 @@ describe('codegen', () => {
   it('generate component', () => {
     assertCodegen(
       '<my-component name="mycomponent1" :msg="msg" @notify="onNotify"><div>hi</div></my-component>',
-      `with(this){return _c('my-component',{attrs:{"name":"mycomponent1","msg":msg,"_hid":0,"_cid":0},on:{"notify":onNotify}},[_c('div',{attrs:{"_hid":2}},[])])}`
+      `with(this){return _c('my-component',{attrs:{"name":"mycomponent1","msg":msg,"_hid":0,"_batrs":"msg","_cid":0},on:{"notify":onNotify}},[_c('div',{attrs:{"_hid":2}},[])])}`
     )
   })
 
@@ -685,5 +685,29 @@ describe('codegen', () => {
   //     { isReservedTag }
   //   )
   // })
+
+  it('generate default value', () => {
+    // normalize type: 2
+    assertCodegen(
+      '<div a ></div>',
+      `with(this){return _c('div',{attrs:{"a":"true","_hid":0}})}`
+    )
+    assertCodegen(
+      '<div a="" ></div>',
+      `with(this){return _c('div',{attrs:{"a":"true","_hid":0}})}`
+    )
+    assertCodegen(
+      '<div a="false" ></div>',
+      `with(this){return _c('div',{attrs:{"a":"false","_hid":0}})}`
+    )
+  })
+
+  it('generate multi v-bind', () => {
+    // normalize type: 2
+    assertCodegen(
+      '<div :a="A" v-bind:b="B" c></div>',
+      `with(this){return _c('div',{attrs:{"a":A,"b":B,"c":"true","_hid":0,"_batrs":"a,b"}})}`
+    )
+  })
 })
 /* eslint-enable quotes */
