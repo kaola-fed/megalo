@@ -92,21 +92,7 @@ export class TemplateGenerator {
       .join('')
   }
 
-  visit (el) {
-    const { visitors = {}} = this.preset
-
-    if (visitors.all) {
-      visitors.all(el)
-    }
-
-    if (visitors[el.tag]) {
-      visitors[el.tag](el)
-    }
-  }
-
   genElement (el): string {
-    this.visit(el)
-
     if (el.ifConditions && !el.ifConditionsGenerated) {
       return this.genIfConditions(el)
     } else if (this.isVHtml(el)) {

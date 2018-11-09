@@ -1,6 +1,7 @@
 import TAG_MAP from './tag-map'
 import { Stack, createUidFn } from './util'
 import { LIST_TAIL_SEPS } from 'mp/util/index'
+import presets from '../util/presets/index'
 
 const vbindReg = /^(v-bind:?|:)/
 const iteratorUid = createUidFn('item')
@@ -16,14 +17,30 @@ let sep = `'${LIST_TAIL_SEPS.wechat}'`
 export function mpify (node, options) {
   const { target = 'wechat' } = options
   sep = LIST_TAIL_SEPS[target] ? `'${LIST_TAIL_SEPS[target]}'` : sep
+  const preset = presets[target]
   const state = new State({
     rootNode: node,
-    target
+    target,
+    preset
   })
   walk(node, state)
 }
 
+function visit (el, state) {
+  const { visitors = {}} = state.preset
+
+  if (visitors.all) {
+    visitors.all(el)
+  }
+
+  if (visitors[el.tag]) {
+    visitors[el.tag](el)
+  }
+}
+
 function walk (node, state) {
+  visit(node, state)
+
   if (node.for && !node.mpForWalked) {
     return walkFor(node, state)
   }
@@ -224,6 +241,7 @@ class State {
     this.elemCount = -1
     this.compStack = new Stack()
     this.sep = options.sep || '-'
+    this.preset = options.preset
     // this.listStates = new Stack()
     // init a root component state, like page
     this.pushComp()
