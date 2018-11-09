@@ -4450,6 +4450,7 @@ var TAG_MAP = {
   'official-account': 'official-account'
 }
 
+var vbindReg = /^(v-bind:?|:)/;
 var iteratorUid = createUidFn('item');
 
 var TYPE = {
@@ -4535,6 +4536,7 @@ function walkFor (node, state) {
 }
 
 function walkElem (node, state) {
+  processAttrs$1(node);
   if (node.key) {
     var key = node.key.replace(/^\w*\./, '');
     addAttr$1(node, '_fk', ("\"" + key + "\""));
@@ -4622,6 +4624,32 @@ function walkChildren (node, state) {
       var slot = scopedSlots[k];
       walk(slot, state);
     });
+  }
+}
+
+function processAttrs$1 (node) {
+  var attrsList = node.attrsList; if ( attrsList === void 0 ) attrsList = [];
+  var attrs = node.attrs; if ( attrs === void 0 ) attrs = [];
+  var attrsMap = node.attrsMap; if ( attrsMap === void 0 ) attrsMap = {};
+  var bindingAttrs = [];
+
+  attrsList.forEach(function (attr, i) {
+    if (!vbindReg.test(attr.name)) {
+      // set default true, <div enable></div> -> <div enable="true"></div>
+      if (attr.value === '') {
+        attr.value = 'true';
+        attrs[i].value = '"true"';
+        attrsMap[attr.name] = 'true';
+      }
+    } else {
+      // collect dynamic attrs, only update daynamic attrs in runtime
+      var realName = attr.name.replace(vbindReg, '') || 'value';
+      bindingAttrs.push(realName);
+    }
+  });
+
+  if (bindingAttrs.length) {
+    addAttr$1(node, '_batrs', ("\"" + (bindingAttrs.join(',')) + "\""));
   }
 }
 
@@ -4729,6 +4757,8 @@ State.prototype.assignHId = function assignHId (node) {
 
 /*  */
 
+var templateCache = {};
+
 // `createCompilerCreator` allows creating compilers that use alternative
 // parser/optimizer/codegen, e.g the SSR optimizing compiler.
 // Here we just export a default compiler using the default parts.
@@ -4736,15 +4766,31 @@ var createCompiler = createCompilerCreator(function baseCompile (
   template,
   options
 ) {
-  var ast = parse(template.trim(), options);
+  var realResourcePath = options.realResourcePath;
+  var md5 = options.md5;
+  var templateTrimed = template.trim();
+
+  var cache = templateCache[realResourcePath];
+  if (md5 && cache && cache.md5 === md5) {
+    return cache.data
+  }
+
+  var ast = parse(templateTrimed, options);
   optimize(ast, options);
   mpify(ast, options);
   var code = generate(ast, options);
-  return {
+  var data = {
     ast: ast,
     render: code.render,
     staticRenderFns: code.staticRenderFns
-  }
+  };
+
+  templateCache[realResourcePath] = {
+    data: data,
+    md5: md5
+  };
+
+  return data
 });
 
 function createFindEventTypeFn (eventTypeMap) {
@@ -4974,7 +5020,7 @@ var presets = {
 
 /*  */
 
-var vbindReg = /^(v-bind)?:/;
+var vbindReg$1 = /^(v-bind)?:/;
 var vonReg = /^v-on:|@/;
 var vmodelReg = /^v-model/;
 var listTailReg = /'[-|_]'/;
@@ -5310,8 +5356,8 @@ TemplateGenerator.prototype.genAttrs = function genAttrs (el) {
       var value = attr.value;
     if (vonReg.test(name) || (name === 'value' && hasVModel) || name === 'v-show') {
       return ''
-    } else if (vbindReg.test(name)) {
-      var realName = name.replace(vbindReg, '');
+    } else if (vbindReg$1.test(name)) {
+      var realName = name.replace(vbindReg$1, '');
       return (realName + "=\"{{ " + HOLDER_VAR + "[ " + (this$1.genHid(el)) + " ][ '" + realName + "' ] }}\"")
     } else if (vmodelReg.test(name)) {
       return ("value=\"{{ " + (this$1.genHolder(el, 'value')) + " }}\"")

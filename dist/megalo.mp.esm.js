@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.2.0-1';
+Vue.version = '0.2.1';
 
 /*  */
 
@@ -4831,6 +4831,9 @@ function updateMPData (type, data, vnode) {
 
   /* istanbul ignore else */
   if (isDef(hid) && !isDeepEqual) {
+    if (vm.$mp.platform === 'swan' && /[^A-Za-z0-9_]/.test(type)) {
+      dataPathStr = dataPathStr.replace(/\.[^\.]*$/, ("['" + type + "']"));
+    }
     vm.$mp._update(( obj = {}, obj[dataPathStr] = data, obj));
   }
 }
@@ -6105,7 +6108,7 @@ var baseModules = [
 
 /*  */
 
-var ignoreKeys = ['_hid', '_fk', '_cid'];
+var ignoreKeys = ['_hid', '_fk', '_cid', '_batrs'];
 
 function isIgnoreKey (key) {
   return ignoreKeys.indexOf(key) > -1 ||
@@ -6123,6 +6126,7 @@ function updateAttrs (oldVnode, vnode) {
   var key, cur, old;
   var oldAttrs = oldVnode.data.attrs || {};
   var attrs = vnode.data.attrs || {};
+  var bindingAttrs = (attrs._batrs || '').split(',');
   // clone observed objects, as the user probably wants to mutate it
   if (isDef(attrs.__ob__)) {
     attrs = vnode.data.attrs = extend({}, attrs);
@@ -6134,7 +6138,9 @@ function updateAttrs (oldVnode, vnode) {
     }
     cur = attrs[key];
     old = oldAttrs[key];
-    if (old !== cur) {
+
+    // only update daynamic attrs in runtime
+    if (old !== cur && bindingAttrs.indexOf(key) > -1) {
       updateVnodeToMP(vnode, key, cur);
     }
   }
