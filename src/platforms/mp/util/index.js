@@ -32,7 +32,8 @@ export const HOLDER_TYPE_VARS = {
   style: 'st',
   value: 'value',
   vhtml: 'html',
-  vshow: 'vs'
+  vshow: 'vs',
+  slot: 'slot'
 }
 
 export const notEmpty = e => !!e
