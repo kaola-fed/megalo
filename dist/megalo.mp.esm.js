@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.2.1';
+Vue.version = '0.2.2';
 
 /*  */
 
@@ -5159,15 +5159,21 @@ function initRootVM (mpVM, opt) {
   var options = opt.options;
   var Component = opt.Component;
   var platform = opt.platform;
+  var mpType = options.mpType;
   var mpVMOptions = mpVM && mpVM.options || {};
   var $mp = {
     platform: platform,
-    page: mpVM,
     status: 'load',
     query: mpVMOptions,
     options: mpVMOptions,
     _update: createUpdateFn(mpVM)
   };
+
+  if (mpType === 'app') {
+    Object.assign($mp, { app: mpVM });
+  } else {
+    Object.assign($mp, { page: mpVM });
+  }
 
   Object.assign(options, { $mp: $mp });
 
