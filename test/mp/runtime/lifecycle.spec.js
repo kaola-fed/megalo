@@ -106,8 +106,8 @@ describe('lifecycle', () => {
     expect(pageOptions.beforeCreate).toHaveBeenCalledTimes(1)
     expect(pageOptions.created).toHaveBeenCalledTimes(1)
     expect(pageOptions.onLoad).toHaveBeenCalledTimes(1)
-    expect(pageOptions.beforeMount).not.toHaveBeenCalled()
-    expect(pageOptions.mounted).not.toHaveBeenCalled()
+    expect(pageOptions.beforeMount).toHaveBeenCalledTimes(1)
+    expect(pageOptions.mounted).toHaveBeenCalledTimes(1)
     expect(pageOptions.destroyed).not.toHaveBeenCalled()
 
     // page onReady
@@ -166,8 +166,8 @@ describe('lifecycle', () => {
       beforeMount: spyFn('beforeMount'),
       mounted: spyFn('mounted'),
       destroyed: spyFn('destroyed'),
-      onLoad: spyFn('onReady'),
-      onUnload: spyFn('onReady'),
+      onLoad: spyFn('onLoad'),
+      onUnload: spyFn('onUnload'),
       onReady: spyFn('onReady'),
       onShow: spyFn('onShow'),
       onHide: spyFn('onHide'),
@@ -199,15 +199,16 @@ describe('lifecycle', () => {
     page._callHook('onLoad', { query: { id: 100 }})
 
     // hook called
-    expect(compOptions.beforeCreate).not.toHaveBeenCalled()
-    expect(compOptions.created).not.toHaveBeenCalled()
-    expect(compOptions.beforeMount).not.toHaveBeenCalled()
-    expect(compOptions.mounted).not.toHaveBeenCalled()
+    expect(compOptions.onLoad).not.toHaveBeenCalled()
+    expect(compOptions.beforeCreate).toHaveBeenCalledTimes(1)
+    expect(compOptions.created).toHaveBeenCalledTimes(1)
+    expect(compOptions.beforeMount).toHaveBeenCalledTimes(1)
+    expect(compOptions.mounted).toHaveBeenCalledTimes(1)
     expect(compOptions.destroyed).not.toHaveBeenCalled()
 
     // page onReady
     page._callHook('onReady')
-    expect(compOptions.onLoad).toHaveBeenCalledTimes(0)
+    expect(compOptions.onLoad).not.toHaveBeenCalled()
     expect(compOptions.onReady).toHaveBeenCalledTimes(1)
     expect(compOptions.beforeCreate).toHaveBeenCalledTimes(1)
     expect(compOptions.created).toHaveBeenCalledTimes(1)
