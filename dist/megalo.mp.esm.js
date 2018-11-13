@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.2.2';
+Vue.version = '0.3.0';
 
 /*  */
 
@@ -4644,7 +4644,8 @@ var HOLDER_TYPE_VARS = {
   style: 'st',
   value: 'value',
   vhtml: 'html',
-  vshow: 'vs'
+  vshow: 'vs',
+  slot: 'slot'
 };
 
 var notEmpty = function (e) { return !!e; };
@@ -4840,17 +4841,27 @@ function updateMPData (type, data, vnode) {
 
 function createUpdateFn (page) {
   var buffer = new Buffer();
-  var throttleSetData = throttle(function () {
+
+  function doUpdate () {
     var data = buffer.pop();
 
     if (!isEmptyObj(data) && page.setData) {
       page.setData(data);
     }
+  }
+
+  var throttleSetData = throttle(function () {
+    doUpdate();
   }, 50, { leadingDelay: 0 });
 
-  return function update (data) {
-    buffer.push(data);
-    throttleSetData();
+  return {
+    update: function update (data) {
+      buffer.push(data);
+      throttleSetData();
+    },
+    instantUpdate: function instantUpdate (data) {
+      doUpdate();
+    }
   }
 }
 
@@ -5161,12 +5172,16 @@ function initRootVM (mpVM, opt) {
   var platform = opt.platform;
   var mpType = options.mpType;
   var mpVMOptions = mpVM && mpVM.options || {};
+  var ref = createUpdateFn(mpVM);
+  var update = ref.update;
+  var instantUpdate = ref.instantUpdate;
   var $mp = {
     platform: platform,
     status: 'load',
     query: mpVMOptions,
     options: mpVMOptions,
-    _update: createUpdateFn(mpVM)
+    _update: update,
+    _instantUpdate: instantUpdate
   };
 
   if (mpType === 'app') {
@@ -6146,7 +6161,7 @@ function updateAttrs (oldVnode, vnode) {
     old = oldAttrs[key];
 
     // only update daynamic attrs in runtime
-    if (old !== cur && bindingAttrs.indexOf(key) > -1) {
+    if (old !== cur && (bindingAttrs.indexOf(key) > -1 || key === 'slot')) {
       updateVnodeToMP(vnode, key, cur);
     }
   }
@@ -6639,6 +6654,10 @@ page.init = function init (opt) {
       var rootVM = this.rootVM = initRootVM(this, opt);
 
       callHook$2(rootVM, 'onLoad', options);
+
+      rootVM.$mount();
+
+      rootVM.$mp._instantUpdate();
     },
     // 生命周期函数--监听页面初次渲染完成
     onReady: function onReady (options) {
@@ -6646,7 +6665,6 @@ page.init = function init (opt) {
       var mp = rootVM.$mp;
 
       mp.status = 'ready';
-      rootVM.$mount();
 
       callHook$2(rootVM, 'onReady', options);
     },

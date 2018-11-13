@@ -1702,7 +1702,8 @@ var HOLDER_TYPE_VARS = {
   style: 'st',
   value: 'value',
   vhtml: 'html',
-  vshow: 'vs'
+  vshow: 'vs',
+  slot: 'slot'
 };
 
 var notEmpty = function (e) { return !!e; };
@@ -4038,7 +4039,12 @@ function genIfScope (ifConditions) {
   if (!ifConditions || !ifConditions.length) {
     return ''
   }
-  var conds = ifConditions.map(function (c) { return ("var " + (c.cond) + " = !!(" + (c.exp) + ");"); });
+  var lastCond = [];
+  var conds = ifConditions.map(function (c) {
+    var res = "var " + (c.cond) + " = " + lastCond + "!!(" + (c.exp) + ");";
+    lastCond += "!" + (c.cond) + " && ";
+    return res
+  });
   var _ifs = "_ri(" + (ifConditions.map(function (c) { return ((c.cond) + "," + (c._hid)); }).join(',')) + ");";
   return conds.join('') + _ifs
 }
@@ -4450,6 +4456,276 @@ var TAG_MAP = {
   'official-account': 'official-account'
 }
 
+function createFindEventTypeFn (eventTypeMap) {
+  return function findEventType (type) {
+    var res = '';
+    Object.keys(eventTypeMap)
+      .some(function (mpType) {
+        if (eventTypeMap[ mpType ].indexOf(type) > -1) {
+          res = mpType;
+          return true
+        }
+      });
+    return res
+  }
+}
+
+function mergePreset (presetA, presetB) {
+  var res = Object.assign({}, presetA, presetB);
+  var aVisitors = presetA.visitors || {};
+  var bVisitors = presetB.visitors || {};
+  var mergeVisitors = Object.assign({}, aVisitors, bVisitors);
+  Object.assign(res, {
+    visitors: mergeVisitors
+  });
+
+  return res
+}
+
+function alterAttrName (el, oldName, newName) {
+  var attrsMap = el.attrsMap; if ( attrsMap === void 0 ) attrsMap = {};
+  var attrsList = el.attrsList; if ( attrsList === void 0 ) attrsList = [];
+  var attrs = el.attrs; if ( attrs === void 0 ) attrs = [];
+  var index = -1;
+
+  attrs.some(function (attr, i) {
+    if (attr.name === oldName) {
+      index = i;
+      return true
+    }
+  });
+
+  if (index > -1) {
+    var rawOldName = attrsList[index].name;
+    var rawNewName = rawOldName.replace(oldName, newName);
+    attrs[index].name = newName;
+    attrsList[index].name = rawNewName;
+
+    var mapValue = attrsMap[rawOldName];
+    delete attrsMap[rawOldName];
+    attrsMap[rawNewName] = mapValue;
+  }
+}
+
+var basePrest = {
+  visitors: {
+    a: function a (el) {
+      alterAttrName(el, 'href', 'url');
+    }
+  }
+};
+
+var prefix = "wx:";
+
+var eventTypeMap$1 = {
+  tap: ['tap', 'click'],
+  touchstart: ['touchstart'],
+  touchmove: ['touchmove'],
+  touchcancel: ['touchcancel'],
+  touchend: ['touchend'],
+  longtap: ['longtap'],
+  input: ['input'],
+  blur: ['change', 'blur'],
+  submit: ['submit'],
+  focus: ['focus'],
+  scrolltoupper: ['scrolltoupper'],
+  scrolltolower: ['scrolltolower'],
+  scroll: ['scroll']
+};
+
+var findEventType = createFindEventTypeFn(eventTypeMap$1);
+
+var wechat = mergePreset(basePrest, {
+  prefix: prefix,
+  ext: "wxml",
+  directives: {
+    if: (prefix + "if"),
+    elseif: (prefix + "elif"),
+    else: (prefix + "else"),
+    for: (prefix + "for"),
+    forItem: (prefix + "for-item"),
+    forIndex: (prefix + "for-index"),
+    forKey: (prefix + "key"),
+    on: "bind",
+    onStop: "catch",
+    capture: "capture"
+  },
+  eventTypeMap: eventTypeMap$1,
+  findEventType: findEventType,
+  genBind: function genBind (event, type, tag) {
+    var modifiers = event.modifiers; if ( modifiers === void 0 ) modifiers = {};
+    var isCapture = /!/.test(type);
+    var realType = type.replace(/^[~|!]/, '');
+    var stop = modifiers.stop;
+    var mpType = realType;
+    var binder = stop ? 'catch' : 'bind';
+    binder = isCapture ? ("capture-" + binder) : binder;
+
+    if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
+      mpType = 'blur';
+    } else {
+      mpType = mpType === 'click' ? 'tap' : mpType;
+    }
+    return ("" + binder + mpType)
+  }
+})
+
+var prefix$1 = "a:";
+
+var eventTypeMap$2 = {
+  Tap: ['tap', 'click'],
+  TouchStart: ['touchstart'],
+  TouchMove: ['touchmove'],
+  TouchCancel: ['touchcancel'],
+  TouchEnd: ['touchend'],
+  LongTap: ['longtap'],
+  Input: ['input'],
+  Change: ['change'],
+  Changing: ['changing'],
+  Blur: ['change', 'blur'],
+  Clear: ['clear'],
+  Submit: ['submit'],
+  Focus: ['focus'],
+  ScrollToUpper: ['scrolltoupper'],
+  ScrollToLower: ['scrolltolower'],
+  Scroll: ['scroll'],
+  TransitionEnd: ['transitionend'],
+  AnimationStart: ['animationstart'],
+  AnimationIteration: ['animationiteration'],
+  AnimationEnd: ['animationend'],
+  Appear: ['appear'],
+  Disappear: ['disappear'],
+  FirstAppear: ['firstappear'],
+  Reset: ['reset'],
+  Confirm: ['confirm'],
+  Load: ['load'],
+  Error: ['error'],
+  MarkerTap: ['markertap'],
+  CalloutTap: ['callouttap'],
+  ControlTap: ['controltap'],
+  RegionChange: ['regionchange'],
+  Messag: ['message'],
+  PlusClick: ['plusclick'],
+  TabClick: ['tabclick'],
+  CardClick: ['cardclick'],
+  GridItemClick: ['griditemclick'],
+  ModalClick: ['modalclick'],
+  ModalClose: ['modalclose'],
+  TapMain: ['tapmain'],
+  TapSub: ['tapsub'],
+  CloseTap: ['closetap'],
+  ButtonClick: ['buttonclick'],
+  RightItemClick: ['rightitemclick'],
+  Select: ['select'],
+  MonthChange: ['monthchange']
+};
+
+var findEventType$1 = createFindEventTypeFn(eventTypeMap$2);
+
+var alipay = mergePreset(basePrest, {
+  prefix: prefix$1,
+  ext: "axml",
+  directives: {
+    if: (prefix$1 + "if"),
+    elseif: (prefix$1 + "elif"),
+    else: (prefix$1 + "else"),
+    for: (prefix$1 + "for"),
+    forItem: (prefix$1 + "for-item"),
+    forIndex: (prefix$1 + "for-index"),
+    forKey: (prefix$1 + "key"),
+    on: "bind",
+    onStop: "catch",
+    capture: "capture"
+  },
+  eventTypeMap: eventTypeMap$2,
+  findEventType: findEventType$1,
+  genBind: function genBind (event, type, tag) {
+    var modifiers = event.modifiers; if ( modifiers === void 0 ) modifiers = {};
+    // const isCapture = /!/.test(type)
+    var realType = type.replace(/^[~|!]/, '');
+    var stop = modifiers.stop;
+    var mpType = findEventType$1(realType) || realType;
+    var binder = stop ? 'catch' : 'on';
+
+    // capture is not supported yet in alipay
+    // binder = isCapture ? `capture-${binder}` : binder
+
+    if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
+      mpType = 'blur';
+    }
+
+    return ("" + binder + (capitalize(mpType)))
+  }
+})
+
+var prefix$2 = "s-";
+
+var eventTypeMap$3 = {
+  tap: ['tap', 'click'],
+  touchstart: ['touchstart'],
+  touchmove: ['touchmove'],
+  touchcancel: ['touchcancel'],
+  touchend: ['touchend'],
+  longtap: ['longtap'],
+  input: ['input'],
+  blur: ['change', 'blur'],
+  submit: ['submit'],
+  focus: ['focus'],
+  scrolltoupper: ['scrolltoupper'],
+  scrolltolower: ['scrolltolower'],
+  scroll: ['scroll']
+};
+
+var findEventType$2 = createFindEventTypeFn(eventTypeMap$3);
+
+var swan$1 = mergePreset(basePrest, {
+  prefix: prefix$2,
+  ext: "swan",
+  directives: {
+    if: (prefix$2 + "if"),
+    elseif: (prefix$2 + "elif"),
+    else: (prefix$2 + "else"),
+    for: (prefix$2 + "for"),
+    forItem: (prefix$2 + "for-item"),
+    forIndex: (prefix$2 + "for-index"),
+    forKey: (prefix$2 + "key"),
+    on: "bind",
+    onStop: "catch",
+    capture: "capture"
+  },
+  eventTypeMap: eventTypeMap$3,
+  findEventType: findEventType$2,
+  genBind: function genBind (event, type, tag) {
+    var modifiers = event.modifiers; if ( modifiers === void 0 ) modifiers = {};
+    var isCapture = /!/.test(type);
+    var realType = type.replace(/^[~|!]/, '');
+    var stop = modifiers.stop;
+    var mpType = realType;
+    var binder = stop ? 'catch' : 'bind';
+    binder = isCapture ? ("capture-" + binder) : binder;
+
+    if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
+      mpType = 'blur';
+    } else {
+      mpType = mpType === 'click' ? 'tap' : mpType;
+    }
+    return ("" + binder + mpType)
+  },
+  visitors: {
+    all: function all (el) {
+      if (el.tag === 'input') {
+        el.isSelfCloseTag = true;
+      }
+    }
+  }
+})
+
+var presets = {
+  wechat: wechat,
+  alipay: alipay,
+  swan: swan$1
+}
+
 var vbindReg = /^(v-bind:?|:)/;
 var iteratorUid = createUidFn('item');
 
@@ -4464,14 +4740,31 @@ var sep = "'" + (LIST_TAIL_SEPS.wechat) + "'";
 function mpify (node, options) {
   var target = options.target; if ( target === void 0 ) target = 'wechat';
   sep = LIST_TAIL_SEPS[target] ? ("'" + (LIST_TAIL_SEPS[target]) + "'") : sep;
+  var preset = presets[target];
   var state = new State({
     rootNode: node,
-    target: target
+    target: target,
+    preset: preset
   });
   walk(node, state);
 }
 
+function visit (el, state) {
+  var ref = state.preset;
+  var visitors = ref.visitors; if ( visitors === void 0 ) visitors = {};
+
+  if (visitors.all) {
+    visitors.all(el);
+  }
+
+  if (visitors[el.tag]) {
+    visitors[el.tag](el);
+  }
+}
+
 function walk (node, state) {
+  visit(node, state);
+
   if (node.for && !node.mpForWalked) {
     return walkFor(node, state)
   }
@@ -4683,6 +4976,7 @@ var State = function State (options) {
   this.elemCount = -1;
   this.compStack = new Stack();
   this.sep = options.sep || '-';
+  this.preset = options.preset;
   // this.listStates = new Stack()
   // init a root component state, like page
   this.pushComp();
@@ -4793,231 +5087,6 @@ var createCompiler = createCompilerCreator(function baseCompile (
   return data
 });
 
-function createFindEventTypeFn (eventTypeMap) {
-  return function findEventType (type) {
-    var res = '';
-    Object.keys(eventTypeMap)
-      .some(function (mpType) {
-        if (eventTypeMap[ mpType ].indexOf(type) > -1) {
-          res = mpType;
-          return true
-        }
-      });
-    return res
-  }
-}
-
-var prefix = "wx:";
-
-var eventTypeMap$1 = {
-  tap: ['tap', 'click'],
-  touchstart: ['touchstart'],
-  touchmove: ['touchmove'],
-  touchcancel: ['touchcancel'],
-  touchend: ['touchend'],
-  longtap: ['longtap'],
-  input: ['input'],
-  blur: ['change', 'blur'],
-  submit: ['submit'],
-  focus: ['focus'],
-  scrolltoupper: ['scrolltoupper'],
-  scrolltolower: ['scrolltolower'],
-  scroll: ['scroll']
-};
-
-var findEventType = createFindEventTypeFn(eventTypeMap$1);
-
-var wechat = {
-  prefix: prefix,
-  ext: "wxml",
-  directives: {
-    if: (prefix + "if"),
-    elseif: (prefix + "elif"),
-    else: (prefix + "else"),
-    for: (prefix + "for"),
-    forItem: (prefix + "for-item"),
-    forIndex: (prefix + "for-index"),
-    forKey: (prefix + "key"),
-    on: "bind",
-    onStop: "catch",
-    capture: "capture"
-  },
-  eventTypeMap: eventTypeMap$1,
-  findEventType: findEventType,
-  genBind: function genBind (event, type, tag) {
-    var modifiers = event.modifiers; if ( modifiers === void 0 ) modifiers = {};
-    var isCapture = /!/.test(type);
-    var realType = type.replace(/^[~|!]/, '');
-    var stop = modifiers.stop;
-    var mpType = realType;
-    var binder = stop ? 'catch' : 'bind';
-    binder = isCapture ? ("capture-" + binder) : binder;
-
-    if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
-      mpType = 'blur';
-    } else {
-      mpType = mpType === 'click' ? 'tap' : mpType;
-    }
-    return ("" + binder + mpType)
-  }
-}
-
-var prefix$1 = "a:";
-
-var eventTypeMap$2 = {
-  Tap: ['tap', 'click'],
-  TouchStart: ['touchstart'],
-  TouchMove: ['touchmove'],
-  TouchCancel: ['touchcancel'],
-  TouchEnd: ['touchend'],
-  LongTap: ['longtap'],
-  Input: ['input'],
-  Change: ['change'],
-  Changing: ['changing'],
-  Blur: ['change', 'blur'],
-  Clear: ['clear'],
-  Submit: ['submit'],
-  Focus: ['focus'],
-  ScrollToUpper: ['scrolltoupper'],
-  ScrollToLower: ['scrolltolower'],
-  Scroll: ['scroll'],
-  TransitionEnd: ['transitionend'],
-  AnimationStart: ['animationstart'],
-  AnimationIteration: ['animationiteration'],
-  AnimationEnd: ['animationend'],
-  Appear: ['appear'],
-  Disappear: ['disappear'],
-  FirstAppear: ['firstappear'],
-  Reset: ['reset'],
-  Confirm: ['confirm'],
-  Load: ['load'],
-  Error: ['error'],
-  MarkerTap: ['markertap'],
-  CalloutTap: ['callouttap'],
-  ControlTap: ['controltap'],
-  RegionChange: ['regionchange'],
-  Messag: ['message'],
-  PlusClick: ['plusclick'],
-  TabClick: ['tabclick'],
-  CardClick: ['cardclick'],
-  GridItemClick: ['griditemclick'],
-  ModalClick: ['modalclick'],
-  ModalClose: ['modalclose'],
-  TapMain: ['tapmain'],
-  TapSub: ['tapsub'],
-  CloseTap: ['closetap'],
-  ButtonClick: ['buttonclick'],
-  RightItemClick: ['rightitemclick'],
-  Select: ['select'],
-  MonthChange: ['monthchange']
-};
-
-var findEventType$1 = createFindEventTypeFn(eventTypeMap$2);
-
-var alipay = {
-  prefix: prefix$1,
-  ext: "axml",
-  directives: {
-    if: (prefix$1 + "if"),
-    elseif: (prefix$1 + "elif"),
-    else: (prefix$1 + "else"),
-    for: (prefix$1 + "for"),
-    forItem: (prefix$1 + "for-item"),
-    forIndex: (prefix$1 + "for-index"),
-    forKey: (prefix$1 + "key"),
-    on: "bind",
-    onStop: "catch",
-    capture: "capture"
-  },
-  eventTypeMap: eventTypeMap$2,
-  findEventType: findEventType$1,
-  genBind: function genBind (event, type, tag) {
-    var modifiers = event.modifiers; if ( modifiers === void 0 ) modifiers = {};
-    // const isCapture = /!/.test(type)
-    var realType = type.replace(/^[~|!]/, '');
-    var stop = modifiers.stop;
-    var mpType = findEventType$1(realType) || realType;
-    var binder = stop ? 'catch' : 'on';
-
-    // capture is not supported yet in alipay
-    // binder = isCapture ? `capture-${binder}` : binder
-
-    if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
-      mpType = 'blur';
-    }
-
-    return ("" + binder + (capitalize(mpType)))
-  }
-}
-
-var prefix$2 = "s-";
-
-var eventTypeMap$3 = {
-  tap: ['tap', 'click'],
-  touchstart: ['touchstart'],
-  touchmove: ['touchmove'],
-  touchcancel: ['touchcancel'],
-  touchend: ['touchend'],
-  longtap: ['longtap'],
-  input: ['input'],
-  blur: ['change', 'blur'],
-  submit: ['submit'],
-  focus: ['focus'],
-  scrolltoupper: ['scrolltoupper'],
-  scrolltolower: ['scrolltolower'],
-  scroll: ['scroll']
-};
-
-var findEventType$2 = createFindEventTypeFn(eventTypeMap$3);
-
-var swan$1 = {
-  prefix: prefix$2,
-  ext: "swan",
-  directives: {
-    if: (prefix$2 + "if"),
-    elseif: (prefix$2 + "elif"),
-    else: (prefix$2 + "else"),
-    for: (prefix$2 + "for"),
-    forItem: (prefix$2 + "for-item"),
-    forIndex: (prefix$2 + "for-index"),
-    forKey: (prefix$2 + "key"),
-    on: "bind",
-    onStop: "catch",
-    capture: "capture"
-  },
-  eventTypeMap: eventTypeMap$3,
-  findEventType: findEventType$2,
-  genBind: function genBind (event, type, tag) {
-    var modifiers = event.modifiers; if ( modifiers === void 0 ) modifiers = {};
-    var isCapture = /!/.test(type);
-    var realType = type.replace(/^[~|!]/, '');
-    var stop = modifiers.stop;
-    var mpType = realType;
-    var binder = stop ? 'catch' : 'bind';
-    binder = isCapture ? ("capture-" + binder) : binder;
-
-    if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
-      mpType = 'blur';
-    } else {
-      mpType = mpType === 'click' ? 'tap' : mpType;
-    }
-    return ("" + binder + mpType)
-  },
-  visitors: {
-    all: function all (el) {
-      if (el.tag === 'input') {
-        el.isSelfCloseTag = true;
-      }
-    }
-  }
-}
-
-var presets = {
-  wechat: wechat,
-  alipay: alipay,
-  swan: swan$1
-}
-
 /*  */
 
 var vbindReg$1 = /^(v-bind)?:/;
@@ -5100,22 +5169,7 @@ TemplateGenerator.prototype.genImports = function genImports () {
     .join('')
 };
 
-TemplateGenerator.prototype.visit = function visit (el) {
-  var ref = this.preset;
-    var visitors = ref.visitors; if ( visitors === void 0 ) visitors = {};
-
-  if (visitors.all) {
-    visitors.all(el);
-  }
-
-  if (visitors[el.tag]) {
-    visitors[el.tag](el);
-  }
-};
-
 TemplateGenerator.prototype.genElement = function genElement (el) {
-  this.visit(el);
-
   if (el.ifConditions && !el.ifConditionsGenerated) {
     return this.genIfConditions(el)
   } else if (this.isVHtml(el)) {
@@ -5287,7 +5341,8 @@ TemplateGenerator.prototype.genTag = function genTag (el) {
     this.genClass(el),
     this.genStyle(el),
     this.genAttrs(el),
-    this.genEvents(el)
+    this.genEvents(el),
+    this.genNativeSlotName(el)
   ];
 
   var startTag = "<" + ([
@@ -5569,6 +5624,17 @@ TemplateGenerator.prototype.genVHtml = function genVHtml (el) {
   ].join('')) + " data=\"{{ nodes: " + (this.genHolder(el, 'vhtml')) + " }}\"/>")
 };
 
+TemplateGenerator.prototype.genNativeSlotName = function genNativeSlotName (el) {
+  var slotTarget = el.slotTarget;
+  if (!slotTarget || this.isComponent(el.parent)) {
+    return ''
+  }
+  var isDynamicSlot = !/"/.test(slotTarget);
+  var slotName = isDynamicSlot ? ("\"{{ " + (this.genHolder(el, 'slot')) + " }}\"") : slotTarget;
+
+  return (" slot=" + slotName)
+};
+
 TemplateGenerator.prototype.isVHtml = function isVHtml (el) {
     if ( el === void 0 ) el = {};
 
@@ -5597,6 +5663,8 @@ TemplateGenerator.prototype.isNamedSlotDefinition = function isNamedSlotDefiniti
 };
 
 TemplateGenerator.prototype.isComponent = function isComponent (el) {
+    if ( el === void 0 ) el = {};
+
   var tag = el.tag;
   if (el._cid) {
     var pascalName = pascalize(tag);
