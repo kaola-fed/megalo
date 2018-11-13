@@ -16,6 +16,8 @@ page.init = function init (opt) {
       callHook(rootVM, 'onLoad', options)
 
       rootVM.$mount()
+
+      rootVM.$mp._instantUpdate()
     },
     // 生命周期函数--监听页面初次渲染完成
     onReady (options) {

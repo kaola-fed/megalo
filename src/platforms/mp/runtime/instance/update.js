@@ -78,17 +78,27 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
 
 export function createUpdateFn (page) {
   const buffer = new Buffer()
-  const throttleSetData = throttle(function () {
+
+  function doUpdate () {
     const data = buffer.pop()
 
     if (!isEmptyObj(data) && page.setData) {
       page.setData(data)
     }
+  }
+
+  const throttleSetData = throttle(function () {
+    doUpdate()
   }, 50, { leadingDelay: 0 })
 
-  return function update (data) {
-    buffer.push(data)
-    throttleSetData()
+  return {
+    update (data) {
+      buffer.push(data)
+      throttleSetData()
+    },
+    instantUpdate (data) {
+      doUpdate()
+    }
   }
 }
 
