@@ -14,6 +14,10 @@ page.init = function init (opt) {
       const rootVM = this.rootVM = initRootVM(this, opt)
 
       callHook(rootVM, 'onLoad', options)
+
+      rootVM.$mount()
+
+      rootVM.$mp._instantUpdate()
     },
     // 生命周期函数--监听页面初次渲染完成
     onReady (options) {
@@ -21,7 +25,6 @@ page.init = function init (opt) {
       const mp = rootVM.$mp
 
       mp.status = 'ready'
-      rootVM.$mount()
 
       callHook(rootVM, 'onReady', options)
     },

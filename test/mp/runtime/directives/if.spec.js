@@ -376,4 +376,57 @@ describe('Directive v-if', () => {
       expect(destroyed).not.toHaveBeenCalled()
     }).then(done)
   })
+
+  it('should work well with v-else-if', done => {
+    const condASpy = jasmine.createSpy('condASpy')
+    const condBSpy = jasmine.createSpy('condBSpy')
+
+    const { page, vm } = createPage({
+      template: `
+        <div>
+          <span v-if="condA()">hello</span>
+          <span v-else-if="condB()">elseif</span>
+          <span v-else>bye</span>
+        </div>
+      `,
+      data () {
+        return {
+          type: 'a'
+        }
+      },
+      methods: {
+        condA () {
+          condASpy()
+          return this.type === 'a'
+        },
+        condB () {
+          condBSpy()
+          return this.type === 'b'
+        }
+      }
+    })
+
+    const pageData = getPageData(page, '0')
+    assertIf(pageData, true, '1')
+    assertIf(pageData, false, '3')
+    expect(condASpy).toHaveBeenCalledTimes(1)
+    expect(condBSpy).not.toHaveBeenCalled()
+
+    vm.type = 'b'
+    waitForUpdate(() => {
+      assertIf(pageData, false, '1')
+      assertIf(pageData, true, '3')
+
+      expect(condASpy).toHaveBeenCalledTimes(2)
+      expect(condBSpy).toHaveBeenCalledTimes(1)
+
+      vm.type = 'c'
+    }).then(() => {
+      assertIf(pageData, false, '1')
+      assertIf(pageData, false, '3')
+
+      expect(condASpy).toHaveBeenCalledTimes(3)
+      expect(condBSpy).toHaveBeenCalledTimes(2)
+    }).then(done)
+  })
 })

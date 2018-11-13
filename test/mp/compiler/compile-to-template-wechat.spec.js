@@ -1142,4 +1142,50 @@ describe('slot', () => {
       }
     )
   })
+
+  it('named slot in native component - div', () => {
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<div slot="head">` +
+              `<div>{{ title }}</div>` +
+            `</div>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<CompA class="_CompA">` +
+            `<view class="_div" slot="head">` +
+              `<view class="_div">{{ h[ 6 ].t }}</view>` +
+            `</view>` +
+          `</CompA>` +
+        `</view>`
+      )
+    )
+  })
+
+  it('binding named slot in native component - span', () => {
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<span :slot="head">` +
+              `{{ title }}` +
+            `</template>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<CompA class="_CompA">` +
+            `<label class="_span" slot="{{ h[ 4 ].slot }}">` +
+              `{{ h[ 5 ].t }}` +
+            `</label>` +
+          `</CompA>` +
+        `</view>`
+      )
+    )
+  })
 })

@@ -92,21 +92,7 @@ export class TemplateGenerator {
       .join('')
   }
 
-  visit (el) {
-    const { visitors = {}} = this.preset
-
-    if (visitors.all) {
-      visitors.all(el)
-    }
-
-    if (visitors[el.tag]) {
-      visitors[el.tag](el)
-    }
-  }
-
   genElement (el): string {
-    this.visit(el)
-
     if (el.ifConditions && !el.ifConditionsGenerated) {
       return this.genIfConditions(el)
     } else if (this.isVHtml(el)) {
@@ -273,7 +259,8 @@ export class TemplateGenerator {
       this.genClass(el),
       this.genStyle(el),
       this.genAttrs(el),
-      this.genEvents(el)
+      this.genEvents(el),
+      this.genNativeSlotName(el)
     ]
 
     const startTag = `<${[
@@ -539,6 +526,17 @@ export class TemplateGenerator {
     ].join('')} data="{{ nodes: ${this.genHolder(el, 'vhtml')} }}"/>`
   }
 
+  genNativeSlotName (el): string {
+    const { slotTarget } = el
+    if (!slotTarget || this.isComponent(el.parent)) {
+      return ''
+    }
+    const isDynamicSlot = !/"/.test(slotTarget)
+    const slotName = isDynamicSlot ? `"{{ ${this.genHolder(el, 'slot')} }}"` : slotTarget
+
+    return ` slot=${slotName}`
+  }
+
   isVHtml (el = {}): boolean {
     const { attrsMap = {}} = el
     return attrsMap['v-html'] !== undefined
@@ -564,7 +562,7 @@ export class TemplateGenerator {
     return slotTarget
   }
 
-  isComponent (el): boolean {
+  isComponent (el = {}): boolean {
     const { tag } = el
     if (el._cid) {
       const pascalName = pascalize(tag)

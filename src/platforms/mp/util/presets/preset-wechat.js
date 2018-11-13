@@ -1,4 +1,8 @@
-import { createFindEventTypeFn } from './helper'
+import { basePrest } from './preset-base'
+import {
+  createFindEventTypeFn,
+  mergePreset
+} from './helper'
 
 const prefix = `wx:`
 
@@ -20,7 +24,7 @@ export const eventTypeMap = {
 
 export const findEventType = createFindEventTypeFn(eventTypeMap)
 
-export default {
+export default mergePreset(basePrest, {
   prefix,
   ext: `wxml`,
   directives: {
@@ -53,4 +57,4 @@ export default {
     }
     return `${binder}${mpType}`
   }
-}
+})

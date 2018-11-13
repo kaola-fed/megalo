@@ -39,7 +39,7 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
     old = oldAttrs[key]
 
     // only update daynamic attrs in runtime
-    if (old !== cur && bindingAttrs.indexOf(key) > -1) {
+    if (old !== cur && (bindingAttrs.indexOf(key) > -1 || key === 'slot')) {
       updateVnodeToMP(vnode, key, cur)
     }
   }
