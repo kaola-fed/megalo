@@ -540,14 +540,19 @@ function genIfScope (ifConditions: Array<any>): string {
   if (!ifConditions || !ifConditions.length) {
     return ''
   }
+  const conds = ifConditions.map(genIfScopeByGroup)
+
+  const _ifs = `_ri(${
+    ifConditions.map(group => group.map(c => `${c.cond},${c._hid}`)).join(',')
+  });`
+  return conds.join('') + _ifs
+}
+
+function genIfScopeByGroup (ifGroup: Array<any>): string {
   let lastCond = []
-  const conds = ifConditions.map(c => {
+  return ifGroup.map(c => {
     const res = `var ${c.cond} = ${lastCond}!!(${c.exp});`
     lastCond += `!${c.cond} && `
     return res
-  })
-  const _ifs = `_ri(${
-    ifConditions.map(c => `${c.cond},${c._hid}`).join(',')
-  });`
-  return conds.join('') + _ifs
+  }).join('')
 }

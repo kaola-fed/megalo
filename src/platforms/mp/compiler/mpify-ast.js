@@ -141,25 +141,26 @@ function walkText (node, state) {
 function walkIf (node, state) {
   const conditions = node.ifConditions
   const scopeNode = state.getCurrentListNode() || state.rootNode
+  const ifGroup = []
+  scopeNode.__ifIndex = scopeNode.__ifIndex || 0
 
   node.mpIfWalked = true
 
   conditions.forEach(condition => {
     const { block, exp } = condition
-    const _if = scopeNode._if || []
     let currIdxInIf = -1
-    scopeNode._if = _if
 
     // if exp === undefined, it's a v-else
     if (exp !== undefined) {
-      const cond = `__cond$${_if.length}`
+      const cond = `__cond$${scopeNode.__ifIndex}`
+      scopeNode.__ifIndex++
 
-      _if.push({
+      ifGroup.push({
         exp,
         cond
       })
 
-      currIdxInIf = _if.length - 1
+      currIdxInIf = ifGroup.length - 1
       condition.rawExp = exp
       condition.exp = cond
     }
@@ -168,9 +169,14 @@ function walkIf (node, state) {
 
     // update _hid in _if after node is walked
     if (currIdxInIf !== -1) {
-      _if[currIdxInIf]._hid = block._hid
+      ifGroup[currIdxInIf]._hid = block._hid
     }
   })
+
+  if (!scopeNode._if) {
+    scopeNode._if = []
+  }
+  scopeNode._if.push(ifGroup)
 }
 
 function walkChildren (node, state) {
