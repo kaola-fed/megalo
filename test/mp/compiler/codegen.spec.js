@@ -182,6 +182,13 @@ describe('codegen', () => {
     )
   })
 
+  it('generate multi v-if group', () => {
+    assertCodegen(
+      '<div><p v-if="show">hello</p><p v-else-if="hide">world</p><p v-if="show">hello</p><p v-else-if="hide">world</p></div>',
+      `with(this){var __cond$0 = !!(show);var __cond$1 = !__cond$0 && !!(hide);var __cond$2 = !!(show);var __cond$3 = !__cond$2 && !!(hide);_ri(__cond$0,1,__cond$1,3,__cond$2,5,__cond$3,7);return _c('div',{attrs:{"_hid":0}},[(__cond$0)?_c('p',{attrs:{"_hid":1}},[]):(__cond$1)?_c('p',{attrs:{"_hid":3}},[]):_e(),(__cond$2)?_c('p',{attrs:{"_hid":5}},[]):(__cond$3)?_c('p',{attrs:{"_hid":7}},[]):_e()],1)}`
+    )
+  })
+
   // it('generate ref', () => {
   //   assertCodegen(
   //     '<p ref="component1"></p>',

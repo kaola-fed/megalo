@@ -429,4 +429,92 @@ describe('Directive v-if', () => {
       expect(condBSpy).toHaveBeenCalledTimes(2)
     }).then(done)
   })
+
+  it('should work well with multi if group', done => {
+    const { page, vm } = createPage({
+      template: `
+        <div>
+          <span v-if="cond0">cond0</span>
+          <span v-else-if="cond1">cond1</span>
+
+          <span v-if="cond2">cond2</span>
+          <span v-else-if="cond3">cond3</span>
+        </div>
+      `,
+      data: {
+        cond0: true,
+        cond1: true,
+        cond2: true,
+        cond3: true
+      }
+    })
+
+    const COND_0 = '1'
+    const COND_1 = '3'
+    const COND_2 = '6'
+    const COND_3 = '8'
+
+    const pageData = getPageData(page, '0')
+    assertIf(pageData, true, COND_0)
+    assertIf(pageData, false, COND_1)
+    assertIf(pageData, true, COND_2)
+    assertIf(pageData, false, COND_3)
+
+    vm.cond0 = false
+    waitForUpdate(() => {
+      assertIf(pageData, false, COND_0)
+      assertIf(pageData, true, COND_1)
+      assertIf(pageData, true, COND_2)
+      assertIf(pageData, false, COND_3)
+
+      vm.cond1 = false
+    }).then(() => {
+      assertIf(pageData, false, COND_0)
+      assertIf(pageData, false, COND_1)
+      assertIf(pageData, true, COND_2)
+      assertIf(pageData, false, COND_3)
+
+      vm.cond2 = false
+    }).then(() => {
+      assertIf(pageData, false, COND_0)
+      assertIf(pageData, false, COND_1)
+      assertIf(pageData, false, COND_2)
+      assertIf(pageData, true, COND_3)
+
+      vm.cond3 = false
+    }).then(() => {
+      assertIf(pageData, false, COND_0)
+      assertIf(pageData, false, COND_1)
+      assertIf(pageData, false, COND_2)
+      assertIf(pageData, false, COND_3)
+
+      vm.cond1 = true
+    }).then(() => {
+      assertIf(pageData, false, COND_0)
+      assertIf(pageData, true, COND_1)
+      assertIf(pageData, false, COND_2)
+      assertIf(pageData, false, COND_3)
+
+      vm.cond0 = true
+    }).then(() => {
+      assertIf(pageData, true, COND_0)
+      assertIf(pageData, false, COND_1)
+      assertIf(pageData, false, COND_2)
+      assertIf(pageData, false, COND_3)
+
+      vm.cond3 = true
+    }).then(() => {
+      assertIf(pageData, true, COND_0)
+      assertIf(pageData, false, COND_1)
+      assertIf(pageData, false, COND_2)
+      assertIf(pageData, true, COND_3)
+
+      vm.cond2 = 1
+    }).then(() => {
+      assertIf(pageData, true, COND_0)
+      assertIf(pageData, false, COND_1)
+      assertIf(pageData, true, COND_2)
+      assertIf(pageData, false, COND_3)
+    }).then(done)
+  })
 })
