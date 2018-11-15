@@ -4039,14 +4039,19 @@ function genIfScope (ifConditions) {
   if (!ifConditions || !ifConditions.length) {
     return ''
   }
+  var conds = ifConditions.map(genIfScopeByGroup);
+
+  var _ifs = "_ri(" + (ifConditions.map(function (group) { return group.map(function (c) { return ((c.cond) + "," + (c._hid)); }); }).join(',')) + ");";
+  return conds.join('') + _ifs
+}
+
+function genIfScopeByGroup (ifGroup) {
   var lastCond = [];
-  var conds = ifConditions.map(function (c) {
+  return ifGroup.map(function (c) {
     var res = "var " + (c.cond) + " = " + lastCond + "!!(" + (c.exp) + ");";
     lastCond += "!" + (c.cond) + " && ";
     return res
-  });
-  var _ifs = "_ri(" + (ifConditions.map(function (c) { return ((c.cond) + "," + (c._hid)); }).join(',')) + ");";
-  return conds.join('') + _ifs
+  }).join('')
 }
 
 /*  */
@@ -4870,26 +4875,27 @@ function walkText (node, state) {
 function walkIf (node, state) {
   var conditions = node.ifConditions;
   var scopeNode = state.getCurrentListNode() || state.rootNode;
+  var ifGroup = [];
+  scopeNode.__ifIndex = scopeNode.__ifIndex || 0;
 
   node.mpIfWalked = true;
 
   conditions.forEach(function (condition) {
     var block = condition.block;
     var exp = condition.exp;
-    var _if = scopeNode._if || [];
     var currIdxInIf = -1;
-    scopeNode._if = _if;
 
     // if exp === undefined, it's a v-else
     if (exp !== undefined) {
-      var cond = "__cond$" + (_if.length);
+      var cond = "__cond$" + (scopeNode.__ifIndex);
+      scopeNode.__ifIndex++;
 
-      _if.push({
+      ifGroup.push({
         exp: exp,
         cond: cond
       });
 
-      currIdxInIf = _if.length - 1;
+      currIdxInIf = ifGroup.length - 1;
       condition.rawExp = exp;
       condition.exp = cond;
     }
@@ -4898,9 +4904,14 @@ function walkIf (node, state) {
 
     // update _hid in _if after node is walked
     if (currIdxInIf !== -1) {
-      _if[currIdxInIf]._hid = block._hid;
+      ifGroup[currIdxInIf]._hid = block._hid;
     }
   });
+
+  if (!scopeNode._if) {
+    scopeNode._if = [];
+  }
+  scopeNode._if.push(ifGroup);
 }
 
 function walkChildren (node, state) {
