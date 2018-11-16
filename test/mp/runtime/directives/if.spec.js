@@ -9,6 +9,10 @@ describe('Directive v-if', () => {
     jasmine.clock().uninstall()
   })
 
+  function assertHoderUndefined (pageData, hid = '1') {
+    expect(pageData.h[hid]).toBeUndefined()
+  }
+
   function assertIf (pageData, expected, hid = '1') {
     expect(pageData.h[hid]._if).toEqual(expected)
   }
@@ -126,7 +130,7 @@ describe('Directive v-if', () => {
 
     const pageData = getPageData(page, '0')
     assertIf(pageData, true, '1')
-    assertIf(pageData, false, '3')
+    assertHoderUndefined(pageData, '3')
 
     vm.foo = false
     waitForUpdate(() => {
@@ -408,7 +412,8 @@ describe('Directive v-if', () => {
 
     const pageData = getPageData(page, '0')
     assertIf(pageData, true, '1')
-    assertIf(pageData, false, '3')
+    expect(pageData.h['3']).toBeUndefined()
+
     expect(condASpy).toHaveBeenCalledTimes(1)
     expect(condBSpy).not.toHaveBeenCalled()
 
@@ -456,23 +461,23 @@ describe('Directive v-if', () => {
 
     const pageData = getPageData(page, '0')
     assertIf(pageData, true, COND_0)
-    assertIf(pageData, false, COND_1)
+    assertHoderUndefined(pageData, COND_1)
     assertIf(pageData, true, COND_2)
-    assertIf(pageData, false, COND_3)
+    assertHoderUndefined(pageData, COND_3)
 
     vm.cond0 = false
     waitForUpdate(() => {
       assertIf(pageData, false, COND_0)
       assertIf(pageData, true, COND_1)
       assertIf(pageData, true, COND_2)
-      assertIf(pageData, false, COND_3)
+      assertHoderUndefined(pageData, COND_3)
 
       vm.cond1 = false
     }).then(() => {
       assertIf(pageData, false, COND_0)
       assertIf(pageData, false, COND_1)
       assertIf(pageData, true, COND_2)
-      assertIf(pageData, false, COND_3)
+      assertHoderUndefined(pageData, COND_3)
 
       vm.cond2 = false
     }).then(() => {
@@ -498,23 +503,66 @@ describe('Directive v-if', () => {
       vm.cond0 = true
     }).then(() => {
       assertIf(pageData, true, COND_0)
-      assertIf(pageData, false, COND_1)
+      assertIf(pageData, true, COND_1)
       assertIf(pageData, false, COND_2)
       assertIf(pageData, false, COND_3)
 
       vm.cond3 = true
     }).then(() => {
       assertIf(pageData, true, COND_0)
-      assertIf(pageData, false, COND_1)
+      assertIf(pageData, true, COND_1)
       assertIf(pageData, false, COND_2)
       assertIf(pageData, true, COND_3)
 
       vm.cond2 = 1
     }).then(() => {
       assertIf(pageData, true, COND_0)
-      assertIf(pageData, false, COND_1)
+      assertIf(pageData, true, COND_1)
       assertIf(pageData, true, COND_2)
-      assertIf(pageData, false, COND_3)
+      assertIf(pageData, true, COND_3)
+    }).then(done)
+  })
+
+  it('should work well with embbed if', done => {
+    const { page, vm } = createPage({
+      template: `
+        <div>
+          <span v-if="obj">
+            <span v-if="obj.a">cond1</span>
+          </span>
+        </div>
+      `,
+      data: {
+        obj: null
+      }
+    })
+
+    const COND_0 = '1'
+    const COND_1 = '2'
+
+    const pageData = getPageData(page, '0')
+    assertIf(pageData, false, COND_0)
+    assertHoderUndefined(pageData, COND_1)
+
+    vm.obj = {}
+    waitForUpdate(() => {
+      assertIf(pageData, true, COND_0)
+      assertIf(pageData, false, COND_1)
+
+      vm.obj = { a: 0 }
+    }).then(() => {
+      assertIf(pageData, true, COND_0)
+      assertIf(pageData, false, COND_1)
+
+      vm.obj = { a: 1 }
+    }).then(() => {
+      assertIf(pageData, true, COND_0)
+      assertIf(pageData, true, COND_1)
+
+      vm.obj = null
+    }).then(() => {
+      assertIf(pageData, false, COND_0)
+      assertIf(pageData, true, COND_1)
     }).then(done)
   })
 })
