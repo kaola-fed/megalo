@@ -37,9 +37,15 @@ describe('lifecycle', () => {
     expect(pageOptions.mounted).not.toHaveBeenCalled()
     expect(pageOptions.destroyed).not.toHaveBeenCalled()
 
-    // page onLaunch
+    // app onLaunch
     const mpApp = App.createInstance()
-    mpApp._callHook('onLaunch')
+    const query = { query: { id: 10000 }}
+
+    mpApp._callHook('onLaunch', query)
+    const rootVM = mpApp.rootVM
+
+    expect(rootVM.$mp.options).toEqual(query.query)
+    expect(rootVM.$mp.query).toEqual(query.query)
     expect(pageOptions.beforeCreate).toHaveBeenCalledTimes(1)
     expect(pageOptions.onLaunch).toHaveBeenCalledTimes(1)
     expect(pageOptions.created).toHaveBeenCalledTimes(1)
@@ -95,12 +101,13 @@ describe('lifecycle', () => {
 
     // page onLoad
     const page = Page.createInstance()
-    page._callHook('onLoad', { query: { id: 100 }})
+    const query = { query: { id: 100 }}
+    page._callHook('onLoad', query)
     const rootVM = page.rootVM
     // access $mp
     expect(rootVM.$mp.page).toBe(page)
-    expect(rootVM.$mp.options).toBe(page.options)
-    expect(rootVM.$mp.query).toBe(page.options)
+    expect(rootVM.$mp.options).toEqual(query)
+    expect(rootVM.$mp.query).toEqual(query)
     expect(rootVM.$mp.platform).toBe('wechat')
     // hook called
     expect(pageOptions.beforeCreate).toHaveBeenCalledTimes(1)
@@ -196,7 +203,8 @@ describe('lifecycle', () => {
 
     // page onLoad
     const page = Page.createInstance()
-    page._callHook('onLoad', { query: { id: 100 }})
+    const query = { query: { id: 100 }}
+    page._callHook('onLoad', query)
 
     // hook called
     expect(compOptions.onLoad).not.toHaveBeenCalled()
