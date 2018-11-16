@@ -11,7 +11,7 @@ page.init = function init (opt) {
       [ROOT_DATA_VAR]: {}
     },
     onLoad (options) {
-      const rootVM = this.rootVM = initRootVM(this, opt)
+      const rootVM = this.rootVM = initRootVM(this, opt, options)
 
       callHook(rootVM, 'onLoad', options)
 
