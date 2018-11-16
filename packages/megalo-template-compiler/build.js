@@ -3589,7 +3589,7 @@ function generate (
   var state = new CodegenState(options);
   var code = ast ? genElement(ast, state) : '_c("div")';
   return {
-    render: ("with(this){" + (genIfScope(ast._if)) + "return " + code + "}"),
+    render: ("with(this){return " + code + "}"),
     staticRenderFns: state.staticRenderFns
   }
 }
@@ -3731,7 +3731,6 @@ function genFor (
   el.forProcessed = true; // avoid recursion
   return (altHelper || '_l') + "((" + exp + ")," +
     "function(" + alias + iterator1 + iterator2 + "){" +
-      "" + (genIfScope(el._if)) +
       "return " + ((altGen || genElement)(el, state)) +
     "}," + _forId + ",_self)"
 }
@@ -4030,28 +4029,6 @@ function transformSpecialNewlines (text) {
   return text
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029')
-}
-
-// for mp
-// evaluate the condition expression and chache it
-// it will be reused afterwards in attrs object and vdom generating funciton
-function genIfScope (ifConditions) {
-  if (!ifConditions || !ifConditions.length) {
-    return ''
-  }
-  var conds = ifConditions.map(genIfScopeByGroup);
-
-  var _ifs = "_ri(" + (ifConditions.map(function (group) { return group.map(function (c) { return ((c.cond) + "," + (c._hid)); }); }).join(',')) + ");";
-  return conds.join('') + _ifs
-}
-
-function genIfScopeByGroup (ifGroup) {
-  var lastCond = [];
-  return ifGroup.map(function (c) {
-    var res = "var " + (c.cond) + " = " + lastCond + "!!(" + (c.exp) + ");";
-    lastCond += "!" + (c.cond) + " && ";
-    return res
-  }).join('')
 }
 
 /*  */
@@ -4874,44 +4851,20 @@ function walkText (node, state) {
 
 function walkIf (node, state) {
   var conditions = node.ifConditions;
-  var scopeNode = state.getCurrentListNode() || state.rootNode;
-  var ifGroup = [];
-  scopeNode.__ifIndex = scopeNode.__ifIndex || 0;
 
   node.mpIfWalked = true;
 
   conditions.forEach(function (condition) {
     var block = condition.block;
     var exp = condition.exp;
-    var currIdxInIf = -1;
-
-    // if exp === undefined, it's a v-else
-    if (exp !== undefined) {
-      var cond = "__cond$" + (scopeNode.__ifIndex);
-      scopeNode.__ifIndex++;
-
-      ifGroup.push({
-        exp: exp,
-        cond: cond
-      });
-
-      currIdxInIf = ifGroup.length - 1;
-      condition.rawExp = exp;
-      condition.exp = cond;
-    }
 
     walk(block, state);
 
-    // update _hid in _if after node is walked
-    if (currIdxInIf !== -1) {
-      ifGroup[currIdxInIf]._hid = block._hid;
+    if (exp) {
+      condition.rawexp = exp;
+      condition.exp = "_ri(!!(" + exp + "), " + (block._hid) + ")";
     }
   });
-
-  if (!scopeNode._if) {
-    scopeNode._if = [];
-  }
-  scopeNode._if.push(ifGroup);
 }
 
 function walkChildren (node, state) {
