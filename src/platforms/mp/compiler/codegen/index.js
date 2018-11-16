@@ -44,7 +44,7 @@ export function generate (
   const state = new CodegenState(options)
   const code = ast ? genElement(ast, state) : '_c("div")'
   return {
-    render: `with(this){${genIfScope(ast._if)}return ${code}}`,
+    render: `with(this){return ${code}}`,
     staticRenderFns: state.staticRenderFns
   }
 }
@@ -198,7 +198,6 @@ export function genFor (
   el.forProcessed = true // avoid recursion
   return `${altHelper || '_l'}((${exp}),` +
     `function(${alias}${iterator1}${iterator2}){` +
-      `${genIfScope(el._if)}` +
       `return ${(altGen || genElement)(el, state)}` +
     `},${_forId},_self)`
 }
@@ -531,28 +530,4 @@ function transformSpecialNewlines (text: string): string {
   return text
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029')
-}
-
-// for mp
-// evaluate the condition expression and chache it
-// it will be reused afterwards in attrs object and vdom generating funciton
-function genIfScope (ifConditions: Array<any>): string {
-  if (!ifConditions || !ifConditions.length) {
-    return ''
-  }
-  const conds = ifConditions.map(genIfScopeByGroup)
-
-  const _ifs = `_ri(${
-    ifConditions.map(group => group.map(c => `${c.cond},${c._hid}`)).join(',')
-  });`
-  return conds.join('') + _ifs
-}
-
-function genIfScopeByGroup (ifGroup: Array<any>): string {
-  let lastCond = []
-  return ifGroup.map(c => {
-    const res = `var ${c.cond} = ${lastCond}!!(${c.exp});`
-    lastCond += `!${c.cond} && `
-    return res
-  }).join('')
 }

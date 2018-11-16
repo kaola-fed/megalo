@@ -117,19 +117,23 @@ describe('Directive v-for', () => {
       vm.list.push({})
     }).then(() => {
       expect(getPageData(page, '0').h['1'].li).toEqual([0, 1, 2, 3])
-      assertList(page, ['e', 'b', 'c', ''])
+      // last object is with empty value, so the holder won't be set
+      expect(page.data.$root[0].h['2-3']).toBeUndefined()
+      assertList(page, ['e', 'b', 'c'])
       vm.list.splice(1, 2)
     }).then(() => {
       expect(getPageData(page, '0').h['1'].li).toEqual([0, 1])
+      expect(page.data.$root[0].h['2-3']).toBeUndefined()
       assertList(page, ['e', ''])
       // TODO: try remove spliced items
-      assertList(page, ['e', '', 'c', ''])
+      assertList(page, ['e', '', 'c'])
       vm.list = [{ value: 'x' }, { value: 'y' }]
     }).then(() => {
       expect(getPageData(page, '0').h['1'].li).toEqual([0, 1])
       assertList(page, ['x', 'y'])
+      expect(page.data.$root[0].h['2-3']).toBeUndefined()
       // TODO: try remove spliced items
-      assertList(page, ['x', 'y', 'c', ''])
+      assertList(page, ['x', 'y', 'c'])
     }).then(done)
   })
 
