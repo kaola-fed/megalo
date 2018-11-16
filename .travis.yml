@@ -7,6 +7,7 @@ branches:
     only:
     - master
     - feature_megalo
+    - develop
 
 install:
 - npm install --only=dev
