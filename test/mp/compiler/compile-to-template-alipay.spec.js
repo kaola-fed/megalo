@@ -1192,4 +1192,16 @@ describe('slot', () => {
       )
     )
   })
+
+  it('v-text', () => {
+    assertCodegen(
+      `<div v-text="title"></div>`,
+      `<view class="_div">{{ h[ 1 ].vt }}</view>`,
+    )
+
+    assertCodegen(
+      `<div v-text="title">{{ notShow }}<div>{{ notShow }}</div>{{ notShow }}</div>`,
+      `<view class="_div">{{ h[ 1 ].vt }}</view>`,
+    )
+  })
 })
