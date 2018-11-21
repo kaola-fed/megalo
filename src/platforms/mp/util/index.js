@@ -26,6 +26,7 @@ export const LIST_TAIL_SEP_REG = /(\-|_)/
 
 export const HOLDER_TYPE_VARS = {
   text: 't',
+  vtext: 'vt',
   if: '_if',
   for: 'li',
   class: 'cl',
