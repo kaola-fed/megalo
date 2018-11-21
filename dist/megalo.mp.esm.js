@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.3.2';
+Vue.version = '0.4.0';
 
 /*  */
 
@@ -4638,6 +4638,7 @@ var LIST_TAIL_SEP_REG = /(\-|_)/;
 
 var HOLDER_TYPE_VARS = {
   text: 't',
+  vtext: 'vt',
   if: '_if',
   for: 'li',
   class: 'cl',
@@ -6227,11 +6228,6 @@ function updateDOMProps (oldVnode, vnode) {
     if (key === 'textContent' || key === 'innerHTML') {
       if (vnode.children) { vnode.children.length = 0; }
       if (cur === oldProps[key]) { continue }
-      // #6601 work around Chrome version <= 55 bug where single textNode
-      // replaced by innerHTML/textContent retains its parentNode property
-      // if (elm.childNodes.length === 1) {
-      //   elm.removeChild(elm.childNodes[0])
-      // }
       /* istanbul ignore else */
       if (key === 'innerHTML') {
         var ref = vnode.context;
@@ -6242,6 +6238,9 @@ function updateDOMProps (oldVnode, vnode) {
         } else {
           updateVnodeToMP(vnode, HOLDER_TYPE_VARS.vhtml, cur);
         }
+        return
+      } else if (key === 'textContent') {
+        updateVnodeToMP(vnode, HOLDER_TYPE_VARS.vtext, cur);
         return
       }
     }
