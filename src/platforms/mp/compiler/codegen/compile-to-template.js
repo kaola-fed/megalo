@@ -110,10 +110,12 @@ export class TemplateGenerator {
     }
   }
 
+  // TODO: refactor component name problem
   genComponent (el): string {
     const { _cid, tag } = el
     const pascalTag = pascalize(tag)
-    const compInfo = this.imports[tag] || this.imports[pascalTag]
+    const camelizedTag = camelize(tag)
+    const compInfo = this.imports[tag] || this.imports[pascalTag] || this.imports[camelizedTag]
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
@@ -520,8 +522,16 @@ export class TemplateGenerator {
   }
 
   getComponentSrc (name): string {
-    return (this.imports[name] || /* istanbul ignore next */ {}).src /* istanbul ignore next */ ||
-      ''
+    const { imports = {}} = this
+    const camelizedName = camelize(name)
+    const pascalizedName = pascalize(name)
+
+    const dep = imports[name] || imports[camelizedName] || imports[pascalizedName]
+    if (dep) {
+      return dep.src
+    } else {
+      return ''
+    }
   }
 
   genVHtml (el): string {
@@ -579,8 +589,10 @@ export class TemplateGenerator {
   isComponent (el = {}): boolean {
     const { tag } = el
     if (el._cid) {
+      const { imports = {}} = this
       const pascalName = pascalize(tag)
-      return !!this.imports[tag] || !!this.imports[pascalName]
+      const camelizedName = camelize(tag)
+      return !!(imports[tag] || imports[pascalName] || imports[camelizedName])
     }
     return false
   }
