@@ -18,6 +18,7 @@ import {
 const vbindReg = /^(v-bind)?:/
 const vonReg = /^v-on:|@/
 const vmodelReg = /^v-model/
+const vtextReg = /^v-text/
 const listTailReg = /'[-|_]'/
 
 let sep = `'${LIST_TAIL_SEPS.wechat}'`
@@ -247,7 +248,7 @@ export class TemplateGenerator {
   }
 
   genTag (el): string {
-    const children = this.genChildren(el)
+    const children = this.isVText(el) ? this.genVText(el) : this.genChildren(el)
     if (this.isPlainTemplate(el)) {
       return children
     }
@@ -324,7 +325,12 @@ export class TemplateGenerator {
 
     let attrs = attrsList.map((attr) => {
       const { name, value } = attr
-      if (vonReg.test(name) || (name === 'value' && hasVModel) || name === 'v-show') {
+      if (
+        vtextReg.test(name) ||
+        vonReg.test(name) ||
+        (name === 'value' && hasVModel) ||
+        name === 'v-show'
+      ) {
         return ''
       } else if (vbindReg.test(name)) {
         const realName = name.replace(vbindReg, '')
@@ -537,6 +543,14 @@ export class TemplateGenerator {
     return ` slot=${slotName}`
   }
 
+  genVText (el = {}): string {
+    const { attrsMap = {}} = el
+    if (attrsMap['v-text']) {
+      return `{{ ${this.genHolder(el, 'vtext')} }}`
+    }
+    return ''
+  }
+
   isVHtml (el = {}): boolean {
     const { attrsMap = {}} = el
     return attrsMap['v-html'] !== undefined
@@ -569,6 +583,11 @@ export class TemplateGenerator {
       return !!this.imports[tag] || !!this.imports[pascalName]
     }
     return false
+  }
+
+  isVText (el = {}): boolean {
+    const { attrsMap = {}} = el
+    return attrsMap.hasOwnProperty('v-text')
   }
 
   hasVModel (el): boolean {
