@@ -46,7 +46,7 @@ Vue.prototype._l = aop(Vue.prototype._l, {
 })
 
 const oInit = Vue.prototype._init
-Vue.prototype._init = function (options) {
+Vue.prototype._init = function (options = {}) {
   if (!Vue.prototype._mpPlatform) {
     Vue.prototype._mpPlatform = getMPPlatform()
   }
