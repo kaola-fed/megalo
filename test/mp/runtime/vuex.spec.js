@@ -1,6 +1,15 @@
+import Vue from 'vue'
 import { createPage, getPageData } from '../helpers'
 
 describe('vuex test', () => {
+  it('new Vue() should work', () => {
+    const vm = new Vue()
+    expect(vm._isVue).toBeTruthy()
+  })
+  it('new Vue({}) should work', () => {
+    const vm = new Vue({})
+    expect(vm._isVue).toBeTruthy()
+  })
   it('init data', () => {
     const pageOptions = {
       vuex: true,
