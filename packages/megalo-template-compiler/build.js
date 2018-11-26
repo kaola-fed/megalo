@@ -1696,6 +1696,7 @@ var LIST_TAIL_SEPS = {
 
 var HOLDER_TYPE_VARS = {
   text: 't',
+  vtext: 'vt',
   if: '_if',
   for: 'li',
   class: 'cl',
@@ -3589,7 +3590,7 @@ function generate (
   var state = new CodegenState(options);
   var code = ast ? genElement(ast, state) : '_c("div")';
   return {
-    render: ("with(this){" + (genIfScope(ast._if)) + "return " + code + "}"),
+    render: ("with(this){return " + code + "}"),
     staticRenderFns: state.staticRenderFns
   }
 }
@@ -3731,7 +3732,6 @@ function genFor (
   el.forProcessed = true; // avoid recursion
   return (altHelper || '_l') + "((" + exp + ")," +
     "function(" + alias + iterator1 + iterator2 + "){" +
-      "" + (genIfScope(el._if)) +
       "return " + ((altGen || genElement)(el, state)) +
     "}," + _forId + ",_self)"
 }
@@ -4030,28 +4030,6 @@ function transformSpecialNewlines (text) {
   return text
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029')
-}
-
-// for mp
-// evaluate the condition expression and chache it
-// it will be reused afterwards in attrs object and vdom generating funciton
-function genIfScope (ifConditions) {
-  if (!ifConditions || !ifConditions.length) {
-    return ''
-  }
-  var conds = ifConditions.map(genIfScopeByGroup);
-
-  var _ifs = "_ri(" + (ifConditions.map(function (group) { return group.map(function (c) { return ((c.cond) + "," + (c._hid)); }); }).join(',')) + ");";
-  return conds.join('') + _ifs
-}
-
-function genIfScopeByGroup (ifGroup) {
-  var lastCond = [];
-  return ifGroup.map(function (c) {
-    var res = "var " + (c.cond) + " = " + lastCond + "!!(" + (c.exp) + ");";
-    lastCond += "!" + (c.cond) + " && ";
-    return res
-  }).join('')
 }
 
 /*  */
@@ -4874,44 +4852,20 @@ function walkText (node, state) {
 
 function walkIf (node, state) {
   var conditions = node.ifConditions;
-  var scopeNode = state.getCurrentListNode() || state.rootNode;
-  var ifGroup = [];
-  scopeNode.__ifIndex = scopeNode.__ifIndex || 0;
 
   node.mpIfWalked = true;
 
   conditions.forEach(function (condition) {
     var block = condition.block;
     var exp = condition.exp;
-    var currIdxInIf = -1;
-
-    // if exp === undefined, it's a v-else
-    if (exp !== undefined) {
-      var cond = "__cond$" + (scopeNode.__ifIndex);
-      scopeNode.__ifIndex++;
-
-      ifGroup.push({
-        exp: exp,
-        cond: cond
-      });
-
-      currIdxInIf = ifGroup.length - 1;
-      condition.rawExp = exp;
-      condition.exp = cond;
-    }
 
     walk(block, state);
 
-    // update _hid in _if after node is walked
-    if (currIdxInIf !== -1) {
-      ifGroup[currIdxInIf]._hid = block._hid;
+    if (exp) {
+      condition.rawexp = exp;
+      condition.exp = "_ri(!!(" + exp + "), " + (block._hid) + ")";
     }
   });
-
-  if (!scopeNode._if) {
-    scopeNode._if = [];
-  }
-  scopeNode._if.push(ifGroup);
 }
 
 function walkChildren (node, state) {
@@ -5103,6 +5057,7 @@ var createCompiler = createCompilerCreator(function baseCompile (
 var vbindReg$1 = /^(v-bind)?:/;
 var vonReg = /^v-on:|@/;
 var vmodelReg = /^v-model/;
+var vtextReg = /^v-text/;
 var listTailReg = /'[-|_]'/;
 
 var sep$1 = "'" + (LIST_TAIL_SEPS.wechat) + "'";
@@ -5197,11 +5152,13 @@ TemplateGenerator.prototype.genElement = function genElement (el) {
   }
 };
 
+// TODO: refactor component name problem
 TemplateGenerator.prototype.genComponent = function genComponent (el) {
   var _cid = el._cid;
     var tag = el.tag;
   var pascalTag = pascalize(tag);
-  var compInfo = this.imports[tag] || this.imports[pascalTag];
+  var camelizedTag = camelize(tag);
+  var compInfo = this.imports[tag] || this.imports[pascalTag] || this.imports[camelizedTag];
   var compName = compInfo.name;
   var slots = this.genSlotSnippets(el);
   var slotsNames = slots.map(function (sl) { return ("s_" + (sl.name) + ": '" + (sl.slotName) + "'"); });
@@ -5339,7 +5296,7 @@ TemplateGenerator.prototype.genSlotSnippets = function genSlotSnippets (el) {
 };
 
 TemplateGenerator.prototype.genTag = function genTag (el) {
-  var children = this.genChildren(el);
+  var children = this.isVText(el) ? this.genVText(el) : this.genChildren(el);
   if (this.isPlainTemplate(el)) {
     return children
   }
@@ -5420,7 +5377,12 @@ TemplateGenerator.prototype.genAttrs = function genAttrs (el) {
   var attrs = attrsList.map(function (attr) {
     var name = attr.name;
       var value = attr.value;
-    if (vonReg.test(name) || (name === 'value' && hasVModel) || name === 'v-show') {
+    if (
+      vtextReg.test(name) ||
+      vonReg.test(name) ||
+      (name === 'value' && hasVModel) ||
+      name === 'v-show'
+    ) {
       return ''
     } else if (vbindReg$1.test(name)) {
       var realName = name.replace(vbindReg$1, '');
@@ -5622,8 +5584,17 @@ TemplateGenerator.prototype.collectDependencies = function collectDependencies (
 };
 
 TemplateGenerator.prototype.getComponentSrc = function getComponentSrc (name) {
-  return (this.imports[name] || /* istanbul ignore next */ {}).src /* istanbul ignore next */ ||
-    ''
+  var ref = this;
+    var imports = ref.imports; if ( imports === void 0 ) imports = {};
+  var camelizedName = camelize(name);
+  var pascalizedName = pascalize(name);
+
+  var dep = imports[name] || imports[camelizedName] || imports[pascalizedName];
+  if (dep) {
+    return dep.src
+  } else {
+    return ''
+  }
 };
 
 TemplateGenerator.prototype.genVHtml = function genVHtml (el) {
@@ -5644,6 +5615,16 @@ TemplateGenerator.prototype.genNativeSlotName = function genNativeSlotName (el) 
   var slotName = isDynamicSlot ? ("\"{{ " + (this.genHolder(el, 'slot')) + " }}\"") : slotTarget;
 
   return (" slot=" + slotName)
+};
+
+TemplateGenerator.prototype.genVText = function genVText (el) {
+    if ( el === void 0 ) el = {};
+
+  var attrsMap = el.attrsMap; if ( attrsMap === void 0 ) attrsMap = {};
+  if (attrsMap['v-text']) {
+    return ("{{ " + (this.genHolder(el, 'vtext')) + " }}")
+  }
+  return ''
 };
 
 TemplateGenerator.prototype.isVHtml = function isVHtml (el) {
@@ -5678,10 +5659,20 @@ TemplateGenerator.prototype.isComponent = function isComponent (el) {
 
   var tag = el.tag;
   if (el._cid) {
+    var ref = this;
+      var imports = ref.imports; if ( imports === void 0 ) imports = {};
     var pascalName = pascalize(tag);
-    return !!this.imports[tag] || !!this.imports[pascalName]
+    var camelizedName = camelize(tag);
+    return !!(imports[tag] || imports[pascalName] || imports[camelizedName])
   }
   return false
+};
+
+TemplateGenerator.prototype.isVText = function isVText (el) {
+    if ( el === void 0 ) el = {};
+
+  var attrsMap = el.attrsMap; if ( attrsMap === void 0 ) attrsMap = {};
+  return attrsMap.hasOwnProperty('v-text')
 };
 
 TemplateGenerator.prototype.hasVModel = function hasVModel (el) {

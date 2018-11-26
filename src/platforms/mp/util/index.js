@@ -26,6 +26,7 @@ export const LIST_TAIL_SEP_REG = /(\-|_)/
 
 export const HOLDER_TYPE_VARS = {
   text: 't',
+  vtext: 'vt',
   if: '_if',
   for: 'li',
   class: 'cl',
@@ -88,7 +89,7 @@ export function deepEqual (a, b) {
   const aType = typeof a
   const bType = typeof b
   if (aType !== 'object' || bType !== 'object' || aType !== bType) {
-    return a === b
+    return a === b || (a === '' && b === undefined) || (a === undefined && b === '')
   } else {
     if (Array.isArray(a)) {
       if (a.length !== b.length) {

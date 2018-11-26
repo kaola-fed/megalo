@@ -7,10 +7,10 @@ export * from './render-helpers/render-slot'
 export * from './render-helpers/render-if'
 export * from './render-helpers/render-list'
 
-export function initRootVM (mpVM, opt = {}) {
+export function initRootVM (mpVM, opt = {}, query = {}) {
   const { options, Component, platform } = opt
   const { mpType } = options
-  const mpVMOptions = mpVM && mpVM.options || {}
+  const mpVMOptions = query
   const { update, instantUpdate } = createUpdateFn(mpVM)
   const $mp = {
     platform,

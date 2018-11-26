@@ -1,5 +1,5 @@
 /*!
- * Vue.js v0.3.1
+ * Vue.js v0.3.2
  * (c) 2014-2018 Evan You
  * Released under the MIT License.
  */
@@ -5086,7 +5086,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.3.1';
+Vue.version = '0.3.2';
 
 /*  */
 

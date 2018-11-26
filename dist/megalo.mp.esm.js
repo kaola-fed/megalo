@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.3.1';
+Vue.version = '0.4.0';
 
 /*  */
 
@@ -4638,6 +4638,7 @@ var LIST_TAIL_SEP_REG = /(\-|_)/;
 
 var HOLDER_TYPE_VARS = {
   text: 't',
+  vtext: 'vt',
   if: '_if',
   for: 'li',
   class: 'cl',
@@ -4703,7 +4704,7 @@ function deepEqual (a, b) {
   var aType = typeof a;
   var bType = typeof b;
   if (aType !== 'object' || bType !== 'object' || aType !== bType) {
-    return a === b
+    return a === b || (a === '' && b === undefined) || (a === undefined && b === '')
   } else {
     if (Array.isArray(a)) {
       if (a.length !== b.length) {
@@ -5047,22 +5048,15 @@ function markComponents (nodes, parentUId) {
   }, [])
 }
 
-function renderIf () {
-  var this$1 = this;
-  var args = [], len$1 = arguments.length;
-  while ( len$1-- ) args[ len$1 ] = arguments[ len$1 ];
-
-  for (var i = 0, len = args.length; i < len; i += 2) {
-    var cond = args[i];
-    var _hid = args[i + 1];
-    var cloneVnode = {
-      context: this$1,
-      data: {
-        attrs: { _hid: _hid }
-      }
-    };
-    updateVnodeToMP(cloneVnode, HOLDER_TYPE_VARS.if, cond);
-  }
+function renderIf (cond, _hid) {
+  var cloneVnode = {
+    context: this,
+    data: {
+      attrs: { _hid: _hid }
+    }
+  };
+  updateVnodeToMP(cloneVnode, HOLDER_TYPE_VARS.if, cond);
+  return cond
 }
 
 /*  */
@@ -5164,14 +5158,15 @@ function updateListToMP (vnodeList, val, forId, context) {
   updateVnodeToMP(cloneVnode, HOLDER_TYPE_VARS.for, list);
 }
 
-function initRootVM (mpVM, opt) {
+function initRootVM (mpVM, opt, query) {
   if ( opt === void 0 ) opt = {};
+  if ( query === void 0 ) query = {};
 
   var options = opt.options;
   var Component = opt.Component;
   var platform = opt.platform;
   var mpType = options.mpType;
-  var mpVMOptions = mpVM && mpVM.options || {};
+  var mpVMOptions = query;
   var ref = createUpdateFn(mpVM);
   var update = ref.update;
   var instantUpdate = ref.instantUpdate;
@@ -5751,7 +5746,7 @@ function createPatchFunction (backend) {
       } else if (isDef(oldVnode.text)) {
         nodeOps.setTextContent(elm, '', vnode);
       }
-    } else if (oldVnode.text !== vnode.text) {
+    } else if (oldVnode.text !== vnode.text || (oldVnode.data && vnode.data && oldVnode.data._hid !== vnode.data._hid)) {
       nodeOps.setTextContent(elm, vnode.text, vnode);
     }
     if (isDef(data)) {
@@ -6190,18 +6185,12 @@ function updateClass (oldVnode, vnode) {
     return
   }
 
-  var elm = vnode.elm; if ( elm === void 0 ) elm = {};
+  // const { elm = {}} = vnode
   var cls = genClassForVnode(vnode);
-  if (isDef(cls) && elm.class !== cls && !/^vue-component/.test(vnode.tag)) {
-    // don't update empty class string on init
-    if (cls === '' && isUndef(elm.class)) {
-      return
-    }
-    if (!/^vue-component/.test(vnode.tag)) {
-      Object.assign(vnode.elm, {
-        class: cls
-      });
-    }
+  if (isDef(cls) && !/^vue-component/.test(vnode.tag)) {
+    Object.assign(vnode.elm, {
+      class: cls
+    });
     updateVnodeToMP(vnode, HOLDER_TYPE_VARS.class, cls);
   }
 }
@@ -6239,11 +6228,6 @@ function updateDOMProps (oldVnode, vnode) {
     if (key === 'textContent' || key === 'innerHTML') {
       if (vnode.children) { vnode.children.length = 0; }
       if (cur === oldProps[key]) { continue }
-      // #6601 work around Chrome version <= 55 bug where single textNode
-      // replaced by innerHTML/textContent retains its parentNode property
-      // if (elm.childNodes.length === 1) {
-      //   elm.removeChild(elm.childNodes[0])
-      // }
       /* istanbul ignore else */
       if (key === 'innerHTML') {
         var ref = vnode.context;
@@ -6254,6 +6238,9 @@ function updateDOMProps (oldVnode, vnode) {
         } else {
           updateVnodeToMP(vnode, HOLDER_TYPE_VARS.vhtml, cur);
         }
+        return
+      } else if (key === 'textContent') {
+        updateVnodeToMP(vnode, HOLDER_TYPE_VARS.vtext, cur);
         return
       }
     }
@@ -6651,7 +6638,7 @@ page.init = function init (opt) {
     // 生命周期函数--监听页面加载
     data: ( obj = {}, obj[ROOT_DATA_VAR] = {}, obj),
     onLoad: function onLoad (options) {
-      var rootVM = this.rootVM = initRootVM(this, opt);
+      var rootVM = this.rootVM = initRootVM(this, opt, options);
 
       callHook$2(rootVM, 'onLoad', options);
 
@@ -6756,7 +6743,9 @@ app.init = function (opt) {
     data: ( obj = {}, obj[ROOT_DATA_VAR] = {}, obj),
     //	Function	生命周期函数--监听小程序初始化	当小程序初始化完成时，会触发 onLaunch（全局只触发一次）
     onLaunch: function onLaunch (options) {
-      var rootVM = this.rootVM = initRootVM(this, opt);
+      if ( options === void 0 ) options = {};
+
+      var rootVM = this.rootVM = initRootVM(this, opt, options.query);
       var ref = rootVM.$options;
       var globalData = ref.globalData; if ( globalData === void 0 ) globalData = function () {};
       rootVM.$mount();

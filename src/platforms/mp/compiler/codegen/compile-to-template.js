@@ -18,6 +18,7 @@ import {
 const vbindReg = /^(v-bind)?:/
 const vonReg = /^v-on:|@/
 const vmodelReg = /^v-model/
+const vtextReg = /^v-text/
 const listTailReg = /'[-|_]'/
 
 let sep = `'${LIST_TAIL_SEPS.wechat}'`
@@ -109,10 +110,12 @@ export class TemplateGenerator {
     }
   }
 
+  // TODO: refactor component name problem
   genComponent (el): string {
     const { _cid, tag } = el
     const pascalTag = pascalize(tag)
-    const compInfo = this.imports[tag] || this.imports[pascalTag]
+    const camelizedTag = camelize(tag)
+    const compInfo = this.imports[tag] || this.imports[pascalTag] || this.imports[camelizedTag]
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
@@ -247,7 +250,7 @@ export class TemplateGenerator {
   }
 
   genTag (el): string {
-    const children = this.genChildren(el)
+    const children = this.isVText(el) ? this.genVText(el) : this.genChildren(el)
     if (this.isPlainTemplate(el)) {
       return children
     }
@@ -324,7 +327,12 @@ export class TemplateGenerator {
 
     let attrs = attrsList.map((attr) => {
       const { name, value } = attr
-      if (vonReg.test(name) || (name === 'value' && hasVModel) || name === 'v-show') {
+      if (
+        vtextReg.test(name) ||
+        vonReg.test(name) ||
+        (name === 'value' && hasVModel) ||
+        name === 'v-show'
+      ) {
         return ''
       } else if (vbindReg.test(name)) {
         const realName = name.replace(vbindReg, '')
@@ -514,8 +522,16 @@ export class TemplateGenerator {
   }
 
   getComponentSrc (name): string {
-    return (this.imports[name] || /* istanbul ignore next */ {}).src /* istanbul ignore next */ ||
-      ''
+    const { imports = {}} = this
+    const camelizedName = camelize(name)
+    const pascalizedName = pascalize(name)
+
+    const dep = imports[name] || imports[camelizedName] || imports[pascalizedName]
+    if (dep) {
+      return dep.src
+    } else {
+      return ''
+    }
   }
 
   genVHtml (el): string {
@@ -535,6 +551,14 @@ export class TemplateGenerator {
     const slotName = isDynamicSlot ? `"{{ ${this.genHolder(el, 'slot')} }}"` : slotTarget
 
     return ` slot=${slotName}`
+  }
+
+  genVText (el = {}): string {
+    const { attrsMap = {}} = el
+    if (attrsMap['v-text']) {
+      return `{{ ${this.genHolder(el, 'vtext')} }}`
+    }
+    return ''
   }
 
   isVHtml (el = {}): boolean {
@@ -565,10 +589,17 @@ export class TemplateGenerator {
   isComponent (el = {}): boolean {
     const { tag } = el
     if (el._cid) {
+      const { imports = {}} = this
       const pascalName = pascalize(tag)
-      return !!this.imports[tag] || !!this.imports[pascalName]
+      const camelizedName = camelize(tag)
+      return !!(imports[tag] || imports[pascalName] || imports[camelizedName])
     }
     return false
+  }
+
+  isVText (el = {}): boolean {
+    const { attrsMap = {}} = el
+    return attrsMap.hasOwnProperty('v-text')
   }
 
   hasVModel (el): boolean {

@@ -1188,4 +1188,86 @@ describe('slot', () => {
       )
     )
   })
+
+  it('v-text', () => {
+    assertCodegen(
+      `<div v-text="title"></div>`,
+      `<view class="_div">{{ h[ 1 ].vt }}</view>`,
+    )
+
+    assertCodegen(
+      `<div v-text="title">{{ notShow }}<div>{{ notShow }}</div>{{ notShow }}</div>`,
+      `<view class="_div">{{ h[ 1 ].vt }}</view>`,
+    )
+  })
+
+  it('support kebab-case tag for component in slot when register component with CapicalCase', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<comp-b></comp-b>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', _t: '' }}" />` +
+        `</view>`
+      ),
+      // options
+      {
+        name: 'App$1234',
+        imports: {
+          CompA,
+          CompB
+        }
+      },
+      // assert output.slots
+      function assertRes (res) {
+        res.slots.forEach(slot => {
+          if (slot.name === 'default') {
+            expect(slot.dependencies[0]).toBe('./CompB$1234')
+            expect(slot.body).toContain(`<template is="CompB$1234" data="{{ ...$root[ cp + 1 ], $root, _t: '' }}" />`)
+          }
+        })
+      }
+    )
+  })
+
+  it('support kebab-case tag for component in slot when register component with camelCase', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<comp-b></comp-b>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 ], $root, s_default: '${slot1}', _t: '' }}" />` +
+        `</view>`
+      ),
+      // options
+      {
+        name: 'App$1234',
+        imports: {
+          CompA,
+          compB: CompB
+        }
+      },
+      // assert output.slots
+      function assertRes (res) {
+        res.slots.forEach(slot => {
+          if (slot.name === 'default') {
+            expect(slot.dependencies[0]).toBe('./CompB$1234')
+            expect(slot.body).toContain(`<template is="CompB$1234" data="{{ ...$root[ cp + 1 ], $root, _t: '' }}" />`)
+          }
+        })
+      }
+    )
+  })
 })
