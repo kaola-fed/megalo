@@ -1,7 +1,21 @@
 import { getVM } from './helper'
-import { eventTypeMap } from 'mp/util/index'
+import { isDef } from 'shared/util'
+import { LIST_TAIL_SEPS, eventTypeMap } from 'mp/util/index'
+
+let sep = ''
+
+function assertHid (vnode, hid) {
+  const { data = {}} = vnode
+  const { attrs = {}} = data
+  const { _hid, _fid } = attrs
+  const curHid = isDef(_fid) ? `${_hid}${sep}${_fid}` : _hid
+  return `${curHid}` === `${hid}`
+}
 
 export function proxyEvent (rootVM, event) {
+  if (!sep) {
+    sep = LIST_TAIL_SEPS[rootVM.$mp.platform] || LIST_TAIL_SEPS.wechat
+  }
   const { type, detail = {}} = event
   const target = event.currentTarget || event.target
   const { dataset = {}} = target
@@ -20,10 +34,9 @@ export function proxyEvent (rootVM, event) {
 }
 
 function getVnode (vnode = {}, hid) {
-  const { data = {}, componentInstance } = vnode
+  const { componentInstance } = vnode
   let { children = [] } = vnode
-  const { attrs = {}} = data
-  if (`${attrs._hid}` === `${hid}`) {
+  if (assertHid(vnode, hid)) {
     return vnode
   }
 
@@ -65,12 +78,11 @@ function getHandlers (vm, rawType, hid) {
 
   if (!vnode) return res
 
-  const { data, elm } = vnode
-  const { attrs = {}} = data
+  const { elm } = vnode
   const { on = {}} = elm
 
   /* istanbul ignore if */
-  if (('' + attrs._hid) !== ('' + hid)) return res
+  if (!assertHid(vnode, hid)) return res
 
   res = eventTypes.reduce((buf, event) => {
     const handler = on[event]

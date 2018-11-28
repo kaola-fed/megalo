@@ -1,9 +1,15 @@
 import { isDef } from 'core/util/index'
-import { VM_ID_SEP } from 'mp/util/index'
+import { VM_ID_SEP, LIST_TAIL_SEPS } from 'mp/util/index'
 
 export function getHid (vm, vnode = {}) {
+  const sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat
   const { data = {}} = vnode
-  return data._hid || (data.attrs && data.attrs._hid)
+  const _hid = isDef(data._hid) ? data._hid : (data.attrs && data.attrs._hid)
+  const _fid = isDef(data._fid) ? data._fid : (data.attrs && data.attrs._fid)
+  if (isDef(_fid)) {
+    return `${_hid}${sep}${_fid}`
+  }
+  return _hid
 }
 
 export function getVM (vm = {}, id) {
@@ -21,22 +27,29 @@ export function getVM (vm = {}, id) {
   }
 }
 
-export function getVMMarker (vm) {
-  return vm && vm.$attrs && vm.$attrs['_cid'] ? vm.$attrs['_cid'] : '0'
+export function getCid (vm) {
+  const cid = vm && vm.$attrs && vm.$attrs._cid ? vm.$attrs._cid : '0'
+  return cid
 }
 
 export function getVMId (vm) {
+  const sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat
   const res = []
   let cursor = vm
   let prev
   while (cursor) {
     if (cursor === vm || !isSlotParent(cursor, prev)) {
-      res.unshift(getVMMarker(cursor))
+      res.unshift(getCid(cursor))
     }
     prev = cursor
     cursor = cursor.$parent
   }
-  return res.join(VM_ID_SEP)
+  const vmId = res.join(VM_ID_SEP)
+  const fid = vm && vm.$attrs && vm.$attrs._fid
+  if (isDef(fid)) {
+    return `${vmId}${sep}${fid}`
+  }
+  return vmId
 }
 
 function isSlotParent (parent, child) {

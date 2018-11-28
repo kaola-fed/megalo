@@ -4,7 +4,7 @@ import TAG_MAP from '../tag-map'
 import { cloneAST, removeQuotes, uid, escapeText } from '../util'
 import presets from '../../util/presets/index'
 import { baseWarn } from 'compiler/helpers'
-import { capitalize, camelize } from 'shared/util'
+import { capitalize, camelize, isDef } from 'shared/util'
 import {
   notEmpty,
   ROOT_DATA_VAR,
@@ -19,7 +19,6 @@ const vbindReg = /^(v-bind)?:/
 const vonReg = /^v-on:|@/
 const vmodelReg = /^v-model/
 const vtextReg = /^v-text/
-const listTailReg = /'[-|_]'/
 
 let sep = `'${LIST_TAIL_SEPS.wechat}'`
 
@@ -112,20 +111,27 @@ export class TemplateGenerator {
 
   // TODO: refactor component name problem
   genComponent (el): string {
-    const { _cid, tag } = el
+    const { _cid, tag, _fid } = el
     const pascalTag = pascalize(tag)
     const camelizedTag = camelize(tag)
     const compInfo = this.imports[tag] || this.imports[pascalTag] || this.imports[camelizedTag]
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
-    let tail = `, ${FOR_TAIL_VAR}: ''`
+    let cid = _cid
+    let tail = ''
+
     // passing parent v-for tail to slot inside v-for
-    if (listTailReg.test(_cid)) {
-      tail = `, ${FOR_TAIL_VAR}: ${extractHidTail(_cid)}`
+    if (this.isInSlotSnippet()) {
+      cid = `${_cid} + (_t || '')`
+      tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
+    } else if (isDef(_fid)) {
+      cid = `${_cid} + '-' + ${_fid}`
+      tail = `, ${FOR_TAIL_VAR}: ${sep} + ${_fid}`
     }
+
     const data = [
-      `...${ROOT_DATA_VAR}[ ${VM_ID_PREFIX} + ${_cid} ]`,
+      `...${ROOT_DATA_VAR}[ ${VM_ID_PREFIX} + ${cid} ]`,
       `${ROOT_DATA_VAR}`,
       ...slotsNames
     ].join(', ')
@@ -437,7 +443,7 @@ export class TemplateGenerator {
   }
 
   genSlot (el): string {
-    const { _hid } = el
+    const { _fid } = el
     let { slotName = 'default' } = el
     slotName = slotName.replace(/"/g, '')
     const defaultSlotName = `${slotName}$${uid()}`
@@ -445,8 +451,8 @@ export class TemplateGenerator {
     const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : /* istanbul ignore next */ ''
     let tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '')`
     // sloped-slot inside v-for
-    if (el.hasBindings && listTailReg.test(_hid)) {
-      tail = `, ${FOR_TAIL_VAR}: ${extractHidTail(_hid)}`
+    if (el.hasBindings && isDef(_fid)) {
+      tail = `, ${FOR_TAIL_VAR}: '-' + ${_fid} + (${FOR_TAIL_VAR} || '')`
     }
 
     /**
@@ -611,11 +617,15 @@ export class TemplateGenerator {
   }
 
   genHid (el): string {
+    const { _hid, _fid } = el
     let tail = ''
+    let hid = _hid
     if (this.isInSlotSnippet()) {
       tail = ` + ${FOR_TAIL_VAR}`
+    } else if (_fid) {
+      hid = `${_hid} + ${sep} + ${_fid}`
     }
-    return `${el._hid}${tail}`
+    return `${hid}${tail}`
   }
   enterSlotSnippet () {
     this.slotSnippet++
@@ -634,12 +644,12 @@ export class TemplateGenerator {
   }
 }
 
-function extractHidTail (hid = ''): string {
-  const delimiter = `+ ${sep} +`
-  let parts = hid.split(delimiter)
-  parts = parts.slice(1).map(s => s.trim())
-  return `${sep} + ${parts.join(delimiter)}`
-}
+// function extractHidTail (hid = ''): string {
+//   const delimiter = `+ ${sep} +`
+//   let parts = hid.split(delimiter)
+//   parts = parts.slice(1).map(s => s.trim())
+//   return `${sep} + ${parts.join(delimiter)}`
+// }
 
 function pascalize (str = ''): string {
   const camelized = camelize(str)
