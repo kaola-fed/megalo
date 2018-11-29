@@ -37,6 +37,9 @@ function remove (
   capture: boolean,
   _target?: HTMLElement
 ) {
+  if (!handler) {
+    return
+  }
   const realTarget = _target || target
   const realHanlder = handler._withTask || handler
   /* istanbul ignore else */
