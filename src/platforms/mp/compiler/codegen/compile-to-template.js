@@ -302,9 +302,7 @@ export class TemplateGenerator {
       klass.push(`{{ ${this.genHolder(el, 'class')} }}`)
     }
     // scoped id class
-    if (klass.length) {
-      klass.push(this.scopeId)
-    }
+    klass.push(this.scopeId)
     klass.unshift(`_${tag}`)
     klass = klass.filter(notEmpty).join(' ')
     return ` class="${klass}"`
