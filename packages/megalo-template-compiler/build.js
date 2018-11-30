@@ -2547,21 +2547,14 @@ function cloneAST (ast) {
     if (walkedVal) {
       return walkedVal._new
     }
-    if (Array.isArray(old)) {
-      var _new = [];
+    if (typeof old === 'object') {
+      var _new = Array.isArray(old) ? [] : {};
       walked.push({ _new: _new, old: old });
-      for (var i = 0, len = old.length; i < len; ++i) {
-        _new.push(doClone(old[i]));
-      }
-      return _new
-    } else if (typeof old === 'object') {
-      var _new$1 = {};
-      walked.push({ _new: _new$1, old: old });
       for (var key in old) {
         var newVal = doClone(old[key]);
-        _new$1[key] = newVal;
+        _new[key] = newVal;
       }
-      return _new$1
+      return _new
     } else {
       return old
     }
@@ -3709,8 +3702,7 @@ function genFor (
   el,
   state,
   altGen,
-  altHelper
-) {
+  altHelper) {
   var exp = el.for;
   var alias = el.alias;
   var iterator1 = el.iterator1 ? ("," + (el.iterator1)) : '';
@@ -3730,10 +3722,12 @@ function genFor (
     );
   }
   var _forId = el._forId;
+  var _fid = el._fid;
 
   el.forProcessed = true; // avoid recursion
   return (altHelper || '_l') + "((" + exp + ")," +
     "function(" + alias + iterator1 + iterator2 + "){" +
+      "var _fid = " + _fid + ";" +
       "return " + ((altGen || genElement)(el, state)) +
     "}," + _forId + ",_self)"
 }
@@ -3747,9 +3741,7 @@ function genData$2 (el, state) {
   if (dirs) { data += dirs + ','; }
 
   // key
-  if (el.key) {
-    data += "key:" + (el.key) + ",";
-  }
+  if (el.key) { data += "key:" + (el.key) + ","; }
   // ref
   if (el.ref) {
     data += "ref:" + (el.ref) + ",";
@@ -4722,6 +4714,7 @@ var TYPE = {
 
 var sep = "'" + (LIST_TAIL_SEPS.wechat) + "'";
 
+// walk and modify ast before render function is generated
 function mpify (node, options) {
   var target = options.target; if ( target === void 0 ) target = 'wechat';
   sep = LIST_TAIL_SEPS[target] ? ("'" + (LIST_TAIL_SEPS[target]) + "'") : sep;
@@ -4754,12 +4747,7 @@ function walk (node, state) {
     return walkFor(node, state)
   }
 
-  if (node._hid === undefined) {
-    state.assignHId(node);
-    addAttr$1(node, '_hid', node._hid);
-    state.assignLId(node);
-    addAttr$1(node, '_fid', node._fid);
-  }
+  state.resolveHolder(node);
 
   if (node.ifConditions && !node.mpIfWalked) {
     return walkIf(node, state)
@@ -4799,23 +4787,8 @@ function walkFor (node, state) {
     alias: alias
   });
 
-  /* istanbul ignore if */
-  if (node._hid === undefined) {
-    state.assignHId(node);
-    addAttr$1(node, '_hid', node._hid);
-    state.assignLId(node);
-    addAttr$1(node, '_fid', node._fid);
-  }
-
-  var _hid = node._hid;
-  var _fid = node._fid;
-  var tail = '';
-  // extract last index
-  if (_fid) {
-    tail = ("" + _fid).split(("+ " + sep + " +")).slice(0, -1).join(("+ " + sep + " +")).trim();
-    tail = tail ? (" + " + sep + " + " + tail) : tail;
-  }
-  node._forId = _hid + tail;
+  state.resolveHolder(node);
+  state.resolveForHolder(node);
 
   walk(node, state);
 
@@ -4857,8 +4830,10 @@ function walkText (node, state) {
   var _fid = node._fid;
   if (type === TYPE.STATIC_TEXT) {
     node.mpNotGenRenderFn = true;
+  } else if (_fid) {
+    node.expression = expression + "," + _hid + ",_fid";
   } else {
-    node.expression = expression + "," + _hid + "," + _fid;
+    node.expression = expression + "," + _hid;
   }
 }
 
@@ -5007,33 +4982,49 @@ State.prototype.getCurrentListNode = function getCurrentListNode () {
 };
 State.prototype.getHId = function getHId (node) {
   this.pushElem();
-  // const currentListState = this.getCurrentListState()
   var _hid = "" + (this.getCurrentElemIndex());
-  // if (currentListState) {
-  // const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
-  // _hid = `${_hid} + ${sep} + ${listTail}`
-  // }
   return ("" + _hid)
 };
 State.prototype.getCId = function getCId (node) {
   this.pushElem();
-  // const currentListState = this.getCurrentListState()
   var _cid = "" + (this.getCurrentCompIndex());
-  // if (currentListState) {
-  // const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
-  // _cid = `${_cid} + ${sep} + ${listTail}`
-  // }
   return ("" + _cid)
+};
+State.prototype.getFid = function getFid (node) {
+  var currentListState = this.getCurrentListState() || [];
+  var _fid = currentListState.map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep + " + "));
+  return _fid
 };
 State.prototype.assignHId = function assignHId (node) {
   var _hid = this.getHId(node);
   Object.assign(node, { _hid: _hid });
 };
-State.prototype.assignLId = function assignLId (node) {
+State.prototype.resolveForHolder = function resolveForHolder (node) {
+  var _hid = node._hid;
+    var _fid = node._fid;
   var currentListState = this.getCurrentListState() || [];
-  var _fid = currentListState.map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep + " + "));
+  var tail = '';
+
+  // remove last index, like '0-1-2', we only need '0-1'
+  // store v-for list in this holder
   if (_fid) {
-    Object.assign(node, { _fid: _fid });
+    tail = currentListState.slice(0, -1).map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep + " + "));
+    tail = tail ? (" + " + sep + " + " + tail) : tail;
+  }
+  node._forId = _hid + tail;
+};
+State.prototype.resolveHolder = function resolveHolder (node) {
+  if (node._hid === undefined) {
+    // holder id
+    this.assignHId(node);
+    addAttr$1(node, '_hid', node._hid);
+
+    // list tail in v-for, exp: '0-0', '0-1'
+    var _fid = this.getFid(node);
+    if (_fid) {
+      Object.assign(node, { _fid: _fid });
+      addAttr$1(node, '_fid', '_fid');
+    }
   }
 };
 
@@ -5067,13 +5058,226 @@ var createCompiler = createCompilerCreator(function baseCompile (
     staticRenderFns: code.staticRenderFns
   };
 
-  templateCache[realResourcePath] = {
-    data: data,
-    md5: md5
-  };
+  if (md5 && realResourcePath) {
+    templateCache[realResourcePath] = {
+      data: data,
+      md5: md5
+    };
+  }
 
   return data
 });
+
+var iteratorUid$1 = createUidFn('item');
+
+var TYPE$1 = {
+  ELEMENT: 1,
+  TEXT: 2,
+  STATIC_TEXT: 3
+};
+
+var sep$1 = "'" + (LIST_TAIL_SEPS.wechat) + "'";
+
+// walk and modify ast after render function is generated
+// modify some value before the template is generated
+function postMpify (node, options, tools) {
+  var target = options.target; if ( target === void 0 ) target = 'wechat';
+  sep$1 = LIST_TAIL_SEPS[target] ? ("'" + (LIST_TAIL_SEPS[target]) + "'") : sep$1;
+  var preset = presets[target];
+  var state = new State$1({
+    rootNode: node,
+    target: target,
+    preset: preset,
+    tools: tools
+  });
+  walk$1(node, state);
+}
+
+function walk$1 (node, state) {
+  if (node.for && !node.postMpForWalked) {
+    return walkFor$1(node, state)
+  }
+
+  state.resolveFid(node);
+
+  if (node.ifConditions && !node.mpIfWalked) {
+    return walkIf$1(node, state)
+  }
+
+  /* istanbul ignore else */
+  if (node.type === TYPE$1.ELEMENT) {
+    walkElem$1(node, state);
+  } else if (
+    node.type === TYPE$1.TEXT || node.type === TYPE$1.STATIC_TEXT
+  ) {
+    
+  }
+}
+
+function walkFor$1 (node, state) {
+  var _for = node.for;
+  var key = node.key;
+  var alias = node.alias;
+  var prefix = /{/.test(alias) ? ("" + (iteratorUid$1())) : alias;
+  // create default iterator1, iterator2 for xml listing,
+  // which is needed for _hid generating
+  var iterator1 = node.iterator1; if ( iterator1 === void 0 ) iterator1 = prefix + "_i1";
+  var iterator2 = node.iterator2; if ( iterator2 === void 0 ) iterator2 = prefix + "_i2";
+  Object.assign(node, {
+    postMpForWalked: true,
+    iterator1: iterator1,
+    iterator2: iterator2
+  });
+
+  state.pushListState({
+    iterator1: iterator1,
+    iterator2: iterator2,
+    _for: _for,
+    key: key,
+    node: node,
+    alias: alias
+  });
+
+  walk$1(node, state);
+
+  state.popListState();
+}
+
+function walkElem$1 (node, state) {
+  if (state.tools.isComponent(node)) {
+    return walkComponent$1(node, state)
+  }
+
+  walkChildren$1(node, state);
+}
+
+function walkComponent$1 (node, state) {
+  state.pushComp();
+
+  walkChildren$1(node, state);
+  state.popComp();
+}
+
+function walkIf$1 (node, state) {
+}
+
+function walkChildren$1 (node, state) {
+  var children = node.children;
+  var scopedSlots = node.scopedSlots;
+  if (children && children.length) {
+    children.forEach(function (n) {
+      walk$1(n, state);
+    });
+  }
+
+  if (scopedSlots) {
+    Object.keys(scopedSlots).forEach(function (k) {
+      var slot = scopedSlots[k];
+      walk$1(slot, state);
+    });
+  }
+}
+
+var State$1 = function State (options) {
+  if ( options === void 0 ) options = {};
+
+  this.rootNode = options.rootNode;
+  this.compCount = -1;
+  this.elemCount = -1;
+  this.compStack = new Stack();
+  this.sep = options.sep || '-';
+  this.preset = options.preset;
+  this.tools = options.tools;
+  // init a root component state, like page
+  this.pushComp();
+};
+State$1.prototype.pushComp = function pushComp () {
+  /**
+   * major difference against pre procedure
+   * the listState is based on component context,
+   * which is, if the slot is inside of v-for, it's tail should be pased throw "_t" in templates
+   *
+   *exp:
+   * <div v-for="(item,index) in items">{{item}}</div>
+   *<compa>
+   *  <div v-for="(ele,i) in item.list">{{index}}-{{ele}}</div>
+   * </compa>
+   * </div>
+   *
+   * the slot should compile to:
+   * <template name="slot_a">
+   * <view wx:for="{{ h[ 1 + _t ].li }}" wx:for-item="ele" wx:for-index="i">
+   *   {{ h[ 2 + _t + '-' + i ].li }}
+   * </view>
+   * </template>
+   *
+   * the "_t" is passed by <compa>:
+   * <template is="slot_a" data="{{ _t: _t || '' }}"></template>
+   *
+   * the source is from main page:
+   * <template>
+   * <view wx:for="{{ h[ 1 + _t ].li }}" wx:for-item="item" wx:for-index="index">
+   *   <template is="compa" data="{{ _t: '-' + index }}"></template>
+   * </view>
+   * </template>
+   */
+  this.compStack.push({
+    id: ++this.compCount,
+    elems: 0,
+    listStates: new Stack()
+  });
+};
+State$1.prototype.popComp = function popComp () {
+  this.compStack.pop();
+};
+State$1.prototype.pushElem = function pushElem () {
+  this.elemCount++;
+};
+State$1.prototype.popListState = function popListState () {
+  return this.getCurrentComp().listStates.pop()
+};
+State$1.prototype.pushListState = function pushListState (state) {
+  var currentStates = this.getCurrentListState();
+  var newStates = [];
+  if (currentStates && currentStates.length) {
+    newStates = [].concat(currentStates);
+  }
+
+  newStates.push(state);
+  this.getCurrentComp().listStates.push(newStates);
+};
+State$1.prototype.getCurrentComp = function getCurrentComp () {
+  return this.compStack.top
+};
+State$1.prototype.getCurrentCompIndex = function getCurrentCompIndex () {
+  return ("" + (this.compCount))
+};
+State$1.prototype.getCurrentElemIndex = function getCurrentElemIndex () {
+  return this.elemCount
+};
+State$1.prototype.getCurrentListState = function getCurrentListState () {
+  return this.getCurrentComp().listStates.top
+};
+State$1.prototype.getCurrentListNode = function getCurrentListNode () {
+  var top = this.getCurrentListState() || [];
+  return (top[top.length - 1] || {}).node
+};
+State$1.prototype.resolveFid = function resolveFid (node) {
+  var _hid = node._hid;
+  var currentListState = this.getCurrentListState() || [];
+  var _fid = currentListState.map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep$1 + " + "));
+  var tail = '';
+
+  node._fid = _fid || undefined;
+
+  // remove last index, like '0-1-2', we only need '0-1'
+  // store v-for list in this holder
+  if (_fid) {
+    tail = currentListState.slice(0, -1).map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep$1 + " + "));
+    tail = tail ? (" + " + sep$1 + " + " + tail) : tail;
+  }
+  node._forId = _hid + tail;
+};
 
 /*  */
 
@@ -5082,7 +5286,7 @@ var vonReg = /^v-on:|@/;
 var vmodelReg = /^v-model/;
 var vtextReg = /^v-text/;
 
-var sep$1 = "'" + (LIST_TAIL_SEPS.wechat) + "'";
+var sep$2 = "'" + (LIST_TAIL_SEPS.wechat) + "'";
 
 function compileToTemplate (ast, options) {
   if ( options === void 0 ) options = {};
@@ -5104,7 +5308,7 @@ var TemplateGenerator = function TemplateGenerator (options) {
   var htmlParse = options.htmlParse; if ( htmlParse === void 0 ) htmlParse = {};
 
   var preset = presets[target];
-  sep$1 = LIST_TAIL_SEPS[target] ? ("'" + (LIST_TAIL_SEPS[target]) + "'") : sep$1;
+  sep$2 = LIST_TAIL_SEPS[target] ? ("'" + (LIST_TAIL_SEPS[target]) + "'") : sep$2;
 
   Object.assign(this, {
     name: name,
@@ -5116,15 +5320,19 @@ var TemplateGenerator = function TemplateGenerator (options) {
     warn: warn,
     needHtmlParse: false,
     htmlParse: htmlParse,
+    options: options,
     errors: []
   });
 
-  this.slotSnippet = 0;
+  this.slotSnippetBuffer = [];
 };
 
 TemplateGenerator.prototype.generate = function generate (ast) {
   try {
     var clonedAST = cloneAST(ast);
+    postMpify(clonedAST, this.options, {
+      isComponent: this.isComponent.bind(this)
+    });
     var code = this.genElement(clonedAST);
     var body = [
       this.genImports(),
@@ -5140,6 +5348,7 @@ TemplateGenerator.prototype.generate = function generate (ast) {
       errors: this.errors
     }
   } catch (err) {
+    console.error('[compile template error]', err);
     this.errors.push(err);
     /* istanbul ignore next */
     return {
@@ -5186,15 +5395,15 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
   var slots = this.genSlotSnippets(el);
   var slotsNames = slots.map(function (sl) { return ("s_" + (sl.name) + ": '" + (sl.slotName) + "'"); });
   var cid = _cid;
-  var tail = '';
+  var tail = ", " + FOR_TAIL_VAR + ": _t || ''";
 
   // passing parent v-for tail to slot inside v-for
   if (this.isInSlotSnippet()) {
-    cid = _cid + " + (_t || '')";
+    cid = _cid + " + _t";
     tail = ", " + FOR_TAIL_VAR + ": " + FOR_TAIL_VAR + " || ''";
   } else if (isDef(_fid)) {
-    cid = _cid + " + '-' + " + _fid;
-    tail = ", " + FOR_TAIL_VAR + ": " + sep$1 + " + " + _fid;
+    cid = _cid + " + " + sep$2 + " + " + _fid;
+    tail = ", " + FOR_TAIL_VAR + ": " + sep$2 + " + " + _fid;
   }
 
   var data = [
@@ -5247,9 +5456,9 @@ TemplateGenerator.prototype.genSlotSnippets = function genSlotSnippets (el) {
         return null
       }
 
-      this$1.enterSlotSnippet();
+      this$1.enterSlotSnippet(slot);
       var parts = slot.ast.map(function (e) { return this$1.genElement(e); });
-      this$1.leaveSlotSnippet();
+      this$1.leaveSlotSnippet(slot);
 
       var dependencies = slot.ast.reduce(function (res, e) { return res.concat(this$1.collectDependencies(e)); }, []);
       var slotName = name + "_" + (uid$1());
@@ -5367,9 +5576,7 @@ TemplateGenerator.prototype.genClass = function genClass (el) {
     klass.push(("{{ " + (this.genHolder(el, 'class')) + " }}"));
   }
   // scoped id class
-  if (klass.length) {
-    klass.push(this.scopeId);
-  }
+  klass.push(this.scopeId);
   klass.unshift(("_" + tag));
   klass = klass.filter(notEmpty).join(' ');
   return (" class=\"" + klass + "\"")
@@ -5491,12 +5698,19 @@ TemplateGenerator.prototype.genFor = function genFor (el) {
   var iterator1 = el.iterator1;
     var alias = el.alias;
     var _forId = el._forId;
+    var _hid = el._hid;
   var FOR = this.directive('for');
   var FOR_ITEM = this.directive('forItem');
   var FOR_INDEX = this.directive('forIndex');
+  var forHolderId = '';
+  if (this.isInSlotSnippet()) {
+    forHolderId = _hid + " + _t";
+  } else {
+    forHolderId = _forId;
+  }
 
   var _for = [
-    (" " + FOR + "=\"{{ " + (this.genHolder(_forId, 'for')) + " }}\""),
+    (" " + FOR + "=\"{{ " + (this.genHolder(forHolderId, 'for')) + " }}\""),
     this.genForKey(el),
     alias ? (" " + FOR_ITEM + "=\"" + alias + "\"") : /* istanbul ignore next */ ''
   ];
@@ -5530,7 +5744,7 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
   var defaultSlotName = slotName + "$" + (uid$1());
   var defaultSlotBody = this.genChildren(el);
   var defaultSlot = defaultSlotBody ? ("<template name=\"" + defaultSlotName + "\">" + defaultSlotBody + "</template>") : /* istanbul ignore next */ '';
-  var tail = ", " + FOR_TAIL_VAR + ": (" + FOR_TAIL_VAR + " || '')";
+  var tail = ", " + FOR_TAIL_VAR + ": " + FOR_TAIL_VAR + " || ''";
   // sloped-slot inside v-for
   if (el.hasBindings && isDef(_fid)) {
     tail = ", " + FOR_TAIL_VAR + ": '-' + " + _fid + " + (" + FOR_TAIL_VAR + " || '')";
@@ -5650,11 +5864,7 @@ TemplateGenerator.prototype.genNativeSlotName = function genNativeSlotName (el) 
 TemplateGenerator.prototype.genVText = function genVText (el) {
     if ( el === void 0 ) el = {};
 
-  var attrsMap = el.attrsMap; if ( attrsMap === void 0 ) attrsMap = {};
-  if (attrsMap['v-text']) {
-    return ("{{ " + (this.genHolder(el, 'vtext')) + " }}")
-  }
-  return ''
+  return ("{{ " + (this.genHolder(el, 'vtext')) + " }}")
 };
 
 TemplateGenerator.prototype.isVHtml = function isVHtml (el) {
@@ -5720,22 +5930,28 @@ TemplateGenerator.prototype.genHid = function genHid (el) {
   var hid = _hid;
   if (this.isInSlotSnippet()) {
     tail = " + " + FOR_TAIL_VAR;
-  } else if (_fid) {
-    hid = _hid + " + " + sep$1 + " + " + _fid;
   }
-  return ("" + hid + tail)
+  if (_fid) {
+    return ("" + _hid + tail + " + " + sep$2 + " + " + _fid)
+  } else {
+    return ("" + hid + tail)
+  }
 };
-TemplateGenerator.prototype.enterSlotSnippet = function enterSlotSnippet () {
-  this.slotSnippet++;
+TemplateGenerator.prototype.enterSlotSnippet = function enterSlotSnippet (slot) {
+  this.slotSnippetBuffer.push(slot);
 };
 
 TemplateGenerator.prototype.leaveSlotSnippet = function leaveSlotSnippet () {
-  this.slotSnippet--;
+  this.slotSnippetBuffer.pop();
 };
 
 TemplateGenerator.prototype.isInSlotSnippet = function isInSlotSnippet () {
-  return this.slotSnippet > 0
+  return this.slotSnippetBuffer.length > 0
 };
+
+// getCurrentSlotSnippet () {
+// return this.slotSnippetBuffer[this.slotSnippetBuffer.length - 1]
+// }
 
 TemplateGenerator.prototype.wrapTemplateData = function wrapTemplateData (str) {
   return this.target === 'swan' ? ("{{{ " + str + " }}}") : ("{{ " + str + " }}")
