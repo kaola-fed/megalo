@@ -173,8 +173,7 @@ export function genFor (
   el: any,
   state: CodegenState,
   altGen?: Function,
-  altHelper?: string
-): string {
+  altHelper?: string): string {
   const exp = el.for
   const alias = el.alias
   const iterator1 = el.iterator1 ? `,${el.iterator1}` : ''
@@ -193,11 +192,12 @@ export function genFor (
       true /* tip */
     )
   }
-  const { _forId } = el
+  const { _forId, _fid } = el
 
   el.forProcessed = true // avoid recursion
   return `${altHelper || '_l'}((${exp}),` +
     `function(${alias}${iterator1}${iterator2}){` +
+      `var _fid = ${_fid};` +
       `return ${(altGen || genElement)(el, state)}` +
     `},${_forId},_self)`
 }
@@ -211,9 +211,7 @@ export function genData (el: ASTElement, state: CodegenState): string {
   if (dirs) data += dirs + ','
 
   // key
-  if (el.key) {
-    data += `key:${el.key},`
-  }
+  if (el.key) { data += `key:${el.key},` }
   // ref
   if (el.ref) {
     data += `ref:${el.ref},`

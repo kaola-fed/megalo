@@ -1,7 +1,7 @@
-import TAG_MAP from './tag-map'
-import { Stack, createUidFn } from './util'
+import TAG_MAP from '../tag-map'
+import { Stack, createUidFn } from '../util'
 import { LIST_TAIL_SEPS } from 'mp/util/index'
-import presets from '../util/presets/index'
+import presets from '../../util/presets/index'
 
 const vbindReg = /^(v-bind:?|:)/
 const iteratorUid = createUidFn('item')
@@ -14,6 +14,7 @@ const TYPE = {
 
 let sep = `'${LIST_TAIL_SEPS.wechat}'`
 
+// walk and modify ast before render function is generated
 export function mpify (node, options) {
   const { target = 'wechat' } = options
   sep = LIST_TAIL_SEPS[target] ? `'${LIST_TAIL_SEPS[target]}'` : sep
@@ -45,12 +46,7 @@ function walk (node, state) {
     return walkFor(node, state)
   }
 
-  if (node._hid === undefined) {
-    state.assignHId(node)
-    addAttr(node, '_hid', node._hid)
-    state.assignLId(node)
-    addAttr(node, '_fid', node._fid)
-  }
+  state.resolveHolder(node)
 
   if (node.ifConditions && !node.mpIfWalked) {
     return walkIf(node, state)
@@ -87,22 +83,8 @@ function walkFor (node, state) {
     alias
   })
 
-  /* istanbul ignore if */
-  if (node._hid === undefined) {
-    state.assignHId(node)
-    addAttr(node, '_hid', node._hid)
-    state.assignLId(node)
-    addAttr(node, '_fid', node._fid)
-  }
-
-  const { _hid, _fid } = node
-  let tail = ''
-  // extract last index
-  if (_fid) {
-    tail = `${_fid}`.split(`+ ${sep} +`).slice(0, -1).join(`+ ${sep} +`).trim()
-    tail = tail ? ` + ${sep} + ${tail}` : tail
-  }
-  node._forId = _hid + tail
+  state.resolveHolder(node)
+  state.resolveForHolder(node)
 
   walk(node, state)
 
@@ -141,8 +123,10 @@ function walkText (node, state) {
   const { expression, type, _hid, _fid } = node
   if (type === TYPE.STATIC_TEXT) {
     node.mpNotGenRenderFn = true
+  } else if (_fid) {
+    node.expression = `${expression},${_hid},_fid`
   } else {
-    node.expression = `${expression},${_hid},${_fid}`
+    node.expression = `${expression},${_hid}`
   }
 }
 
@@ -285,33 +269,48 @@ class State {
   }
   getHId (node) {
     this.pushElem()
-    // const currentListState = this.getCurrentListState()
     const _hid = `${this.getCurrentElemIndex()}`
-    // if (currentListState) {
-    //   const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
-    // _hid = `${_hid} + ${sep} + ${listTail}`
-    // }
     return `${_hid}`
   }
   getCId (node) {
     this.pushElem()
-    // const currentListState = this.getCurrentListState()
     const _cid = `${this.getCurrentCompIndex()}`
-    // if (currentListState) {
-    //   const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
-    //   _cid = `${_cid} + ${sep} + ${listTail}`
-    // }
     return `${_cid}`
+  }
+  getFid (node) {
+    const currentListState = this.getCurrentListState() || []
+    const _fid = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
+    return _fid
   }
   assignHId (node) {
     const _hid = this.getHId(node)
     Object.assign(node, { _hid })
   }
-  assignLId (node) {
+  resolveForHolder (node) {
+    const { _hid, _fid } = node
     const currentListState = this.getCurrentListState() || []
-    const _fid = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
+    let tail = ''
+
+    // remove last index, like '0-1-2', we only need '0-1'
+    // store v-for list in this holder
     if (_fid) {
-      Object.assign(node, { _fid })
+      tail = currentListState.slice(0, -1).map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
+      tail = tail ? ` + ${sep} + ${tail}` : tail
+    }
+    node._forId = _hid + tail
+  }
+  resolveHolder (node) {
+    if (node._hid === undefined) {
+      // holder id
+      this.assignHId(node)
+      addAttr(node, '_hid', node._hid)
+
+      // list tail in v-for, exp: '0-0', '0-1'
+      const _fid = this.getFid(node)
+      if (_fid) {
+        Object.assign(node, { _fid })
+        addAttr(node, '_fid', '_fid')
+      }
     }
   }
 }

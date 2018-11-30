@@ -5,6 +5,7 @@ import { cloneAST, removeQuotes, uid, escapeText } from '../util'
 import presets from '../../util/presets/index'
 import { baseWarn } from 'compiler/helpers'
 import { capitalize, camelize, isDef } from 'shared/util'
+import { postMpify } from '../mpify/post'
 import {
   notEmpty,
   ROOT_DATA_VAR,
@@ -53,15 +54,19 @@ export class TemplateGenerator {
       warn,
       needHtmlParse: false,
       htmlParse,
+      options,
       errors: []
     })
 
-    this.slotSnippet = 0
+    this.slotSnippetBuffer = []
   }
 
   generate (ast) {
     try {
       const clonedAST = cloneAST(ast)
+      postMpify(clonedAST, this.options, {
+        isComponent: this.isComponent.bind(this)
+      })
       const code = this.genElement(clonedAST)
       const body = [
         this.genImports(),
@@ -76,6 +81,7 @@ export class TemplateGenerator {
         errors: this.errors
       }
     } catch (err) {
+      console.error('[compile template error]', err)
       this.errors.push(err)
       /* istanbul ignore next */
       return {
@@ -119,14 +125,14 @@ export class TemplateGenerator {
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
     let cid = _cid
-    let tail = ''
+    let tail = `, ${FOR_TAIL_VAR}: _t || ''`
 
     // passing parent v-for tail to slot inside v-for
     if (this.isInSlotSnippet()) {
-      cid = `${_cid} + (_t || '')`
+      cid = `${_cid} + _t`
       tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
     } else if (isDef(_fid)) {
-      cid = `${_cid} + '-' + ${_fid}`
+      cid = `${_cid} + ${sep} + ${_fid}`
       tail = `, ${FOR_TAIL_VAR}: ${sep} + ${_fid}`
     }
 
@@ -179,9 +185,9 @@ export class TemplateGenerator {
           return null
         }
 
-        this.enterSlotSnippet()
+        this.enterSlotSnippet(slot)
         const parts = slot.ast.map(e => this.genElement(e))
-        this.leaveSlotSnippet()
+        this.leaveSlotSnippet(slot)
 
         const dependencies = slot.ast.reduce((res, e) => res.concat(this.collectDependencies(e)), [])
         const slotName = `${name}_${uid()}`
@@ -409,13 +415,19 @@ export class TemplateGenerator {
     if (!el.for) {
       return this.genForKey(el)
     }
-    const { iterator1, alias, _forId } = el
+    const { iterator1, alias, _forId, _hid } = el
     const FOR = this.directive('for')
     const FOR_ITEM = this.directive('forItem')
     const FOR_INDEX = this.directive('forIndex')
+    let forHolderId = ''
+    if (this.isInSlotSnippet()) {
+      forHolderId = `${_hid} + _t`
+    } else {
+      forHolderId = _forId
+    }
 
     const _for = [
-      ` ${FOR}="{{ ${this.genHolder(_forId, 'for')} }}"`,
+      ` ${FOR}="{{ ${this.genHolder(forHolderId, 'for')} }}"`,
       this.genForKey(el),
       alias ? ` ${FOR_ITEM}="${alias}"` : /* istanbul ignore next */ ''
     ]
@@ -449,7 +461,7 @@ export class TemplateGenerator {
     const defaultSlotName = `${slotName}$${uid()}`
     const defaultSlotBody = this.genChildren(el)
     const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : /* istanbul ignore next */ ''
-    let tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '')`
+    let tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
     // sloped-slot inside v-for
     if (el.hasBindings && isDef(_fid)) {
       tail = `, ${FOR_TAIL_VAR}: '-' + ${_fid} + (${FOR_TAIL_VAR} || '')`
@@ -619,24 +631,30 @@ export class TemplateGenerator {
   genHid (el): string {
     const { _hid, _fid } = el
     let tail = ''
-    let hid = _hid
+    const hid = _hid
     if (this.isInSlotSnippet()) {
       tail = ` + ${FOR_TAIL_VAR}`
-    } else if (_fid) {
-      hid = `${_hid} + ${sep} + ${_fid}`
     }
-    return `${hid}${tail}`
+    if (_fid) {
+      return `${_hid}${tail} + ${sep} + ${_fid}`
+    } else {
+      return `${hid}${tail}`
+    }
   }
-  enterSlotSnippet () {
-    this.slotSnippet++
+  enterSlotSnippet (slot) {
+    this.slotSnippetBuffer.push(slot)
   }
 
   leaveSlotSnippet () {
-    this.slotSnippet--
+    this.slotSnippetBuffer.pop()
   }
 
   isInSlotSnippet () {
-    return this.slotSnippet > 0
+    return this.slotSnippetBuffer.length > 0
+  }
+
+  getCurrentSlotSnippet () {
+    return this.slotSnippetBuffer[this.slotSnippetBuffer.length - 1]
   }
 
   wrapTemplateData (str) {
