@@ -28,14 +28,15 @@ function wrapHtml (code) {
 }
 
 function wrapMP (code, options = {}) {
-  const { imports = {}, name = 'defaultName' } = options
+  const { imports = {}, name = 'defaultName', scopeId } = options
+  const scopedClass = scopeId ? ` ${scopeId}` : ''
   const importStr = Object.keys(imports)
     .map(k => `<import src="${imports[k].src}"/>`)
     .join('')
   return (
     importStr +
     `<template name="${name}">` +
-      `<view class="_div">${code}</view>` +
+      `<view class="_div${scopedClass}">${code}</view>` +
     `</template>`
   )
 }
@@ -45,7 +46,7 @@ function assertCodegen (body, assertTemplate, options = {}, callback) {
     target: 'swan'
   })
 
-  const template = wrapHtml(body)
+  const template = wrapHtml(body, options)
   const output = compileToTemplate(template, options)
 
   expect(output.body).toEqual(wrapMP(assertTemplate, options))
