@@ -34,15 +34,8 @@ export function cloneAST (ast) {
     if (walkedVal) {
       return walkedVal._new
     }
-    if (Array.isArray(old)) {
-      const _new = []
-      walked.push({ _new, old })
-      for (let i = 0, len = old.length; i < len; ++i) {
-        _new.push(doClone(old[i]))
-      }
-      return _new
-    } else if (typeof old === 'object') {
-      const _new = {}
+    if (typeof old === 'object') {
+      const _new = Array.isArray(old) ? [] : {}
       walked.push({ _new, old })
       for (const key in old) {
         const newVal = doClone(old[key])
