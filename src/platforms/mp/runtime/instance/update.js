@@ -8,6 +8,7 @@ import {
   VM_ID_SEP,
   VM_ID_VAR,
   VM_ID_PREFIX,
+  LIST_TAIL_SEPS,
   ROOT_DATA_VAR,
   HOLDER_VAR,
   SLOT_CONTEXT_ID_VAR,
@@ -19,14 +20,20 @@ function isEmptyObj (obj = {}) {
 }
 
 export function initVMToMP (vm) {
+  const sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat
+
   vm = vm || this
-  const cid = getVMId(vm)
+  // const cid = getVMId(vm)
+  const vmId = getVMId(vm)
+  // console.log(vmId)
+  const i = vmId.indexOf(sep)
+  const cid = i > -1 ? vmId.slice(0, i) : vmId
   const info = {
     cid,
     cpath: `${cid}${VM_ID_SEP}`
   }
 
-  const prefix = `${ROOT_DATA_VAR}.${cid}`
+  const prefix = `${ROOT_DATA_VAR}.${vmId}`
 
   vm.$mp._update({
     [`${prefix}.${VM_ID_VAR}`]: info.cid,

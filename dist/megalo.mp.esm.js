@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.4.0';
+Vue.version = '0.5.0-0';
 
 /*  */
 
@@ -4633,8 +4633,12 @@ var VM_ID_SEP = 'v';
 
 var SLOT_CONTEXT_ID_VAR = 's';
 
+var LIST_TAIL_SEPS = {
+  swan: '_',
+  wechat: '-',
+  alipay: '-'
+};
 
-var LIST_TAIL_SEP_REG = /(\-|_)/;
 
 var HOLDER_TYPE_VARS = {
   text: 't',
@@ -4723,8 +4727,14 @@ function deepEqual (a, b) {
 function getHid (vm, vnode) {
   if ( vnode === void 0 ) vnode = {};
 
+  var sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat;
   var data = vnode.data; if ( data === void 0 ) data = {};
-  return data._hid || (data.attrs && data.attrs._hid)
+  var _hid = isDef(data._hid) ? data._hid : (data.attrs && data.attrs._hid);
+  var _fid = isDef(data._fid) ? data._fid : (data.attrs && data.attrs._fid);
+  if (isDef(_fid)) {
+    return ("" + _hid + sep + _fid)
+  }
+  return _hid
 }
 
 function getVM (vm, id) {
@@ -4744,22 +4754,29 @@ function getVM (vm, id) {
   }
 }
 
-function getVMMarker (vm) {
-  return vm && vm.$attrs && vm.$attrs['_cid'] ? vm.$attrs['_cid'] : '0'
+function getCid (vm) {
+  var cid = vm && vm.$attrs && vm.$attrs._cid ? vm.$attrs._cid : '0';
+  return cid
 }
 
 function getVMId (vm) {
+  var sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat;
   var res = [];
   var cursor = vm;
   var prev;
   while (cursor) {
     if (cursor === vm || !isSlotParent(cursor, prev)) {
-      res.unshift(getVMMarker(cursor));
+      res.unshift(getCid(cursor));
     }
     prev = cursor;
     cursor = cursor.$parent;
   }
-  return res.join(VM_ID_SEP)
+  var vmId = res.join(VM_ID_SEP);
+  var fid = vm && vm.$attrs && vm.$attrs._fid;
+  if (isDef(fid)) {
+    return ("" + vmId + sep + fid)
+  }
+  return vmId
 }
 
 function isSlotParent (parent, child) {
@@ -4785,14 +4802,20 @@ function isEmptyObj (obj) {
 function initVMToMP (vm) {
   var obj;
 
+  var sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat;
+
   vm = vm || this;
-  var cid = getVMId(vm);
+  // const cid = getVMId(vm)
+  var vmId = getVMId(vm);
+  // console.log(vmId)
+  var i = vmId.indexOf(sep);
+  var cid = i > -1 ? vmId.slice(0, i) : vmId;
   var info = {
     cid: cid,
     cpath: ("" + cid + VM_ID_SEP)
   };
 
-  var prefix = ROOT_DATA_VAR + "." + cid;
+  var prefix = ROOT_DATA_VAR + "." + vmId;
 
   vm.$mp._update(( obj = {}, obj[(prefix + "." + VM_ID_VAR)] = info.cid, obj[(prefix + "." + VM_ID_PREFIX)] = info.cpath, obj));
 }
@@ -4880,7 +4903,21 @@ function updateVnodeToMP (vnode, key, value) {
   }
 }
 
+var sep = '';
+
+function assertHid (vnode, hid) {
+  var data = vnode.data; if ( data === void 0 ) data = {};
+  var attrs = data.attrs; if ( attrs === void 0 ) attrs = {};
+  var _hid = attrs._hid;
+  var _fid = attrs._fid;
+  var curHid = isDef(_fid) ? ("" + _hid + sep + _fid) : _hid;
+  return ("" + curHid) === ("" + hid)
+}
+
 function proxyEvent (rootVM, event) {
+  if (!sep) {
+    sep = LIST_TAIL_SEPS[rootVM.$mp.platform] || LIST_TAIL_SEPS.wechat;
+  }
   var type = event.type;
   var detail = event.detail; if ( detail === void 0 ) detail = {};
   var target = event.currentTarget || event.target;
@@ -4903,11 +4940,9 @@ function proxyEvent (rootVM, event) {
 function getVnode (vnode, hid) {
   if ( vnode === void 0 ) vnode = {};
 
-  var data = vnode.data; if ( data === void 0 ) data = {};
   var componentInstance = vnode.componentInstance;
   var children = vnode.children; if ( children === void 0 ) children = [];
-  var attrs = data.attrs; if ( attrs === void 0 ) attrs = {};
-  if (("" + (attrs._hid)) === ("" + hid)) {
+  if (assertHid(vnode, hid)) {
     return vnode
   }
 
@@ -4949,13 +4984,11 @@ function getHandlers (vm, rawType, hid) {
 
   if (!vnode) { return res }
 
-  var data = vnode.data;
   var elm = vnode.elm;
-  var attrs = data.attrs; if ( attrs === void 0 ) attrs = {};
   var on = elm.on; if ( on === void 0 ) on = {};
 
   /* istanbul ignore if */
-  if (('' + attrs._hid) !== ('' + hid)) { return res }
+  if (!assertHid(vnode, hid)) { return res }
 
   res = eventTypes.reduce(function (buf, event) {
     var handler = on[event];
@@ -4984,9 +5017,7 @@ function afterRenderSlot (
   props,
   bindObject
 ) {
-  var componentVnode = this.$vnode;
-  var componentCid = componentVnode.data.attrs._cid;
-  var _hid = props._hid; if ( _hid === void 0 ) _hid = '';
+  var _fid = props._fid;
   // single tag:
   // <CompA><span slot-scope="props">{{ props.msg }}</span></CompA>
   if (nodes && nodes.tag) {
@@ -5004,12 +5035,9 @@ function afterRenderSlot (
 
   // scopedSlotFn with v-for
   var scopedSlotFn = this.$scopedSlots[name];
-  if (scopedSlotFn && LIST_TAIL_SEP_REG.test(_hid)) {
-    var tail = _hid.replace(/^\d+/, '');
-    updateNodesHid(nodes, tail);
-  } else if (LIST_TAIL_SEP_REG.test(componentCid)) {
-    var tail$1 = componentCid.replace(/^\d+/, '');
-    updateNodesHid(nodes, tail$1);
+  // update vnode hid in scoped slot with the slot host's actual fid
+  if (scopedSlotFn && isDef(_fid)) {
+    updateNodesHid(nodes, ("-" + _fid));
   }
 
   return nodes
@@ -5038,21 +5066,20 @@ function getFirstNode (nodes) {
 }
 
 function markComponents (nodes, parentUId) {
-  return (nodes || []).reduce(function (res, node) {
+  return (nodes || []).forEach(function (node) {
     var componentOptions = node.componentOptions;
     if (componentOptions) {
       node._mpSlotParentUId = parentUId;
     }
     markComponents(node.children);
-    return res
-  }, [])
+  })
 }
 
-function renderIf (cond, _hid) {
+function renderIf (cond, _hid, _fid) {
   var cloneVnode = {
     context: this,
     data: {
-      attrs: { _hid: _hid }
+      attrs: { _hid: _hid, _fid: _fid }
     }
   };
   updateVnodeToMP(cloneVnode, HOLDER_TYPE_VARS.if, cond);
@@ -5903,9 +5930,9 @@ function createPatchFunction (backend) {
 
 /*  */
 
-function createTextVNode$1 (val, _hid) {
+function createTextVNode$1 (val, _hid, _fid) {
   var vnode = new VNode(undefined, {
-    _hid: _hid
+    _hid: _hid, _fid: _fid
   }, undefined, String(val), undefined, this);
 
   return vnode
@@ -6532,6 +6559,9 @@ function remove$2 (
   capture,
   _target
 ) {
+  if (!handler) {
+    return
+  }
   var realTarget = _target || target$1;
   var realHanlder = handler._withTask || handler;
   /* istanbul ignore else */
@@ -6948,6 +6978,8 @@ Vue.prototype._l = aop(Vue.prototype._l, {
 
 var oInit = Vue.prototype._init;
 Vue.prototype._init = function (options) {
+  if ( options === void 0 ) options = {};
+
   if (!Vue.prototype._mpPlatform) {
     Vue.prototype._mpPlatform = getMPPlatform();
   }
