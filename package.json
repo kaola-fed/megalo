@@ -114,6 +114,7 @@
     "karma-coverage": "^1.1.1",
     "karma-firefox-launcher": "^1.0.1",
     "karma-jasmine": "^1.1.0",
+    "karma-jasmine-diff-reporter": "^2.0.0",
     "karma-mocha-reporter": "^2.2.3",
     "karma-phantomjs-launcher": "^1.0.4",
     "karma-safari-launcher": "^1.0.0",
