@@ -572,11 +572,7 @@ export class TemplateGenerator {
   }
 
   genVText (el = {}): string {
-    const { attrsMap = {}} = el
-    if (attrsMap['v-text']) {
-      return `{{ ${this.genHolder(el, 'vtext')} }}`
-    }
-    return ''
+    return `{{ ${this.genHolder(el, 'vtext')} }}`
   }
 
   isVHtml (el = {}): boolean {
@@ -653,9 +649,9 @@ export class TemplateGenerator {
     return this.slotSnippetBuffer.length > 0
   }
 
-  getCurrentSlotSnippet () {
-    return this.slotSnippetBuffer[this.slotSnippetBuffer.length - 1]
-  }
+  // getCurrentSlotSnippet () {
+  //   return this.slotSnippetBuffer[this.slotSnippetBuffer.length - 1]
+  // }
 
   wrapTemplateData (str) {
     return this.target === 'swan' ? `{{{ ${str} }}}` : `{{ ${str} }}`
