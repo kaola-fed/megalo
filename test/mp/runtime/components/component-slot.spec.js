@@ -765,4 +765,40 @@ describe('Component slot', () => {
 
     // expect(vm.$el.innerHTML).toBe('<div class="foo"><div class="bar">fallback</div></div>')
   })
+
+  it('ebedded component slot with v-for', () => {
+    const { page } = createPage({
+      template: '<div><test v-for="i in 3" :key="i"><test2><div v-for="ele in 3">{{ i }}-{{ ele }}</div></test2></test></div>',
+      components: {
+        test: {
+          template: '<div><slot></slot></div>'
+        },
+        test2: {
+          template: '<div><slot></slot></div>'
+        }
+      }
+    })
+    const pageData = getPageData(page, '0')
+    const comp1 = getPageData(page, '0,0-0')
+    const comp2 = getPageData(page, '0,0-0')
+    const comp3 = getPageData(page, '0,0-0')
+    expect(pageData.h[1].li.length).toBe(3)
+    expect(pageData.h['5-0'].li.length).toBe(3)
+    expect(pageData.h['6-0-0'].t).toBe('1-1')
+    expect(pageData.h['6-0-1'].t).toBe('1-2')
+    expect(pageData.h['6-0-2'].t).toBe('1-3')
+    expect(pageData.h['5-1'].li.length).toBe(3)
+    expect(pageData.h['6-1-0'].t).toBe('2-1')
+    expect(pageData.h['6-1-1'].t).toBe('2-2')
+    expect(pageData.h['6-1-2'].t).toBe('2-3')
+    expect(pageData.h['5-2'].li.length).toBe(3)
+    expect(pageData.h['6-2-0'].t).toBe('3-1')
+    expect(pageData.h['6-2-1'].t).toBe('3-2')
+    expect(pageData.h['6-2-2'].t).toBe('3-3')
+    expect(comp1.s).toBe('0')
+    expect(comp2.s).toBe('0')
+    expect(comp3.s).toBe('0')
+  })
+
+  // TODO: '<div><test v-for="i in 3" :key="i"><test2><div slot-scope="scope" v-for="ele in scope.list">{{ i }}-{{ ele }}</div></test2></test></div>',
 })

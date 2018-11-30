@@ -2,7 +2,7 @@
 
 // import { extend, warn, isObject } from 'core/util/index'
 import { getVMId, updateSlotId } from '../../instance/index'
-import { LIST_TAIL_SEP_REG } from 'mp/util/index'
+import { isDef } from 'shared/util'
 /**
  * Runtime helper for rendering <slot>
  */
@@ -13,9 +13,7 @@ export function afterRenderSlot (
   props: ?Object,
   bindObject: ?Object
 ): ?Array<VNode> {
-  const componentVnode = this.$vnode
-  const componentCid = componentVnode.data.attrs._cid
-  const { _hid = '' } = props
+  const { _fid } = props
   // single tag:
   // <CompA><span slot-scope="props">{{ props.msg }}</span></CompA>
   if (nodes && nodes.tag) {
@@ -33,12 +31,9 @@ export function afterRenderSlot (
 
   // scopedSlotFn with v-for
   const scopedSlotFn = this.$scopedSlots[name]
-  if (scopedSlotFn && LIST_TAIL_SEP_REG.test(_hid)) {
-    const tail = _hid.replace(/^\d+/, '')
-    updateNodesHid(nodes, tail)
-  } else if (LIST_TAIL_SEP_REG.test(componentCid)) {
-    const tail = componentCid.replace(/^\d+/, '')
-    updateNodesHid(nodes, tail)
+  // update vnode hid in scoped slot with the slot host's actual fid
+  if (scopedSlotFn && isDef(_fid)) {
+    updateNodesHid(nodes, `-${_fid}`)
   }
 
   return nodes
@@ -65,12 +60,11 @@ function getFirstNode (nodes) {
 }
 
 function markComponents (nodes, parentUId) {
-  return (nodes || []).reduce((res, node) => {
+  return (nodes || []).forEach(node => {
     const { componentOptions } = node
     if (componentOptions) {
       node._mpSlotParentUId = parentUId
     }
     markComponents(node.children)
-    return res
-  }, [])
+  })
 }

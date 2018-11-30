@@ -1,7 +1,7 @@
-import TAG_MAP from './tag-map'
-import { Stack, createUidFn } from './util'
+import TAG_MAP from '../tag-map'
+import { Stack, createUidFn } from '../util'
 import { LIST_TAIL_SEPS } from 'mp/util/index'
-import presets from '../util/presets/index'
+import presets from '../../util/presets/index'
 
 const vbindReg = /^(v-bind:?|:)/
 const iteratorUid = createUidFn('item')
@@ -14,6 +14,7 @@ const TYPE = {
 
 let sep = `'${LIST_TAIL_SEPS.wechat}'`
 
+// walk and modify ast before render function is generated
 export function mpify (node, options) {
   const { target = 'wechat' } = options
   sep = LIST_TAIL_SEPS[target] ? `'${LIST_TAIL_SEPS[target]}'` : sep
@@ -45,10 +46,7 @@ function walk (node, state) {
     return walkFor(node, state)
   }
 
-  if (node._hid === undefined) {
-    state.assignHId(node)
-    addAttr(node, '_hid', node._hid)
-  }
+  state.resolveHolder(node)
 
   if (node.ifConditions && !node.mpIfWalked) {
     return walkIf(node, state)
@@ -85,16 +83,8 @@ function walkFor (node, state) {
     alias
   })
 
-  /* istanbul ignore if */
-  if (node._hid === undefined) {
-    state.assignHId(node)
-    addAttr(node, '_hid', node._hid)
-  }
-
-  const { _hid } = node
-  // extract last index
-  const forId = `${_hid}`.split(`+ ${sep} +`).slice(0, -1).join(`+ ${sep} +`).trim()
-  node._forId = forId
+  state.resolveHolder(node)
+  state.resolveForHolder(node)
 
   walk(node, state)
 
@@ -130,9 +120,11 @@ function walkComponent (node, state) {
 }
 
 function walkText (node, state) {
-  const { expression, type, _hid } = node
+  const { expression, type, _hid, _fid } = node
   if (type === TYPE.STATIC_TEXT) {
     node.mpNotGenRenderFn = true
+  } else if (_fid) {
+    node.expression = `${expression},${_hid},_fid`
   } else {
     node.expression = `${expression},${_hid}`
   }
@@ -150,7 +142,11 @@ function walkIf (node, state) {
 
     if (exp) {
       condition.rawexp = exp
-      condition.exp = `_ri(!!(${exp}), ${block._hid})`
+      if (block._fid) {
+        condition.exp = `_ri(!!(${exp}), ${block._hid}, ${block._fid})`
+      } else {
+        condition.exp = `_ri(!!(${exp}), ${block._hid})`
+      }
     }
   })
 }
@@ -224,6 +220,7 @@ class State {
     this.compStack = new Stack()
     this.sep = options.sep || '-'
     this.preset = options.preset
+    this.listStates = new Stack()
     // this.listStates = new Stack()
     // init a root component state, like page
     this.pushComp()
@@ -231,8 +228,8 @@ class State {
   pushComp () {
     this.compStack.push({
       id: ++this.compCount,
-      elems: 0,
-      listStates: new Stack()
+      elems: 0
+      // listStates: new Stack()
     })
   }
   popComp () {
@@ -242,18 +239,17 @@ class State {
     this.elemCount++
   }
   popListState () {
-    return this.getCurrentComp().listStates.pop()
+    return this.listStates.pop()
   }
   pushListState (state) {
-    const currentComp = this.getCurrentComp()
-    const currentStates = currentComp.listStates.top
+    const currentStates = this.listStates.top
     let newStates = []
     if (currentStates && currentStates.length) {
       newStates = [].concat(currentStates)
     }
 
     newStates.push(state)
-    currentComp.listStates.push(newStates)
+    this.listStates.push(newStates)
   }
   getCurrentComp () {
     return this.compStack.top
@@ -265,34 +261,56 @@ class State {
     return this.elemCount
   }
   getCurrentListState () {
-    return this.getCurrentComp().listStates.top
+    return this.listStates.top
   }
   getCurrentListNode () {
-    const top = this.getCurrentComp().listStates.top || []
+    const top = this.listStates.top || []
     return (top[top.length - 1] || {}).node
   }
   getHId (node) {
     this.pushElem()
-    const currentListState = this.getCurrentListState()
-    let _hid = `${this.getCurrentElemIndex()}`
-    if (currentListState) {
-      const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
-      _hid = `${_hid} + ${sep} + ${listTail}`
-    }
+    const _hid = `${this.getCurrentElemIndex()}`
     return `${_hid}`
   }
   getCId (node) {
     this.pushElem()
-    const currentListState = this.getCurrentListState()
-    let _cid = `${this.getCurrentCompIndex()}`
-    if (currentListState) {
-      const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
-      _cid = `${_cid} + ${sep} + ${listTail}`
-    }
+    const _cid = `${this.getCurrentCompIndex()}`
     return `${_cid}`
+  }
+  getFid (node) {
+    const currentListState = this.getCurrentListState() || []
+    const _fid = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
+    return _fid
   }
   assignHId (node) {
     const _hid = this.getHId(node)
     Object.assign(node, { _hid })
+  }
+  resolveForHolder (node) {
+    const { _hid, _fid } = node
+    const currentListState = this.getCurrentListState() || []
+    let tail = ''
+
+    // remove last index, like '0-1-2', we only need '0-1'
+    // store v-for list in this holder
+    if (_fid) {
+      tail = currentListState.slice(0, -1).map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
+      tail = tail ? ` + ${sep} + ${tail}` : tail
+    }
+    node._forId = _hid + tail
+  }
+  resolveHolder (node) {
+    if (node._hid === undefined) {
+      // holder id
+      this.assignHId(node)
+      addAttr(node, '_hid', node._hid)
+
+      // list tail in v-for, exp: '0-0', '0-1'
+      const _fid = this.getFid(node)
+      if (_fid) {
+        Object.assign(node, { _fid })
+        addAttr(node, '_fid', '_fid')
+      }
+    }
   }
 }

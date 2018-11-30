@@ -17,7 +17,9 @@ function isUndef (v) {
   return v === undefined || v === null
 }
 
-
+function isDef (v) {
+  return v !== undefined && v !== null
+}
 
 
 
@@ -4755,6 +4757,8 @@ function walk (node, state) {
   if (node._hid === undefined) {
     state.assignHId(node);
     addAttr$1(node, '_hid', node._hid);
+    state.assignLId(node);
+    addAttr$1(node, '_fid', node._fid);
   }
 
   if (node.ifConditions && !node.mpIfWalked) {
@@ -4799,12 +4803,19 @@ function walkFor (node, state) {
   if (node._hid === undefined) {
     state.assignHId(node);
     addAttr$1(node, '_hid', node._hid);
+    state.assignLId(node);
+    addAttr$1(node, '_fid', node._fid);
   }
 
   var _hid = node._hid;
+  var _fid = node._fid;
+  var tail = '';
   // extract last index
-  var forId = ("" + _hid).split(("+ " + sep + " +")).slice(0, -1).join(("+ " + sep + " +")).trim();
-  node._forId = forId;
+  if (_fid) {
+    tail = ("" + _fid).split(("+ " + sep + " +")).slice(0, -1).join(("+ " + sep + " +")).trim();
+    tail = tail ? (" + " + sep + " + " + tail) : tail;
+  }
+  node._forId = _hid + tail;
 
   walk(node, state);
 
@@ -4843,10 +4854,11 @@ function walkText (node, state) {
   var expression = node.expression;
   var type = node.type;
   var _hid = node._hid;
+  var _fid = node._fid;
   if (type === TYPE.STATIC_TEXT) {
     node.mpNotGenRenderFn = true;
   } else {
-    node.expression = expression + "," + _hid;
+    node.expression = expression + "," + _hid + "," + _fid;
   }
 }
 
@@ -4863,7 +4875,11 @@ function walkIf (node, state) {
 
     if (exp) {
       condition.rawexp = exp;
-      condition.exp = "_ri(!!(" + exp + "), " + (block._hid) + ")";
+      if (block._fid) {
+        condition.exp = "_ri(!!(" + exp + "), " + (block._hid) + ", " + (block._fid) + ")";
+      } else {
+        condition.exp = "_ri(!!(" + exp + "), " + (block._hid) + ")";
+      }
     }
   });
 }
@@ -4942,6 +4958,7 @@ var State = function State (options) {
   this.compStack = new Stack();
   this.sep = options.sep || '-';
   this.preset = options.preset;
+  this.listStates = new Stack();
   // this.listStates = new Stack()
   // init a root component state, like page
   this.pushComp();
@@ -4949,8 +4966,8 @@ var State = function State (options) {
 State.prototype.pushComp = function pushComp () {
   this.compStack.push({
     id: ++this.compCount,
-    elems: 0,
-    listStates: new Stack()
+    elems: 0
+    // listStates: new Stack()
   });
 };
 State.prototype.popComp = function popComp () {
@@ -4960,18 +4977,17 @@ State.prototype.pushElem = function pushElem () {
   this.elemCount++;
 };
 State.prototype.popListState = function popListState () {
-  return this.getCurrentComp().listStates.pop()
+  return this.listStates.pop()
 };
 State.prototype.pushListState = function pushListState (state) {
-  var currentComp = this.getCurrentComp();
-  var currentStates = currentComp.listStates.top;
+  var currentStates = this.listStates.top;
   var newStates = [];
   if (currentStates && currentStates.length) {
     newStates = [].concat(currentStates);
   }
 
   newStates.push(state);
-  currentComp.listStates.push(newStates);
+  this.listStates.push(newStates);
 };
 State.prototype.getCurrentComp = function getCurrentComp () {
   return this.compStack.top
@@ -4983,35 +4999,42 @@ State.prototype.getCurrentElemIndex = function getCurrentElemIndex () {
   return this.elemCount
 };
 State.prototype.getCurrentListState = function getCurrentListState () {
-  return this.getCurrentComp().listStates.top
+  return this.listStates.top
 };
 State.prototype.getCurrentListNode = function getCurrentListNode () {
-  var top = this.getCurrentComp().listStates.top || [];
+  var top = this.listStates.top || [];
   return (top[top.length - 1] || {}).node
 };
 State.prototype.getHId = function getHId (node) {
   this.pushElem();
-  var currentListState = this.getCurrentListState();
+  // const currentListState = this.getCurrentListState()
   var _hid = "" + (this.getCurrentElemIndex());
-  if (currentListState) {
-    var listTail = currentListState.map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep + " + "));
-    _hid = _hid + " + " + sep + " + " + listTail;
-  }
+  // if (currentListState) {
+  // const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
+  // _hid = `${_hid} + ${sep} + ${listTail}`
+  // }
   return ("" + _hid)
 };
 State.prototype.getCId = function getCId (node) {
   this.pushElem();
-  var currentListState = this.getCurrentListState();
+  // const currentListState = this.getCurrentListState()
   var _cid = "" + (this.getCurrentCompIndex());
-  if (currentListState) {
-    var listTail = currentListState.map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep + " + "));
-    _cid = _cid + " + " + sep + " + " + listTail;
-  }
+  // if (currentListState) {
+  // const listTail = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
+  // _cid = `${_cid} + ${sep} + ${listTail}`
+  // }
   return ("" + _cid)
 };
 State.prototype.assignHId = function assignHId (node) {
   var _hid = this.getHId(node);
   Object.assign(node, { _hid: _hid });
+};
+State.prototype.assignLId = function assignLId (node) {
+  var currentListState = this.getCurrentListState() || [];
+  var _fid = currentListState.map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep + " + "));
+  if (_fid) {
+    Object.assign(node, { _fid: _fid });
+  }
 };
 
 /*  */
@@ -5058,7 +5081,6 @@ var vbindReg$1 = /^(v-bind)?:/;
 var vonReg = /^v-on:|@/;
 var vmodelReg = /^v-model/;
 var vtextReg = /^v-text/;
-var listTailReg = /'[-|_]'/;
 
 var sep$1 = "'" + (LIST_TAIL_SEPS.wechat) + "'";
 
@@ -5156,19 +5178,27 @@ TemplateGenerator.prototype.genElement = function genElement (el) {
 TemplateGenerator.prototype.genComponent = function genComponent (el) {
   var _cid = el._cid;
     var tag = el.tag;
+    var _fid = el._fid;
   var pascalTag = pascalize(tag);
   var camelizedTag = camelize(tag);
   var compInfo = this.imports[tag] || this.imports[pascalTag] || this.imports[camelizedTag];
   var compName = compInfo.name;
   var slots = this.genSlotSnippets(el);
   var slotsNames = slots.map(function (sl) { return ("s_" + (sl.name) + ": '" + (sl.slotName) + "'"); });
-  var tail = ", " + FOR_TAIL_VAR + ": ''";
+  var cid = _cid;
+  var tail = '';
+
   // passing parent v-for tail to slot inside v-for
-  if (listTailReg.test(_cid)) {
-    tail = ", " + FOR_TAIL_VAR + ": " + (extractHidTail(_cid));
+  if (this.isInSlotSnippet()) {
+    cid = _cid + " + (_t || '')";
+    tail = ", " + FOR_TAIL_VAR + ": " + FOR_TAIL_VAR + " || ''";
+  } else if (isDef(_fid)) {
+    cid = _cid + " + '-' + " + _fid;
+    tail = ", " + FOR_TAIL_VAR + ": " + sep$1 + " + " + _fid;
   }
+
   var data = [
-    ("..." + ROOT_DATA_VAR + "[ " + VM_ID_PREFIX + " + " + _cid + " ]"),
+    ("..." + ROOT_DATA_VAR + "[ " + VM_ID_PREFIX + " + " + cid + " ]"),
     ("" + ROOT_DATA_VAR) ].concat( slotsNames
   ).join(', ');
 
@@ -5494,7 +5524,7 @@ TemplateGenerator.prototype.genText = function genText (el) {
 };
 
 TemplateGenerator.prototype.genSlot = function genSlot (el) {
-  var _hid = el._hid;
+  var _fid = el._fid;
   var slotName = el.slotName; if ( slotName === void 0 ) slotName = 'default';
   slotName = slotName.replace(/"/g, '');
   var defaultSlotName = slotName + "$" + (uid$1());
@@ -5502,8 +5532,8 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
   var defaultSlot = defaultSlotBody ? ("<template name=\"" + defaultSlotName + "\">" + defaultSlotBody + "</template>") : /* istanbul ignore next */ '';
   var tail = ", " + FOR_TAIL_VAR + ": (" + FOR_TAIL_VAR + " || '')";
   // sloped-slot inside v-for
-  if (el.hasBindings && listTailReg.test(_hid)) {
-    tail = ", " + FOR_TAIL_VAR + ": " + (extractHidTail(_hid));
+  if (el.hasBindings && isDef(_fid)) {
+    tail = ", " + FOR_TAIL_VAR + ": '-' + " + _fid + " + (" + FOR_TAIL_VAR + " || '')";
   }
 
   /**
@@ -5684,11 +5714,16 @@ TemplateGenerator.prototype.directive = function directive (grammar) {
 };
 
 TemplateGenerator.prototype.genHid = function genHid (el) {
+  var _hid = el._hid;
+    var _fid = el._fid;
   var tail = '';
+  var hid = _hid;
   if (this.isInSlotSnippet()) {
     tail = " + " + FOR_TAIL_VAR;
+  } else if (_fid) {
+    hid = _hid + " + " + sep$1 + " + " + _fid;
   }
-  return ("" + (el._hid) + tail)
+  return ("" + hid + tail)
 };
 TemplateGenerator.prototype.enterSlotSnippet = function enterSlotSnippet () {
   this.slotSnippet++;
@@ -5706,14 +5741,12 @@ TemplateGenerator.prototype.wrapTemplateData = function wrapTemplateData (str) {
   return this.target === 'swan' ? ("{{{ " + str + " }}}") : ("{{ " + str + " }}")
 };
 
-function extractHidTail (hid) {
-  if ( hid === void 0 ) hid = '';
-
-  var delimiter = "+ " + sep$1 + " +";
-  var parts = hid.split(delimiter);
-  parts = parts.slice(1).map(function (s) { return s.trim(); });
-  return (sep$1 + " + " + (parts.join(delimiter)))
-}
+// function extractHidTail (hid = ''): string {
+//   const delimiter = `+ ${sep} +`
+//   let parts = hid.split(delimiter)
+//   parts = parts.slice(1).map(s => s.trim())
+//   return `${sep} + ${parts.join(delimiter)}`
+// }
 
 function pascalize (str) {
   if ( str === void 0 ) str = '';

@@ -4,7 +4,7 @@ import { parse } from 'compiler/parser/index'
 import { optimize } from 'compiler/optimizer'
 import { generate } from './codegen/index'
 import { createCompilerCreator } from 'compiler/create-compiler'
-import { mpify } from './mpify-ast'
+import { mpify } from './mpify/pre'
 
 const templateCache = {}
 
@@ -33,9 +33,11 @@ export const createCompiler = createCompilerCreator(function baseCompile (
     staticRenderFns: code.staticRenderFns
   }
 
-  templateCache[realResourcePath] = {
-    data,
-    md5
+  if (md5 && realResourcePath) {
+    templateCache[realResourcePath] = {
+      data,
+      md5
+    }
   }
 
   return data

@@ -4,7 +4,8 @@ import TAG_MAP from '../tag-map'
 import { cloneAST, removeQuotes, uid, escapeText } from '../util'
 import presets from '../../util/presets/index'
 import { baseWarn } from 'compiler/helpers'
-import { capitalize, camelize } from 'shared/util'
+import { capitalize, camelize, isDef } from 'shared/util'
+import { postMpify } from '../mpify/post'
 import {
   notEmpty,
   ROOT_DATA_VAR,
@@ -19,7 +20,6 @@ const vbindReg = /^(v-bind)?:/
 const vonReg = /^v-on:|@/
 const vmodelReg = /^v-model/
 const vtextReg = /^v-text/
-const listTailReg = /'[-|_]'/
 
 let sep = `'${LIST_TAIL_SEPS.wechat}'`
 
@@ -54,15 +54,19 @@ export class TemplateGenerator {
       warn,
       needHtmlParse: false,
       htmlParse,
+      options,
       errors: []
     })
 
-    this.slotSnippet = 0
+    this.slotSnippetBuffer = []
   }
 
   generate (ast) {
     try {
       const clonedAST = cloneAST(ast)
+      postMpify(clonedAST, this.options, {
+        isComponent: this.isComponent.bind(this)
+      })
       const code = this.genElement(clonedAST)
       const body = [
         this.genImports(),
@@ -77,6 +81,7 @@ export class TemplateGenerator {
         errors: this.errors
       }
     } catch (err) {
+      console.error('[compile template error]', err)
       this.errors.push(err)
       /* istanbul ignore next */
       return {
@@ -112,20 +117,27 @@ export class TemplateGenerator {
 
   // TODO: refactor component name problem
   genComponent (el): string {
-    const { _cid, tag } = el
+    const { _cid, tag, _fid } = el
     const pascalTag = pascalize(tag)
     const camelizedTag = camelize(tag)
     const compInfo = this.imports[tag] || this.imports[pascalTag] || this.imports[camelizedTag]
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
-    let tail = `, ${FOR_TAIL_VAR}: ''`
+    let cid = _cid
+    let tail = `, ${FOR_TAIL_VAR}: _t || ''`
+
     // passing parent v-for tail to slot inside v-for
-    if (listTailReg.test(_cid)) {
-      tail = `, ${FOR_TAIL_VAR}: ${extractHidTail(_cid)}`
+    if (this.isInSlotSnippet()) {
+      cid = `${_cid} + _t`
+      tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
+    } else if (isDef(_fid)) {
+      cid = `${_cid} + ${sep} + ${_fid}`
+      tail = `, ${FOR_TAIL_VAR}: ${sep} + ${_fid}`
     }
+
     const data = [
-      `...${ROOT_DATA_VAR}[ ${VM_ID_PREFIX} + ${_cid} ]`,
+      `...${ROOT_DATA_VAR}[ ${VM_ID_PREFIX} + ${cid} ]`,
       `${ROOT_DATA_VAR}`,
       ...slotsNames
     ].join(', ')
@@ -173,9 +185,9 @@ export class TemplateGenerator {
           return null
         }
 
-        this.enterSlotSnippet()
+        this.enterSlotSnippet(slot)
         const parts = slot.ast.map(e => this.genElement(e))
-        this.leaveSlotSnippet()
+        this.leaveSlotSnippet(slot)
 
         const dependencies = slot.ast.reduce((res, e) => res.concat(this.collectDependencies(e)), [])
         const slotName = `${name}_${uid()}`
@@ -290,9 +302,7 @@ export class TemplateGenerator {
       klass.push(`{{ ${this.genHolder(el, 'class')} }}`)
     }
     // scoped id class
-    if (klass.length) {
-      klass.push(this.scopeId)
-    }
+    klass.push(this.scopeId)
     klass.unshift(`_${tag}`)
     klass = klass.filter(notEmpty).join(' ')
     return ` class="${klass}"`
@@ -403,13 +413,19 @@ export class TemplateGenerator {
     if (!el.for) {
       return this.genForKey(el)
     }
-    const { iterator1, alias, _forId } = el
+    const { iterator1, alias, _forId, _hid } = el
     const FOR = this.directive('for')
     const FOR_ITEM = this.directive('forItem')
     const FOR_INDEX = this.directive('forIndex')
+    let forHolderId = ''
+    if (this.isInSlotSnippet()) {
+      forHolderId = `${_hid} + _t`
+    } else {
+      forHolderId = _forId
+    }
 
     const _for = [
-      ` ${FOR}="{{ ${this.genHolder(_forId, 'for')} }}"`,
+      ` ${FOR}="{{ ${this.genHolder(forHolderId, 'for')} }}"`,
       this.genForKey(el),
       alias ? ` ${FOR_ITEM}="${alias}"` : /* istanbul ignore next */ ''
     ]
@@ -437,16 +453,16 @@ export class TemplateGenerator {
   }
 
   genSlot (el): string {
-    const { _hid } = el
+    const { _fid } = el
     let { slotName = 'default' } = el
     slotName = slotName.replace(/"/g, '')
     const defaultSlotName = `${slotName}$${uid()}`
     const defaultSlotBody = this.genChildren(el)
     const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : /* istanbul ignore next */ ''
-    let tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '')`
+    let tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
     // sloped-slot inside v-for
-    if (el.hasBindings && listTailReg.test(_hid)) {
-      tail = `, ${FOR_TAIL_VAR}: ${extractHidTail(_hid)}`
+    if (el.hasBindings && isDef(_fid)) {
+      tail = `, ${FOR_TAIL_VAR}: '-' + ${_fid} + (${FOR_TAIL_VAR} || '')`
     }
 
     /**
@@ -554,11 +570,7 @@ export class TemplateGenerator {
   }
 
   genVText (el = {}): string {
-    const { attrsMap = {}} = el
-    if (attrsMap['v-text']) {
-      return `{{ ${this.genHolder(el, 'vtext')} }}`
-    }
-    return ''
+    return `{{ ${this.genHolder(el, 'vtext')} }}`
   }
 
   isVHtml (el = {}): boolean {
@@ -611,35 +623,45 @@ export class TemplateGenerator {
   }
 
   genHid (el): string {
+    const { _hid, _fid } = el
     let tail = ''
+    const hid = _hid
     if (this.isInSlotSnippet()) {
       tail = ` + ${FOR_TAIL_VAR}`
     }
-    return `${el._hid}${tail}`
+    if (_fid) {
+      return `${_hid}${tail} + ${sep} + ${_fid}`
+    } else {
+      return `${hid}${tail}`
+    }
   }
-  enterSlotSnippet () {
-    this.slotSnippet++
+  enterSlotSnippet (slot) {
+    this.slotSnippetBuffer.push(slot)
   }
 
   leaveSlotSnippet () {
-    this.slotSnippet--
+    this.slotSnippetBuffer.pop()
   }
 
   isInSlotSnippet () {
-    return this.slotSnippet > 0
+    return this.slotSnippetBuffer.length > 0
   }
+
+  // getCurrentSlotSnippet () {
+  //   return this.slotSnippetBuffer[this.slotSnippetBuffer.length - 1]
+  // }
 
   wrapTemplateData (str) {
     return this.target === 'swan' ? `{{{ ${str} }}}` : `{{ ${str} }}`
   }
 }
 
-function extractHidTail (hid = ''): string {
-  const delimiter = `+ ${sep} +`
-  let parts = hid.split(delimiter)
-  parts = parts.slice(1).map(s => s.trim())
-  return `${sep} + ${parts.join(delimiter)}`
-}
+// function extractHidTail (hid = ''): string {
+//   const delimiter = `+ ${sep} +`
+//   let parts = hid.split(delimiter)
+//   parts = parts.slice(1).map(s => s.trim())
+//   return `${sep} + ${parts.join(delimiter)}`
+// }
 
 function pascalize (str = ''): string {
   const camelized = camelize(str)
