@@ -12,6 +12,12 @@ import {
 
 import { updateVnodeToMP } from '../instance/index'
 
+function isRootVnodeOfComponent (vnode = {}) {
+  const { data = {}} = vnode
+  const _hid = isDef(data._hid) ? data._hid : (data.attrs && data.attrs._hid)
+  return _hid === 0 && vnode.parent
+}
+
 function updateClass (oldVnode: any, vnode: any) {
   const data: VNodeData = vnode.data
   const oldData: VNodeData = oldVnode.data
@@ -35,6 +41,15 @@ function updateClass (oldVnode: any, vnode: any) {
       class: cls
     })
     updateVnodeToMP(vnode, HOLDER_TYPE_VARS.class, cls)
+  }
+
+  // extract component class
+  if (isRootVnodeOfComponent(vnode)) {
+    const { staticClass = '' } = vnode.parent.data
+    const cls = staticClass
+    if (cls) {
+      updateVnodeToMP(vnode, HOLDER_TYPE_VARS.rootClass, cls)
+    }
   }
 }
 

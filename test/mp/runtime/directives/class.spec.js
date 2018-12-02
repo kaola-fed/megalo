@@ -74,8 +74,11 @@ describe(':class', () => {
     ])
   })
 
-  // TODO: template support parent and child class merge
   it('class merge between parent and child', done => {
+    function expectRootClass (expected) {
+      expect(page.data.$root['0v0'].h[0].rcl).toBe(expected)
+    }
+
     const pageOptions = {
       mpType: 'page',
       template: '<child class="a" :class="value"></child>',
@@ -93,6 +96,8 @@ describe(':class', () => {
     const child = vm.$children[0]
 
     expectClass(page).toEqual('d b')
+    // static class of child is stored in 'h[0].rcl' of the child
+    expectRootClass('a')
 
     vm.value = 'e'
     waitForUpdate(() => {

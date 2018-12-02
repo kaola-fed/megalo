@@ -128,9 +128,15 @@ export class TemplateGenerator {
     let tail = `, ${FOR_TAIL_VAR}: _t || ''`
 
     // passing parent v-for tail to slot inside v-for
+    // TODO: refactor
     if (this.isInSlotSnippet()) {
-      cid = `${_cid} + _t`
-      tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
+      if (isDef(_fid)) {
+        cid = `${_cid} + _t + ${sep} + ${_fid}`
+        tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '') + ${sep} + ${_fid}`
+      } else {
+        cid = `${_cid} + _t`
+        tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
+      }
     } else if (isDef(_fid)) {
       cid = `${_cid} + ${sep} + ${_fid}`
       tail = `, ${FOR_TAIL_VAR}: ${sep} + ${_fid}`
@@ -291,7 +297,7 @@ export class TemplateGenerator {
   }
 
   genClass (el): string {
-    const { tag, classBinding } = el
+    const { tag, classBinding, _hid } = el
     let { staticClass = '' } = el
     let klass = []
     staticClass = removeQuotes(staticClass)
@@ -300,6 +306,9 @@ export class TemplateGenerator {
     }
     if (classBinding) {
       klass.push(`{{ ${this.genHolder(el, 'class')} }}`)
+    }
+    if (_hid === '0') {
+      klass.push(`{{ ${this.genHolder(el, 'rootClass')} }}`)
     }
     // scoped id class
     klass.push(this.scopeId)
@@ -456,9 +465,9 @@ export class TemplateGenerator {
     const { _fid } = el
     let { slotName = 'default' } = el
     slotName = slotName.replace(/"/g, '')
-    const defaultSlotName = `${slotName}$${uid()}`
-    const defaultSlotBody = this.genChildren(el)
-    const defaultSlot = defaultSlotBody ? `<template name="${defaultSlotName}">${defaultSlotBody}</template>` : /* istanbul ignore next */ ''
+    const fallbackSlotName = `${slotName}$${uid()}`
+    const fallbackSlotBody = this.genChildren(el)
+    const fallbackSlot = `<template name="${fallbackSlotName}">${fallbackSlotBody || ''}</template>`
     let tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
     // sloped-slot inside v-for
     if (el.hasBindings && isDef(_fid)) {
@@ -474,7 +483,7 @@ export class TemplateGenerator {
     if (this.target === 'swan') {
       return [
         // if
-        `${defaultSlot}`,
+        `${fallbackSlot}`,
         `<block s-if="s_${slotName}">`,
         `<template is="{{ s_${slotName} }}" `,
         `data="`,
@@ -484,7 +493,7 @@ export class TemplateGenerator {
 
         // else use default slot snippet
         `<block s-else>`,
-        `<template is="{{ '${defaultSlotName}' }}" `,
+        `<template is="{{ '${fallbackSlotName}' }}" `,
         `data="`,
         this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
         `"${this.genFor(el)}/>`,
@@ -493,8 +502,8 @@ export class TemplateGenerator {
     }
 
     return [
-      `${defaultSlot}`,
-      `<template is="{{ s_${slotName} || '${defaultSlotName}' }}" `,
+      `${fallbackSlot}`,
+      `<template is="{{ s_${slotName} || '${fallbackSlotName}' }}" `,
       `data="`,
       this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
       `"${this.genFor(el)}/>`

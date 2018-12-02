@@ -30,6 +30,7 @@ export const HOLDER_TYPE_VARS = {
   if: '_if',
   for: 'li',
   class: 'cl',
+  rootClass: 'rcl',
   style: 'st',
   value: 'value',
   vhtml: 'html',

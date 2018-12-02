@@ -59,12 +59,12 @@ function getFirstNode (nodes) {
   return firstNode
 }
 
-function markComponents (nodes, parentUId) {
-  return (nodes || []).forEach(node => {
+function markComponents (nodes = [], parentUId) {
+  nodes.forEach(node => {
     const { componentOptions } = node
     if (componentOptions) {
       node._mpSlotParentUId = parentUId
     }
-    markComponents(node.children)
+    markComponents(node.children, parentUId)
   })
 }

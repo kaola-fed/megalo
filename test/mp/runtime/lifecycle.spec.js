@@ -13,6 +13,9 @@ initMPEnvironment()
 
 describe('lifecycle', () => {
   it('App lifecycle', () => {
+    const globalData = {
+      x: 100
+    }
     const pageOptions = {
       mpType: 'app',
       template: `<div></div>`,
@@ -25,7 +28,10 @@ describe('lifecycle', () => {
       onShow: spyFn('onShow'),
       onHide: spyFn('onHide'),
       onError: spyFn('onError'),
-      onPageNotFound: spyFn('onPageNotFound')
+      onPageNotFound: spyFn('onPageNotFound'),
+      globalData () {
+        return globalData
+      }
     }
 
     new Vue(pageOptions).$mount()
@@ -52,6 +58,9 @@ describe('lifecycle', () => {
     expect(pageOptions.beforeMount).toHaveBeenCalledTimes(1)
     expect(pageOptions.mounted).toHaveBeenCalledTimes(1)
     expect(pageOptions.destroyed).not.toHaveBeenCalled()
+    expect(rootVM.globalData).toBe(globalData)
+    expect(rootVM.$mp.app.globalData).toBe(globalData)
+    expect(rootVM.$mp.app.globalData === rootVM.globalData).toBeTruthy()
 
     mpApp._callHook('onShow')
     expect(pageOptions.onShow).toHaveBeenCalledTimes(1)
