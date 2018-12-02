@@ -297,7 +297,7 @@ export class TemplateGenerator {
   }
 
   genClass (el): string {
-    const { tag, classBinding } = el
+    const { tag, classBinding, _hid } = el
     let { staticClass = '' } = el
     let klass = []
     staticClass = removeQuotes(staticClass)
@@ -306,6 +306,9 @@ export class TemplateGenerator {
     }
     if (classBinding) {
       klass.push(`{{ ${this.genHolder(el, 'class')} }}`)
+    }
+    if (_hid === '0') {
+      klass.push(`{{ ${this.genHolder(el, 'rootClass')} }}`)
     }
     // scoped id class
     klass.push(this.scopeId)
