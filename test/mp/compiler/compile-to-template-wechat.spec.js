@@ -875,6 +875,7 @@ describe('slot', () => {
       (
         `<view class="_div">` +
           `<view wx:for="{{ h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i1" class="_div">` +
+            `<template name="${slot1}"></template>` +
             `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, _t: _t || '', _c: c }}"/>` +
           `</view>` +
         `</view>`
@@ -893,6 +894,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
+          `<template name="${slot1}"></template>` +
           `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, _t: _t || '', _c: c }}" wx:for="{{ h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i1"/>` +
         `</view>`
       ),
@@ -913,6 +915,7 @@ describe('slot', () => {
       (
         `<view class="_div">` +
           `<view wx:for="{{ h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i1" class="_div">` +
+            `<template name="${slot1}"></template>` +
             `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, _t: '-' + (item_i2 !== undefined ? item_i2 : item_i1) + (_t || ''), _c: c }}"/>` +
           `</view>` +
         `</view>`
@@ -931,6 +934,7 @@ describe('slot', () => {
       ),
       (
         `<view class="_div">` +
+          `<template name="${slot1}"></template>` +
           `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, _t: '-' + (item_i2 !== undefined ? item_i2 : item_i1) + (_t || ''), _c: c }}" wx:for="{{ h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i1"/>` +
         `</view>`
       ),
