@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.5.0';
+Vue.version = '0.5.1';
 
 /*  */
 
@@ -4646,6 +4646,7 @@ var HOLDER_TYPE_VARS = {
   if: '_if',
   for: 'li',
   class: 'cl',
+  rootClass: 'rcl',
   style: 'st',
   value: 'value',
   vhtml: 'html',
@@ -4811,7 +4812,7 @@ function initVMToMP (vm) {
   var i = vmId.indexOf(sep);
   var cid = i > -1 ? vmId.slice(0, i) : vmId;
   var info = {
-    cid: cid,
+    cid: vmId,
     cpath: ("" + cid + VM_ID_SEP)
   };
 
@@ -5066,13 +5067,15 @@ function getFirstNode (nodes) {
 }
 
 function markComponents (nodes, parentUId) {
-  return (nodes || []).forEach(function (node) {
+  if ( nodes === void 0 ) nodes = [];
+
+  nodes.forEach(function (node) {
     var componentOptions = node.componentOptions;
     if (componentOptions) {
       node._mpSlotParentUId = parentUId;
     }
-    markComponents(node.children);
-  })
+    markComponents(node.children, parentUId);
+  });
 }
 
 function renderIf (cond, _hid, _fid) {
@@ -5185,6 +5188,8 @@ function updateListToMP (vnodeList, val, forId, context) {
   updateVnodeToMP(cloneVnode, HOLDER_TYPE_VARS.for, list);
 }
 
+var app = null;
+
 function initRootVM (mpVM, opt, query) {
   if ( opt === void 0 ) opt = {};
   if ( query === void 0 ) query = {};
@@ -5207,9 +5212,13 @@ function initRootVM (mpVM, opt, query) {
   };
 
   if (mpType === 'app') {
-    Object.assign($mp, { app: mpVM });
+    app = mpVM;
+    Object.assign($mp, { app: app });
   } else {
-    Object.assign($mp, { page: mpVM });
+    Object.assign($mp, {
+      page: mpVM,
+      app: app
+    });
   }
 
   Object.assign(options, { $mp: $mp });
@@ -6196,6 +6205,14 @@ var attrs = {
 
 /*  */
 
+function isRootVnodeOfComponent (vnode) {
+  if ( vnode === void 0 ) vnode = {};
+
+  var data = vnode.data; if ( data === void 0 ) data = {};
+  var _hid = isDef(data._hid) ? data._hid : (data.attrs && data.attrs._hid);
+  return _hid === 0 && vnode.parent
+}
+
 function updateClass (oldVnode, vnode) {
   var data = vnode.data;
   var oldData = oldVnode.data;
@@ -6219,6 +6236,16 @@ function updateClass (oldVnode, vnode) {
       class: cls
     });
     updateVnodeToMP(vnode, HOLDER_TYPE_VARS.class, cls);
+  }
+
+  // extract component class
+  if (isRootVnodeOfComponent(vnode)) {
+    var ref = vnode.parent.data;
+    var staticClass = ref.staticClass; if ( staticClass === void 0 ) staticClass = '';
+    var cls$1 = staticClass;
+    if (cls$1) {
+      updateVnodeToMP(vnode, HOLDER_TYPE_VARS.rootClass, cls$1);
+    }
   }
 }
 
@@ -6755,9 +6782,9 @@ page.init = function init (opt) {
   });
 };
 
-var app = {};
+var app$1 = {};
 
-app.init = function (opt) {
+app$1.init = function (opt) {
   var obj;
 
   var _App;
@@ -6778,11 +6805,12 @@ app.init = function (opt) {
       var rootVM = this.rootVM = initRootVM(this, opt, options.query);
       var ref = rootVM.$options;
       var globalData = ref.globalData; if ( globalData === void 0 ) globalData = function () {};
-      rootVM.$mount();
-      callHook$2(rootVM, 'onLaunch', options);
       this.globalData = globalData && (typeof globalData === 'function'
         ? globalData.call(rootVM, options)
         : globalData) || {};
+      rootVM.globalData = this.globalData;
+      rootVM.$mount();
+      callHook$2(rootVM, 'onLaunch', options);
     },
     //	Function	生命周期函数--监听小程序显示	当小程序启动，或从后台进入前台显示，会触发 onShow
     onShow: function onShow (options) {
@@ -6814,7 +6842,7 @@ function initMP (vm, options) {
 
   /* istanbul ignore else */
   if (mpType === 'app') {
-    app.init({
+    app$1.init({
       Component: vm.constructor,
       options: options,
       platform: _mpPlatform

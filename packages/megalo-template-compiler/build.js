@@ -1702,6 +1702,7 @@ var HOLDER_TYPE_VARS = {
   if: '_if',
   for: 'li',
   class: 'cl',
+  rootClass: 'rcl',
   style: 'st',
   value: 'value',
   vhtml: 'html',
@@ -5398,9 +5399,15 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
   var tail = ", " + FOR_TAIL_VAR + ": _t || ''";
 
   // passing parent v-for tail to slot inside v-for
+  // TODO: refactor
   if (this.isInSlotSnippet()) {
-    cid = _cid + " + _t";
-    tail = ", " + FOR_TAIL_VAR + ": " + FOR_TAIL_VAR + " || ''";
+    if (isDef(_fid)) {
+      cid = _cid + " + _t + " + sep$2 + " + " + _fid;
+      tail = ", " + FOR_TAIL_VAR + ": (" + FOR_TAIL_VAR + " || '') + " + sep$2 + " + " + _fid;
+    } else {
+      cid = _cid + " + _t";
+      tail = ", " + FOR_TAIL_VAR + ": " + FOR_TAIL_VAR + " || ''";
+    }
   } else if (isDef(_fid)) {
     cid = _cid + " + " + sep$2 + " + " + _fid;
     tail = ", " + FOR_TAIL_VAR + ": " + sep$2 + " + " + _fid;
@@ -5566,6 +5573,7 @@ TemplateGenerator.prototype.genTag = function genTag (el) {
 TemplateGenerator.prototype.genClass = function genClass (el) {
   var tag = el.tag;
     var classBinding = el.classBinding;
+    var _hid = el._hid;
   var staticClass = el.staticClass; if ( staticClass === void 0 ) staticClass = '';
   var klass = [];
   staticClass = removeQuotes(staticClass);
@@ -5574,6 +5582,9 @@ TemplateGenerator.prototype.genClass = function genClass (el) {
   }
   if (classBinding) {
     klass.push(("{{ " + (this.genHolder(el, 'class')) + " }}"));
+  }
+  if (_hid === '0') {
+    klass.push(("{{ " + (this.genHolder(el, 'rootClass')) + " }}"));
   }
   // scoped id class
   klass.push(this.scopeId);
@@ -5741,9 +5752,9 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
   var _fid = el._fid;
   var slotName = el.slotName; if ( slotName === void 0 ) slotName = 'default';
   slotName = slotName.replace(/"/g, '');
-  var defaultSlotName = slotName + "$" + (uid$1());
-  var defaultSlotBody = this.genChildren(el);
-  var defaultSlot = defaultSlotBody ? ("<template name=\"" + defaultSlotName + "\">" + defaultSlotBody + "</template>") : /* istanbul ignore next */ '';
+  var fallbackSlotName = slotName + "$" + (uid$1());
+  var fallbackSlotBody = this.genChildren(el);
+  var fallbackSlot = "<template name=\"" + fallbackSlotName + "\">" + (fallbackSlotBody || '') + "</template>";
   var tail = ", " + FOR_TAIL_VAR + ": " + FOR_TAIL_VAR + " || ''";
   // sloped-slot inside v-for
   if (el.hasBindings && isDef(_fid)) {
@@ -5759,7 +5770,7 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
   if (this.target === 'swan') {
     return [
       // if
-      ("" + defaultSlot),
+      ("" + fallbackSlot),
       ("<block s-if=\"s_" + slotName + "\">"),
       ("<template is=\"{{ s_" + slotName + " }}\" "),
       "data=\"",
@@ -5769,7 +5780,7 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
 
       // else use default slot snippet
       "<block s-else>",
-      ("<template is=\"{{ '" + defaultSlotName + "' }}\" "),
+      ("<template is=\"{{ '" + fallbackSlotName + "' }}\" "),
       "data=\"",
       this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ s ], " + ROOT_DATA_VAR + tail + ", _c: c")),
       ("\"" + (this.genFor(el)) + "/>"),
@@ -5778,8 +5789,8 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
   }
 
   return [
-    ("" + defaultSlot),
-    ("<template is=\"{{ s_" + slotName + " || '" + defaultSlotName + "' }}\" "),
+    ("" + fallbackSlot),
+    ("<template is=\"{{ s_" + slotName + " || '" + fallbackSlotName + "' }}\" "),
     "data=\"",
     this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ s ], " + ROOT_DATA_VAR + tail + ", _c: c")),
     ("\"" + (this.genFor(el)) + "/>")
