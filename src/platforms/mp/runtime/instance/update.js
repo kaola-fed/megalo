@@ -29,7 +29,7 @@ export function initVMToMP (vm) {
   const i = vmId.indexOf(sep)
   const cid = i > -1 ? vmId.slice(0, i) : vmId
   const info = {
-    cid,
+    cid: vmId,
     cpath: `${cid}${VM_ID_SEP}`
   }
 
