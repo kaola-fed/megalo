@@ -7,6 +7,8 @@ export * from './render-helpers/render-slot'
 export * from './render-helpers/render-if'
 export * from './render-helpers/render-list'
 
+let app = null
+
 export function initRootVM (mpVM, opt = {}, query = {}) {
   const { options, Component, platform } = opt
   const { mpType } = options
@@ -22,9 +24,13 @@ export function initRootVM (mpVM, opt = {}, query = {}) {
   }
 
   if (mpType === 'app') {
-    Object.assign($mp, { app: mpVM })
+    app = mpVM
+    Object.assign($mp, { app })
   } else {
-    Object.assign($mp, { page: mpVM })
+    Object.assign($mp, {
+      page: mpVM,
+      app
+    })
   }
 
   Object.assign(options, { $mp })

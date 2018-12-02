@@ -22,11 +22,12 @@ app.init = function (opt) {
     onLaunch (options = {}) {
       const rootVM = this.rootVM = initRootVM(this, opt, options.query)
       const { globalData = () => {} } = rootVM.$options
-      rootVM.$mount()
-      callHook(rootVM, 'onLaunch', options)
       this.globalData = globalData && (typeof globalData === 'function'
         ? globalData.call(rootVM, options)
         : globalData) || {}
+      rootVM.globalData = this.globalData
+      rootVM.$mount()
+      callHook(rootVM, 'onLaunch', options)
     },
     //	Function	生命周期函数--监听小程序显示	当小程序启动，或从后台进入前台显示，会触发 onShow
     onShow (options) {
