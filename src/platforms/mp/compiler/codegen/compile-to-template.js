@@ -128,9 +128,15 @@ export class TemplateGenerator {
     let tail = `, ${FOR_TAIL_VAR}: _t || ''`
 
     // passing parent v-for tail to slot inside v-for
+    // TODO: refactor
     if (this.isInSlotSnippet()) {
-      cid = `${_cid} + _t`
-      tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
+      if (isDef(_fid)) {
+        cid = `${_cid} + _t + ${sep} + ${_fid}`
+        tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '') + ${sep} + ${_fid}`
+      } else {
+        cid = `${_cid} + _t`
+        tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
+      }
     } else if (isDef(_fid)) {
       cid = `${_cid} + ${sep} + ${_fid}`
       tail = `, ${FOR_TAIL_VAR}: ${sep} + ${_fid}`
