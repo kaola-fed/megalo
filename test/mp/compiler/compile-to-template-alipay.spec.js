@@ -36,7 +36,7 @@ function wrapMP (code, options = {}) {
   return (
     importStr +
     `<template name="${name}">` +
-      `<view class="_div${scopedClass}">${code}</view>` +
+      `<view class="_div {{ h[ 0 ].rcl }}${scopedClass}">${code}</view>` +
     `</template>`
   )
 }
