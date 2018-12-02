@@ -613,4 +613,35 @@ describe('Directive v-on', () => {
     page._triggerEvent(undefined, 'touch-start')
     expect(onTouchStart.calls.count()).toBe(1)
   })
+
+  it('should work with components in v-for', () => {
+    const { page } = createPage({
+      template: '<div>' +
+                  '<div v-for="i in 3">' +
+                    '<test :v="i"></test>' +
+                  '</div>' +
+                '</div>',
+      components: {
+        test: {
+          template: '<div @click="foo(v-1)"></div>',
+          props: ['v'],
+          methods: { foo: spy }
+        }
+      }
+    })
+
+    page._triggerEvent({ dataset: { hid: '0', cid: '0v0-0' }}, 'tap')
+    expect(spy.calls.count()).toBe(1)
+
+    page._triggerEvent({ dataset: { hid: '0', cid: '0v0-1' }}, 'tap')
+    expect(spy.calls.count()).toBe(2)
+
+    page._triggerEvent({ dataset: { hid: '0', cid: '0v0-2' }}, 'tap')
+    expect(spy.calls.count()).toBe(3)
+
+    const args = spy.calls.allArgs()
+    args.forEach((arg, i) => {
+      expect(arg[0]).toBe(i)
+    })
+  })
 })
