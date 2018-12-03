@@ -12,4 +12,8 @@ export class Buffer {
     this.buff = {}
     return data
   }
+
+  isEqual (key, value) {
+    return this.buff[key] !== undefined && this.buff[key] === value
+  }
 }
