@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.5.1';
+Vue.version = '0.5.2';
 
 /*  */
 
@@ -4595,6 +4595,10 @@ Buffer.prototype.pop = function pop () {
   var data = Object.assign({}, this.buff);
   this.buff = {};
   return data
+};
+
+Buffer.prototype.isEqual = function isEqual (key, value) {
+  return this.buff[key] !== undefined && this.buff[key] === value
 };
 
 function getMPPlatform () {
@@ -4856,11 +4860,14 @@ function updateMPData (type, data, vnode) {
   var isDeepEqual = deepEqual(curValue, data);
 
   /* istanbul ignore else */
-  if (isDef(hid) && !isDeepEqual) {
+  if (isDef(hid)) {
     if (vm.$mp.platform === 'swan' && /[^A-Za-z0-9_]/.test(type)) {
       dataPathStr = dataPathStr.replace(/\.[^\.]*$/, ("['" + type + "']"));
     }
-    vm.$mp._update(( obj = {}, obj[dataPathStr] = data, obj));
+
+    if (!isDeepEqual || !vm.$mp._isEqualToBuffer(dataPathStr, data)) {
+      vm.$mp._update(( obj = {}, obj[dataPathStr] = data, obj));
+    }
   }
 }
 
@@ -4886,6 +4893,9 @@ function createUpdateFn (page) {
     },
     instantUpdate: function instantUpdate (data) {
       doUpdate();
+    },
+    isEqualToBuffer: function isEqualToBuffer (key, value) {
+      return buffer.isEqual(key, value)
     }
   }
 }
@@ -5202,13 +5212,15 @@ function initRootVM (mpVM, opt, query) {
   var ref = createUpdateFn(mpVM);
   var update = ref.update;
   var instantUpdate = ref.instantUpdate;
+  var isEqualToBuffer = ref.isEqualToBuffer;
   var $mp = {
     platform: platform,
     status: 'load',
     query: mpVMOptions,
     options: mpVMOptions,
     _update: update,
-    _instantUpdate: instantUpdate
+    _instantUpdate: instantUpdate,
+    _isEqualToBuffer: isEqualToBuffer
   };
 
   if (mpType === 'app') {
