@@ -69,7 +69,7 @@ export class TemplateGenerator {
       })
       const code = this.genElement(clonedAST)
       const body = [
-        this.genImports(),
+        // this.genImports(),
         `<template name="${this.name}">${code}</template>`
       ].join('')
 
@@ -536,7 +536,7 @@ export class TemplateGenerator {
     let deps = []
     const { tag, children } = el
     if (this.isComponent(el)) {
-      deps.push(this.getComponentSrc(tag))
+      deps.push(this.getComponentName(tag))
     }
     if (children) {
       children.forEach(c => {
@@ -546,14 +546,14 @@ export class TemplateGenerator {
     return deps
   }
 
-  getComponentSrc (name): string {
+  getComponentName (name): string {
     const { imports = {}} = this
     const camelizedName = camelize(name)
     const pascalizedName = pascalize(name)
 
     const dep = imports[name] || imports[camelizedName] || imports[pascalizedName]
     if (dep) {
-      return dep.src
+      return dep.name
     } else {
       return ''
     }
