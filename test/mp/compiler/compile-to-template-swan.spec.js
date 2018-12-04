@@ -28,13 +28,9 @@ function wrapHtml (code) {
 }
 
 function wrapMP (code, options = {}) {
-  const { imports = {}, name = 'defaultName', scopeId } = options
+  const { name = 'defaultName', scopeId } = options
   const scopedClass = scopeId ? ` ${scopeId}` : ''
-  const importStr = Object.keys(imports)
-    .map(k => `<import src="${imports[k].src}"/>`)
-    .join('')
   return (
-    importStr +
     `<template name="${name}">` +
       `<view class="_div {{ h[ 0 ].rcl }}${scopedClass}">${code}</view>` +
     `</template>`
