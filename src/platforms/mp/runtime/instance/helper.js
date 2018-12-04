@@ -28,8 +28,16 @@ export function getVM (vm = {}, id) {
 }
 
 export function getCid (vm) {
-  const cid = vm && vm.$attrs && vm.$attrs._cid ? vm.$attrs._cid : '0'
+  const { $vnode } = vm
+  let cid = $vnode && $vnode.data && $vnode.data.attrs._cid
+  cid = cid || '0'
   return cid
+}
+
+export function getFid (vm) {
+  const { $vnode } = vm
+  const fid = $vnode && $vnode.data && $vnode.data.attrs._fid
+  return fid
 }
 
 export function getVMId (vm) {
@@ -45,7 +53,7 @@ export function getVMId (vm) {
     cursor = cursor.$parent
   }
   const vmId = res.join(VM_ID_SEP)
-  const fid = vm && vm.$attrs && vm.$attrs._fid
+  const fid = getFid(vm)
   if (isDef(fid)) {
     return `${vmId}${sep}${fid}`
   }
