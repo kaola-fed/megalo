@@ -12,12 +12,6 @@ import {
 
 import { updateVnodeToMP } from '../instance/index'
 
-function isRootVnodeOfComponent (vnode = {}) {
-  const { data = {}} = vnode
-  const _hid = isDef(data._hid) ? data._hid : (data.attrs && data.attrs._hid)
-  return _hid === 0 && vnode.parent
-}
-
 function updateClass (oldVnode: any, vnode: any) {
   const data: VNodeData = vnode.data
   const oldData: VNodeData = oldVnode.data
@@ -34,22 +28,27 @@ function updateClass (oldVnode: any, vnode: any) {
     return
   }
 
-  // const { elm = {}} = vnode
-  const cls = genClassForVnode(vnode)
-  if (isDef(cls) && !/^vue-component/.test(vnode.tag)) {
-    Object.assign(vnode.elm, {
-      class: cls
-    })
+  let cls = genClassForVnode(vnode)
+  let rootClass = null
+  let rootVnode = null
+
+  if (isDef(cls) && isDef(vnode.componentInstance)) {
+    const { staticClass = '' } = vnode.data
+    const rootClassList = cls
+      .split(/\s+/)
+      .concat(staticClass.split(/\s+/))
+    rootVnode = vnode.componentInstance._vnode
+    rootClass = rootClassList.join(' ')
+    cls = undefined
+  }
+
+  if (isDef(cls)) {
+    vnode.elm.class = cls
     updateVnodeToMP(vnode, HOLDER_TYPE_VARS.class, cls)
   }
 
-  // extract component class
-  if (isRootVnodeOfComponent(vnode)) {
-    const { staticClass = '' } = vnode.parent.data
-    const cls = staticClass
-    if (cls) {
-      updateVnodeToMP(vnode, HOLDER_TYPE_VARS.rootClass, cls)
-    }
+  if (isDef(rootClass)) {
+    updateVnodeToMP(rootVnode, HOLDER_TYPE_VARS.rootClass, rootClass)
   }
 }
 
