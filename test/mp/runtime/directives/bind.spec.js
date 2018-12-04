@@ -290,6 +290,47 @@ describe('Directive v-bind', () => {
     }).then(done)
   })
 
+  it('update in Promise', done => {
+    jasmine.clock().uninstall()
+
+    const options = {
+      template: '<div>{{test}}</div>',
+      data: { test: false },
+      methods: {
+        update () {
+          this.test = false
+          this.next()
+            .then(() => {
+              this.test = true
+            })
+        },
+        next () {
+          return new Promise(resolve => {
+            resolve()
+          })
+        }
+      }
+    }
+
+    const { page, vm } = createPage(options)
+
+    function expectValue (expected) {
+      expect(getPageData(page, '0').h['1'].t).toEqual(expected)
+    }
+
+    expectValue('false')
+    vm.update()
+
+    setTimeout(() => {
+      expectValue('true')
+      vm.update()
+      setTimeout(() => {
+        expectValue('true')
+        done()
+      }, 100)
+    }, 100)
+  })
+
   // TODO: verify
   describe('bind object with special attribute', () => {
     pending()
