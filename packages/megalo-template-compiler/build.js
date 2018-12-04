@@ -1662,6 +1662,20 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 
 /*  */
 
+
+
+// function mergeClassData (child: VNodeData, parent: VNodeData): {
+//   staticClass: string,
+//   class: any
+// } {
+//   return {
+//     staticClass: concat(child.staticClass, parent.staticClass),
+//     class: isDef(child.class)
+//       ? [child.class, parent.class]
+//       : parent.class
+//   }
+// }
+
 /**
  * 频率控制 返回函数连续调用时，func 执行频率限定为 次 / wait
  *

@@ -4406,37 +4406,40 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.5.2';
+Vue.version = '0.5.3';
 
 /*  */
 
 function genClassForVnode (vnode) {
   var data = vnode.data;
-  var parentNode = vnode;
-  var childNode = vnode;
-  while (isDef(childNode.componentInstance)) {
-    childNode = childNode.componentInstance._vnode;
-    if (childNode && childNode.data) {
-      data = mergeClassData(childNode.data, data);
-    }
-  }
-  while (isDef(parentNode = parentNode.parent)) {
-    if (parentNode && parentNode.data) {
-      data = mergeClassData(data, parentNode.data);
-    }
-  }
+  // let parentNode = vnode
+  // let childNode = vnode
+  // while (isDef(childNode.componentInstance)) {
+  //   childNode = childNode.componentInstance._vnode
+  //   if (childNode && childNode.data) {
+  // data = mergeClassData(childNode.data, data)
+  // }
+  // }
+  // while (isDef(parentNode = parentNode.parent)) {
+  // if (parentNode && parentNode.data) {
+  // data = mergeClassData(data, parentNode.data)
+  // }
+  // }
   // mp: no need to update static class
   return renderClass(data.class)
 }
 
-function mergeClassData (child, parent) {
-  return {
-    staticClass: concat(child.staticClass, parent.staticClass),
-    class: isDef(child.class)
-      ? [child.class, parent.class]
-      : parent.class
-  }
-}
+// function mergeClassData (child: VNodeData, parent: VNodeData): {
+//   staticClass: string,
+//   class: any
+// } {
+//   return {
+//     staticClass: concat(child.staticClass, parent.staticClass),
+//     class: isDef(child.class)
+//       ? [child.class, parent.class]
+//       : parent.class
+//   }
+// }
 
 function renderClass (
   dynamicClass
@@ -4760,8 +4763,16 @@ function getVM (vm, id) {
 }
 
 function getCid (vm) {
-  var cid = vm && vm.$attrs && vm.$attrs._cid ? vm.$attrs._cid : '0';
+  var $vnode = vm.$vnode;
+  var cid = $vnode && $vnode.data && $vnode.data.attrs._cid;
+  cid = cid || '0';
   return cid
+}
+
+function getFid (vm) {
+  var $vnode = vm.$vnode;
+  var fid = $vnode && $vnode.data && $vnode.data.attrs._fid;
+  return fid
 }
 
 function getVMId (vm) {
@@ -4777,7 +4788,7 @@ function getVMId (vm) {
     cursor = cursor.$parent;
   }
   var vmId = res.join(VM_ID_SEP);
-  var fid = vm && vm.$attrs && vm.$attrs._fid;
+  var fid = getFid(vm);
   if (isDef(fid)) {
     return ("" + vmId + sep + fid)
   }
@@ -6217,14 +6228,6 @@ var attrs = {
 
 /*  */
 
-function isRootVnodeOfComponent (vnode) {
-  if ( vnode === void 0 ) vnode = {};
-
-  var data = vnode.data; if ( data === void 0 ) data = {};
-  var _hid = isDef(data._hid) ? data._hid : (data.attrs && data.attrs._hid);
-  return _hid === 0 && vnode.parent
-}
-
 function updateClass (oldVnode, vnode) {
   var data = vnode.data;
   var oldData = oldVnode.data;
@@ -6241,23 +6244,28 @@ function updateClass (oldVnode, vnode) {
     return
   }
 
-  // const { elm = {}} = vnode
   var cls = genClassForVnode(vnode);
-  if (isDef(cls) && !/^vue-component/.test(vnode.tag)) {
-    Object.assign(vnode.elm, {
-      class: cls
-    });
+  var rootClass = null;
+  var rootVnode = null;
+
+  if (isDef(cls) && isDef(vnode.componentInstance)) {
+    var ref = vnode.data;
+    var staticClass = ref.staticClass; if ( staticClass === void 0 ) staticClass = '';
+    var rootClassList = cls
+      .split(/\s+/)
+      .concat(staticClass.split(/\s+/));
+    rootVnode = vnode.componentInstance._vnode;
+    rootClass = rootClassList.join(' ');
+    cls = undefined;
+  }
+
+  if (isDef(cls)) {
+    vnode.elm.class = cls;
     updateVnodeToMP(vnode, HOLDER_TYPE_VARS.class, cls);
   }
 
-  // extract component class
-  if (isRootVnodeOfComponent(vnode)) {
-    var ref = vnode.parent.data;
-    var staticClass = ref.staticClass; if ( staticClass === void 0 ) staticClass = '';
-    var cls$1 = staticClass;
-    if (cls$1) {
-      updateVnodeToMP(vnode, HOLDER_TYPE_VARS.rootClass, cls$1);
-    }
+  if (isDef(rootClass)) {
+    updateVnodeToMP(rootVnode, HOLDER_TYPE_VARS.rootClass, rootClass);
   }
 }
 
