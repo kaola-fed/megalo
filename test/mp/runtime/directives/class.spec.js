@@ -95,22 +95,25 @@ describe(':class', () => {
 
     const child = vm.$children[0]
 
-    expectClass(page).toEqual('d b')
+    expectClass(page).toEqual('d')
     // static class of child is stored in 'h[0].rcl' of the child
-    expectRootClass('a')
+    expectRootClass('b a')
 
     vm.value = 'e'
     waitForUpdate(() => {
-      expectClass(page).toEqual('d e')
+      expectRootClass('e a')
+      expectClass(page).toEqual('d')
     }).then(() => {
       child.value = 'f'
     }).then(() => {
-      expectClass(page).toEqual('f e')
+      expectRootClass('e a')
+      expectClass(page).toEqual('f')
     }).then(() => {
       vm.value = { foo: true }
       child.value = ['bar', 'baz']
     }).then(() => {
-      expectClass(page).toEqual('bar baz foo')
+      expectRootClass('foo a')
+      expectClass(page).toEqual('bar baz')
     }).then(done)
 
     function expectClass (page) {
@@ -211,5 +214,44 @@ describe(':class', () => {
     expect(console.warn.calls.argsFor(0)[0]).toContain(
       'class="{{test}}": Interpolation inside attributes has been removed. Use v-bind or the colon shorthand instead. For example, instead of <div class="{{ val }}">, use <div :class="val">.'
     )
+  })
+
+  it('class merge between parent and child and no binding in child', done => {
+    function expectRootClass (expected) {
+      expect(page.data.$root['0v0'].h[0].rcl).toBe(expected)
+    }
+
+    const pageOptions = {
+      mpType: 'page',
+      template: '<child class="a" :class="value"></child>',
+      data: { value: 'b' },
+      components: {
+        child: {
+          template: '<div class="c"></div>',
+          data: () => ({ value: 'd' })
+        }
+      }
+    }
+
+    const { page, vm } = createPage(pageOptions)
+
+    const child = vm.$children[0]
+
+    // static class of child is stored in 'h[0].rcl' of the child
+    expectRootClass('b a')
+
+    vm.value = 'e'
+    waitForUpdate(() => {
+      expectRootClass('e a')
+    }).then(() => {
+      child.value = 'f'
+    }).then(() => {
+      expectRootClass('e a')
+    }).then(() => {
+      vm.value = { foo: true }
+      child.value = ['bar', 'baz']
+    }).then(() => {
+      expectRootClass('foo a')
+    }).then(done)
   })
 })
