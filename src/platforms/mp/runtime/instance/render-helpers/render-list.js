@@ -15,16 +15,16 @@ export function afterRenderList (
     keyOrIndex: string | number,
     index?: number
   ) => VNode,
-  forId: string | number,
+  forInfo: Array,
   context: Vue
 ) {
-  updateListToMP(ret, val, forId, context)
+  updateListToMP(ret, val, forInfo, context)
 }
 
 // TODO: support for destructuring
 // TODO: keys collecting method needs improve for
 // <li v-for="i in 3" :key="i"></li>
-function updateListToMP (vnodeList = [], val, forId, context) {
+function updateListToMP (vnodeList = [], val, forInfo, context) {
   const firstItem = vnodeList[0]
   let forKeys
   let list = []
@@ -76,7 +76,7 @@ function updateListToMP (vnodeList = [], val, forId, context) {
   const cloneVnode = {
     context,
     data: {
-      attrs: { _hid: forId }
+      attrs: { _hid: forInfo[0], _fid: forInfo[1] }
     }
   }
 
@@ -99,4 +99,14 @@ function updateListToMP (vnodeList = [], val, forId, context) {
   }
 
   updateVnodeToMP(cloneVnode, HOLDER_TYPE_VARS.for, list)
+
+  const fnStoreNode = Array.isArray(firstItem) ? firstItem[0] : firstItem
+
+  if (fnStoreNode) {
+    fnStoreNode.__renderListFn = function (vnode) {
+      updateVnodeToMP(vnode || cloneVnode, HOLDER_TYPE_VARS.for, list)
+    }
+
+    fnStoreNode.__renderListVnode = cloneVnode
+  }
 }

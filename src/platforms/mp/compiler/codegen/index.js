@@ -2,7 +2,7 @@
 
 import { genHandlers } from './events'
 import baseDirectives from 'compiler/directives/index'
-import { camelize, no, extend } from 'shared/util'
+import { camelize, no, extend, isDef } from 'shared/util'
 import { baseWarn, pluckModuleFunction } from 'compiler/helpers'
 
 type TransformFunction = (el: ASTElement, code: string) => string;
@@ -136,7 +136,9 @@ export function genIf (
   altEmpty?: string
 ): string {
   el.ifProcessed = true // avoid recursion
-  return genIfConditions(el.ifConditions.slice(), state, altGen, altEmpty)
+  const conditions = el.ifConditions.slice()
+  conditions.__extratExpression = el.ifConditions.__extratExpression
+  return genIfConditions(conditions, state, altGen, altEmpty)
 }
 
 function genIfConditions (
@@ -146,6 +148,9 @@ function genIfConditions (
   altEmpty?: string
 ): string {
   if (!conditions.length) {
+    if (conditions.__extratExpression) {
+      return `_c\("a", {attrs: {__if:[${conditions.__extratExpression.join(',')}]}})`
+    }
     return altEmpty || '_e()'
   }
   const condition = conditions.shift()
@@ -192,14 +197,14 @@ export function genFor (
       true /* tip */
     )
   }
-  const { _forId, _fid } = el
-
+  const { _forInfo, _fid } = el
   el.forProcessed = true // avoid recursion
+  const tailStr = _forInfo._hid + (isDef(_forInfo._fid) ? `, ${_forInfo._fid}` : '')
   return `${altHelper || '_l'}((${exp}),` +
     `function(${alias}${iterator1}${iterator2}){` +
       `var _fid = ${_fid};` +
       `return ${(altGen || genElement)(el, state)}` +
-    `},${_forId},_self)`
+    `},[${tailStr}],_self)`
 }
 
 export function genData (el: ASTElement, state: CodegenState): string {

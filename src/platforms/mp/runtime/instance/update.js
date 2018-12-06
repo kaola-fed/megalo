@@ -8,10 +8,11 @@ import {
   VM_ID_SEP,
   VM_ID_VAR,
   VM_ID_PREFIX,
-  LIST_TAIL_SEPS,
+  // LIST_TAIL_SEPS,
   ROOT_DATA_VAR,
+  SLOT_HOLDER_VAR,
   HOLDER_VAR,
-  SLOT_CONTEXT_ID_VAR,
+  // SLOT_CONTEXT_ID_VAR,
   HOLDER_TYPE_VARS
 } from 'mp/util/index'
 
@@ -20,17 +21,13 @@ function isEmptyObj (obj = {}) {
 }
 
 export function initVMToMP (vm) {
-  const sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat
+  // const sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat
 
   vm = vm || this
-  // const cid = getVMId(vm)
   const vmId = getVMId(vm)
-  // console.log(vmId)
-  const i = vmId.indexOf(sep)
-  const cid = i > -1 ? vmId.slice(0, i) : vmId
   const info = {
     cid: vmId,
-    cpath: `${cid}${VM_ID_SEP}`
+    cpath: `${vmId}${VM_ID_SEP}`
   }
 
   const prefix = `${ROOT_DATA_VAR}.${vmId}`
@@ -41,21 +38,6 @@ export function initVMToMP (vm) {
   })
 }
 
-export function updateSlotId (vm, sid) {
-  vm = vm || this
-  const vmId = getVMId(vm)
-  const dataPaths = [ROOT_DATA_VAR, vmId, SLOT_CONTEXT_ID_VAR]
-  const curValue = getValue(vm.$mp.page.data, dataPaths)
-  const dataPathStr = dataPaths.join('.')
-
-  /* istanbul ignore else */
-  if (isDef(sid) && curValue !== sid) {
-    vm.$mp._update({
-      [dataPathStr]: sid
-    })
-  }
-}
-
 export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
   const vm = this
   const vmId = getVMId(vm)
@@ -63,7 +45,7 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
   const dataPaths = [
     ROOT_DATA_VAR,
     vmId,
-    HOLDER_VAR,
+    vnode.slotContext ? SLOT_HOLDER_VAR : HOLDER_VAR,
     hid,
     type
   ]
