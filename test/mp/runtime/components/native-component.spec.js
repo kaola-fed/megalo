@@ -1,6 +1,8 @@
 import { createPage, getPageData } from '../../helpers'
 
 describe('native component', () => {
+  pending()
+
   beforeEach(() => {
     jasmine.clock().install()
   })
