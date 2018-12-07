@@ -68,9 +68,12 @@ export function getVMId (vm) {
   let cursor = vm
   while (cursor) {
     let tmp = getCid(cursor)
+    const fidPath = getFidPath(cursor)
+    if (cursor !== vm && isDef(fidPath)) {
+      tmp += `${sep}${fidPath}`
+    }
     const fid = getFid(cursor)
     if (cursor !== vm && isDef(fid)) {
-      tmp += `${sep}${getFidPath(cursor)}`
       fids.unshift(fid)
     }
     res.unshift(tmp)
