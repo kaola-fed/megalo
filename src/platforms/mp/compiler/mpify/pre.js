@@ -191,17 +191,26 @@ function processAttrs (node) {
   const bindingAttrs = []
 
   attrsList.forEach((attr, i) => {
-    if (!vbindReg.test(attr.name)) {
+    let { name } = attr
+    if (/^:?mp:/.test(name)) {
+      const realName = attr.name.replace(/mp:/, '')
+      renameObjectPropName(attrsMap, name, realName)
+      modifyAttrName(attrs, name, realName)
+      attr.name = realName
+      name = realName
+    }
+
+    if (!vbindReg.test(name)) {
       // set default true, <div enable></div> -> <div enable="true"></div>
       if (attr.value === '') {
         attr.value = 'true'
-        attrs[i].value = '"true"'
-        attrsMap[attr.name] = 'true'
+        attrsMap[name] = 'true'
+        modifyAttr(attrs, name, '"true"')
       }
     } else {
       // collect dynamic attrs, only update daynamic attrs in runtime
-      const realName = attr.name.replace(vbindReg, '') || 'value'
-      bindingAttrs.push(realName)
+      const bindingName = name.replace(vbindReg, '') || 'value'
+      bindingAttrs.push(bindingName)
     }
   })
 
@@ -352,4 +361,31 @@ function findFirstNoneTemplateNode (el) {
   }
 
   return res
+}
+
+function renameObjectPropName (obj, from, to) {
+  if (obj.hasOwnProperty(from)) {
+    obj[to] = obj[from]
+    delete obj[from]
+  }
+}
+
+function modifyAttr (attrs, name, value) {
+  attrs.some(attr => {
+    if (attr.name === name) {
+      attr.value = value
+      return true
+    }
+  })
+}
+
+function modifyAttrName (attrs, name, newName) {
+  const realName = name.replace(/^:/, '')
+  const realNewName = newName.replace(/^:/, '')
+  attrs.some(attr => {
+    if (attr.name === realName) {
+      attr.name = realNewName
+      return true
+    }
+  })
 }

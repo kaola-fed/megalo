@@ -127,7 +127,6 @@ export class TemplateGenerator {
 
     // passing parent v-for tail to slot inside v-for
     // TODO: refactor
-    // if (this.isInSlotSnippet()) {
     if (isDef(_fid)) {
       cid = `${_cid} + (_t || '') + ${sep} + ${_fid}`
       tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '') + ${sep} + ${_fid}`
@@ -135,10 +134,6 @@ export class TemplateGenerator {
       cid = `${_cid} + (_t || '')`
       tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
     }
-    // } else if (isDef(_fid)) {
-    //   cid = `${_cid} + ${sep} + ${_fid}`
-    //   tail = `, ${FOR_TAIL_VAR}: ${sep} + ${_fid}`
-    // }
 
     const data = [
       `...${ROOT_DATA_VAR}[ ${VM_ID_PREFIX} + ${cid} ]`,
