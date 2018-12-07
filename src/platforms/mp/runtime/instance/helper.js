@@ -1,8 +1,15 @@
 import { isDef } from 'core/util/index'
 import { VM_ID_SEP, LIST_TAIL_SEPS } from 'mp/util/index'
+let sep = null
+
+function updateSep (vm) {
+  if (!sep) {
+    sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat
+  }
+}
 
 export function getHid (vm, vnode = {}) {
-  const sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat
+  updateSep(vm)
   const { data = {}} = vnode
   const _hid = isDef(data._hid) ? data._hid : (data.attrs && data.attrs._hid)
   const _fid = isDef(data._fid) ? data._fid : (data.attrs && data.attrs._fid)
@@ -40,31 +47,55 @@ export function getFid (vm) {
   return fid
 }
 
+function getFidPath (vm) {
+  updateSep(vm)
+  const fids = []
+  let cursor = vm
+  while (cursor) {
+    const fid = getFid(cursor)
+    if (isDef(fid)) {
+      fids.unshift(fid)
+    }
+    cursor = cursor.$parent
+  }
+  return fids.join(sep) || undefined
+}
+
 export function getVMId (vm) {
   const sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat
   const res = []
+  const fids = []
   let cursor = vm
-  let prev
   while (cursor) {
-    if (cursor === vm || !isSlotParent(cursor, prev)) {
-      res.unshift(getCid(cursor))
+    let tmp = getCid(cursor)
+    const fidPath = getFidPath(cursor)
+    if (cursor !== vm && isDef(fidPath)) {
+      tmp += `${sep}${fidPath}`
     }
-    prev = cursor
+    const fid = getFid(cursor)
+    if (cursor !== vm && isDef(fid)) {
+      fids.unshift(fid)
+    }
+    res.unshift(tmp)
+
     cursor = cursor.$parent
   }
   const vmId = res.join(VM_ID_SEP)
   const fid = getFid(vm)
   if (isDef(fid)) {
-    return `${vmId}${sep}${fid}`
+    fids.push(fid)
+  }
+  if (fids.length) {
+    return `${vmId}${sep}${fids.join(sep)}`
   }
   return vmId
 }
 
-function isSlotParent (parent, child) {
-  const { $vnode = {}} = child || {}
-  const childSlotParentUId = $vnode._mpSlotParentUId
-  return isDef(childSlotParentUId) && childSlotParentUId === parent._uid
-}
+// function isSlotParent (parent, child) {
+//   const { $vnode = {}} = child || {}
+//   const childSlotParentUId = $vnode._mpSlotParentUId
+//   return isDef(childSlotParentUId) && childSlotParentUId === parent._uid
+// }
 
 // export function getVMParentId (vm) {
 //   if (vm.$parent) {

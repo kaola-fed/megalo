@@ -36,13 +36,11 @@ describe('Component scoped slot', () => {
       }
     })
 
-    const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData.h[4].t).toBe('hello')
-    expect(comp1.s).toBe('0')
+    expect(comp1.s[4].t).toBe('hello')
     vm.$refs.test.msg = 'world'
     waitForUpdate(() => {
-      expect(pageData.h[4].t).toBe('world')
+      expect(comp1.s[4].t).toBe('world')
     }).then(done)
   })
 
@@ -67,13 +65,11 @@ describe('Component scoped slot', () => {
       }
     })
 
-    const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData.h[3].t).toBe('hello')
-    expect(comp1.s).toBe('0')
+    expect(comp1.s[3].t).toBe('hello')
     vm.$refs.test.msg = 'world'
     waitForUpdate(() => {
-      expect(pageData.h[3].t).toBe('world')
+      expect(comp1.s[3].t).toBe('world')
     }).then(done)
   })
 
@@ -103,14 +99,12 @@ describe('Component scoped slot', () => {
       }
     })
 
-    const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData.h[4].t).toBe('hello world !')
-    expect(comp1.s).toBe('0')
+    expect(comp1.s[4].t).toBe('hello world !')
     vm.$refs.test.msg = 'bye'
     vm.$refs.test.obj.msg2 = 'bye'
     waitForUpdate(() => {
-      expect(pageData.h[4].t).toBe('bye bye !')
+      expect(comp1.s[4].t).toBe('bye bye !')
     }).then(done)
   })
 
@@ -196,16 +190,14 @@ describe('Component scoped slot', () => {
       }
     })
 
-    const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData.h[4].t).toBe('FOO')
-    expect(pageData.h[6].t).toBe('BAR')
-    expect(comp1.s).toBe('0')
+    expect(comp1.s[4].t).toBe('FOO')
+    expect(comp1.s[6].t).toBe('BAR')
     // expect(vm.$el.innerHTML).toBe('<span>FOO</span><span>BAR</span>')
     vm.$refs.test.foo = 'BAZ'
     waitForUpdate(() => {
-      expect(pageData.h[4].t).toBe('BAZ')
-      expect(pageData.h[6].t).toBe('BAR')
+      expect(comp1.s[4].t).toBe('BAZ')
+      expect(comp1.s[6].t).toBe('BAR')
       // expect(vm.$el.innerHTML).toBe('<span>BAZ</span><span>BAR</span>')
     }).then(done)
   })
@@ -230,13 +222,11 @@ describe('Component scoped slot', () => {
         }
       }
     })
-    const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData.h[3].t).toBe('FOO BAR')
-    expect(comp1.s).toBe('0')
+    expect(comp1.s[3].t).toBe('FOO BAR')
     vm.$refs.test.foo = 'BAZ'
     waitForUpdate(() => {
-      expect(pageData.h[3].t).toBe('BAZ BAR')
+      expect(comp1.s[3].t).toBe('BAZ BAR')
     }).then(done)
   })
 
@@ -261,8 +251,7 @@ describe('Component scoped slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     expect(pageData._h).toBeUndefined()
-    expect(comp1.s).toBeUndefined()
-    expect(comp1.h[4].t).toBe('hello fallback')
+    expect(comp1.s[4].t).toBe('hello fallback')
   })
 
   it('slot with v-for', done => {
@@ -290,13 +279,11 @@ describe('Component scoped slot', () => {
       }
     })
 
-    const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s).toBe('0')
 
     function assertOutput () {
       vm.$refs.test.items.map((item, i) => {
-        expect(pageData.h[`4-${i}`].t).toBe(item)
+        expect(comp1.s[`4-${i}`].t).toBe(item)
       })
     }
 
@@ -338,13 +325,11 @@ describe('Component scoped slot', () => {
       }
     })
 
-    const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s).toBe('0')
 
     function assertOutput () {
       vm.$refs.test.items.map((item, i) => {
-        expect(pageData.h[`4-${i}`].t).toBe(item)
+        expect(comp1.s[`4-${i}`].t).toBe(item)
       })
     }
 
@@ -382,10 +367,8 @@ describe('Component scoped slot', () => {
         msg: 'hello'
       }
     })
-    const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(pageData.h[3].t).toBe('helloI am static')
-    expect(comp1.s).toBe('0')
+    expect(comp1.s[3].t).toBe('helloI am static')
   })
 
   it('non-scoped slot with scope alias', () => {
@@ -411,8 +394,8 @@ describe('Component scoped slot', () => {
       }
     })
 
-    const pageData = getPageData(page, '0')
-    expect(pageData.h[4].t).toBe('meh')
+    const comp1 = getPageData(page, '0,0')
+    expect(comp1.s[4].t).toBe('meh')
   })
 
   it('warn key on slot', () => {
@@ -522,14 +505,12 @@ describe('Component scoped slot', () => {
       }
     })
 
-    const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s).toBe('0')
 
     function assertOutput () {
       vm.items.map((item, i) => {
         const name = vm.$refs.test.info.name
-        expect(pageData.h[`4-${i}`].t).toBe(`${name} + ${item}`)
+        expect(comp1.s[`4-${i}`].t).toBe(`${name} + ${item}`)
       })
     }
 

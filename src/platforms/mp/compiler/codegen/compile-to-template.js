@@ -5,11 +5,11 @@ import { cloneAST, removeQuotes, uid, escapeText } from '../util'
 import presets from '../../util/presets/index'
 import { baseWarn } from 'compiler/helpers'
 import { capitalize, camelize, isDef } from 'shared/util'
-import { postMpify } from '../mpify/post'
 import {
   notEmpty,
   ROOT_DATA_VAR,
   LIST_TAIL_SEPS,
+  SLOT_HOLDER_VAR,
   HOLDER_VAR,
   FOR_TAIL_VAR,
   VM_ID_PREFIX,
@@ -59,14 +59,12 @@ export class TemplateGenerator {
     })
 
     this.slotSnippetBuffer = []
+    this.fallbackSlot = 0
   }
 
   generate (ast) {
     try {
       const clonedAST = cloneAST(ast)
-      postMpify(clonedAST, this.options, {
-        isComponent: this.isComponent.bind(this)
-      })
       const code = this.genElement(clonedAST)
       const body = [
         this.genImports(),
@@ -129,17 +127,12 @@ export class TemplateGenerator {
 
     // passing parent v-for tail to slot inside v-for
     // TODO: refactor
-    if (this.isInSlotSnippet()) {
-      if (isDef(_fid)) {
-        cid = `${_cid} + _t + ${sep} + ${_fid}`
-        tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '') + ${sep} + ${_fid}`
-      } else {
-        cid = `${_cid} + _t`
-        tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
-      }
-    } else if (isDef(_fid)) {
-      cid = `${_cid} + ${sep} + ${_fid}`
-      tail = `, ${FOR_TAIL_VAR}: ${sep} + ${_fid}`
+    if (isDef(_fid)) {
+      cid = `${_cid} + (_t || '') + ${sep} + ${_fid}`
+      tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '') + ${sep} + ${_fid}`
+    } else {
+      cid = `${_cid} + (_t || '')`
+      tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
     }
 
     const data = [
@@ -422,15 +415,21 @@ export class TemplateGenerator {
     if (!el.for) {
       return this.genForKey(el)
     }
-    const { iterator1, alias, _forId, _hid } = el
+    const { iterator1, alias, _forInfo = {}} = el
     const FOR = this.directive('for')
     const FOR_ITEM = this.directive('forItem')
     const FOR_INDEX = this.directive('forIndex')
+    const { _hid: forHid, _fid: forFid } = _forInfo
+
     let forHolderId = ''
+
     if (this.isInSlotSnippet()) {
-      forHolderId = `${_hid} + _t`
+      forHolderId =
+        isDef(forFid)
+          ? `${forHid} + (${FOR_TAIL_VAR} || '') + ${sep} + ${forFid}`
+          : `${forHid} + (${FOR_TAIL_VAR} || '')`
     } else {
-      forHolderId = _forId
+      forHolderId = isDef(forFid) ? `${forHid} + ${sep} + ${forFid}` : forHid
     }
 
     const _for = [
@@ -466,12 +465,13 @@ export class TemplateGenerator {
     let { slotName = 'default' } = el
     slotName = slotName.replace(/"/g, '')
     const fallbackSlotName = `${slotName}$${uid()}`
+    this.enterFallbackSlot()
     const fallbackSlotBody = this.genChildren(el)
+    this.leaveFallbackSlot()
     const fallbackSlot = `<template name="${fallbackSlotName}">${fallbackSlotBody || ''}</template>`
     let tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
-    // sloped-slot inside v-for
-    if (el.hasBindings && isDef(_fid)) {
-      tail = `, ${FOR_TAIL_VAR}: '-' + ${_fid} + (${FOR_TAIL_VAR} || '')`
+    if (isDef(_fid)) {
+      tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '') + ${sep} + ${_fid}`
     }
 
     /**
@@ -487,7 +487,7 @@ export class TemplateGenerator {
         `<block s-if="s_${slotName}">`,
         `<template is="{{ s_${slotName} }}" `,
         `data="`,
-        this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
+        this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}, _c: c`),
         `"${this.genFor(el)}/>`,
         `</block>`,
 
@@ -495,7 +495,7 @@ export class TemplateGenerator {
         `<block s-else>`,
         `<template is="{{ '${fallbackSlotName}' }}" `,
         `data="`,
-        this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
+        this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}, _c: c`),
         `"${this.genFor(el)}/>`,
         `</block>`
       ].join('')
@@ -505,7 +505,7 @@ export class TemplateGenerator {
       `${fallbackSlot}`,
       `<template is="{{ s_${slotName} || '${fallbackSlotName}' }}" `,
       `data="`,
-      this.wrapTemplateData(`...${ROOT_DATA_VAR}[ s ], ${ROOT_DATA_VAR}${tail}, _c: c`),
+      this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}, _c: c`),
       `"${this.genFor(el)}/>`
     ].join('')
   }
@@ -523,6 +523,9 @@ export class TemplateGenerator {
     /* istanbul ignore next */
     if (!varName) {
       throw new Error(`${type} holder HOLDER_TYPE_VARS not found`)
+    }
+    if (this.isInSlotSnippet() || this.isInFallbackSlot()) {
+      return `${SLOT_HOLDER_VAR}[ ${hid} ].${varName}`
     }
     return `${HOLDER_VAR}[ ${hid} ].${varName}`
   }
@@ -648,17 +651,33 @@ export class TemplateGenerator {
     this.slotSnippetBuffer.push(slot)
   }
 
+  enterFallbackSlot () {
+    this.fallbackSlot++
+  }
+
   leaveSlotSnippet () {
     this.slotSnippetBuffer.pop()
+  }
+
+  leaveFallbackSlot () {
+    this.fallbackSlot--
   }
 
   isInSlotSnippet () {
     return this.slotSnippetBuffer.length > 0
   }
 
-  // getCurrentSlotSnippet () {
-  //   return this.slotSnippetBuffer[this.slotSnippetBuffer.length - 1]
-  // }
+  isInFallbackSlot () {
+    return this.fallbackSlot > 0
+  }
+
+  isInScopedSlotSnippet () {
+    return this.slotSnippetBuffer.length > 0 && this.getCurrentSlotSnippet().scoped
+  }
+
+  getCurrentSlotSnippet () {
+    return this.slotSnippetBuffer[this.slotSnippetBuffer.length - 1]
+  }
 
   wrapTemplateData (str) {
     return this.target === 'swan' ? `{{{ ${str} }}}` : `{{ ${str} }}`

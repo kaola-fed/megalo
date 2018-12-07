@@ -9,13 +9,13 @@ export * from './platform'
 
 export const ROOT_DATA_VAR = '$root'
 export const HOLDER_VAR = 'h'
+export const SLOT_HOLDER_VAR = 's'
 export const FOR_TAIL_VAR = '_t'
 export const VM_ID_VAR = 'c'
 export const VM_ID_PREFIX = 'cp'
 
 export const VM_ID_SEP = 'v'
 export const VM_ID_SEP_REG = /v/
-export const SLOT_CONTEXT_ID_VAR = 's'
 
 export const LIST_TAIL_SEPS = {
   swan: '_',

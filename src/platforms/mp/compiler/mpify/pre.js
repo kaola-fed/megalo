@@ -140,6 +140,17 @@ function walkIf (node, state) {
 
     walk(block, state)
 
+    if (state.isInSlot()) {
+      condition.__isInSlot = true
+      if (!conditions.__extratExpression) {
+        conditions.__extratExpression = []
+      }
+      if (exp) {
+        const extratExpression = `!!(${exp}), ${block._hid}, ${block._fid || null}`
+        conditions.__extratExpression.push(extratExpression)
+      }
+    }
+
     if (exp) {
       condition.rawexp = exp
       if (block._fid) {
@@ -149,6 +160,14 @@ function walkIf (node, state) {
       }
     }
   })
+
+  if (conditions.__extratExpression) {
+    conditions.forEach(condition => {
+      const { block } = condition
+      const noneTemplateBlock = findFirstNoneTemplateNode(block)
+      addAttr(noneTemplateBlock, '__if', `[ ${conditions.__extratExpression.join(',')} ]`)
+    })
+  }
 }
 
 function walkChildren (node, state) {
@@ -172,17 +191,26 @@ function processAttrs (node) {
   const bindingAttrs = []
 
   attrsList.forEach((attr, i) => {
-    if (!vbindReg.test(attr.name)) {
+    let { name } = attr
+    if (/^:?mp:/.test(name)) {
+      const realName = attr.name.replace(/mp:/, '')
+      renameObjectPropName(attrsMap, name, realName)
+      modifyAttrName(attrs, name, realName)
+      attr.name = realName
+      name = realName
+    }
+
+    if (!vbindReg.test(name)) {
       // set default true, <div enable></div> -> <div enable="true"></div>
       if (attr.value === '') {
         attr.value = 'true'
-        attrs[i].value = '"true"'
-        attrsMap[attr.name] = 'true'
+        attrsMap[name] = 'true'
+        modifyAttr(attrs, name, '"true"')
       }
     } else {
       // collect dynamic attrs, only update daynamic attrs in runtime
-      const realName = attr.name.replace(vbindReg, '') || 'value'
-      bindingAttrs.push(realName)
+      const bindingName = name.replace(vbindReg, '') || 'value'
+      bindingAttrs.push(bindingName)
     }
   })
 
@@ -220,16 +248,14 @@ class State {
     this.compStack = new Stack()
     this.sep = options.sep || '-'
     this.preset = options.preset
-    this.listStates = new Stack()
-    // this.listStates = new Stack()
     // init a root component state, like page
     this.pushComp()
   }
   pushComp () {
     this.compStack.push({
       id: ++this.compCount,
-      elems: 0
-      // listStates: new Stack()
+      elems: 0,
+      listStates: new Stack()
     })
   }
   popComp () {
@@ -239,17 +265,20 @@ class State {
     this.elemCount++
   }
   popListState () {
-    return this.listStates.pop()
+    return this.getCurrentComp().listStates.pop()
   }
   pushListState (state) {
-    const currentStates = this.listStates.top
+    const currentStates = this.getCurrentListState()
     let newStates = []
     if (currentStates && currentStates.length) {
       newStates = [].concat(currentStates)
     }
 
     newStates.push(state)
-    this.listStates.push(newStates)
+    this.getCurrentComp().listStates.push(newStates)
+  }
+  getCurrentListState () {
+    return this.getCurrentComp().listStates.top
   }
   getCurrentComp () {
     return this.compStack.top
@@ -260,11 +289,8 @@ class State {
   getCurrentElemIndex () {
     return this.elemCount
   }
-  getCurrentListState () {
-    return this.listStates.top
-  }
   getCurrentListNode () {
-    const top = this.listStates.top || []
+    const top = this.getCurrentListState() || []
     return (top[top.length - 1] || {}).node
   }
   getHId (node) {
@@ -282,6 +308,9 @@ class State {
     const _fid = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
     return _fid
   }
+  isInSlot () {
+    return this.getCurrentComp().id !== 0
+  }
   assignHId (node) {
     const _hid = this.getHId(node)
     Object.assign(node, { _hid })
@@ -293,11 +322,11 @@ class State {
 
     // remove last index, like '0-1-2', we only need '0-1'
     // store v-for list in this holder
+    node._forInfo = { _hid }
     if (_fid) {
       tail = currentListState.slice(0, -1).map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
-      tail = tail ? ` + ${sep} + ${tail}` : tail
+      node._forInfo._fid = `${tail}` || undefined
     }
-    node._forId = _hid + tail
   }
   resolveHolder (node) {
     if (node._hid === undefined) {
@@ -313,4 +342,50 @@ class State {
       }
     }
   }
+}
+
+function findFirstNoneTemplateNode (el) {
+  let res = null
+  if (el.tag !== 'template') {
+    return el
+  }
+
+  if (el.children) {
+    el.children.some(c => {
+      const found = findFirstNoneTemplateNode(c)
+      if (found) {
+        res = found
+        return true
+      }
+    })
+  }
+
+  return res
+}
+
+function renameObjectPropName (obj, from, to) {
+  if (obj.hasOwnProperty(from)) {
+    obj[to] = obj[from]
+    delete obj[from]
+  }
+}
+
+function modifyAttr (attrs, name, value) {
+  attrs.some(attr => {
+    if (attr.name === name) {
+      attr.value = value
+      return true
+    }
+  })
+}
+
+function modifyAttrName (attrs, name, newName) {
+  const realName = name.replace(/^:/, '')
+  const realNewName = newName.replace(/^:/, '')
+  attrs.some(attr => {
+    if (attr.name === realName) {
+      attr.name = realNewName
+      return true
+    }
+  })
 }
