@@ -116,12 +116,12 @@ describe('codegen', () => {
   it('generate v-for directive', () => {
     assertCodegen(
       '<div><li v-for="item in items" :key="item.uid"></li></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},_l((items),function(item,item_i1,item_i2){var _fid = (item_i2 !== undefined ? item_i2 : item_i1);return _c('li',{key:item.uid,attrs:{"_hid":1,"_fid":_fid,"_fk":"uid"}})},1,_self))}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},_l((items),function(item,item_i1,item_i2){var _fid = (item_i2 !== undefined ? item_i2 : item_i1);return _c('li',{key:item.uid,attrs:{"_hid":1,"_fid":_fid,"_fk":"uid"}})},[1],_self))}`
     )
     // iterator syntax
     assertCodegen(
       '<div><li v-for="(item, i) in items"></li></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},_l((items),function(item,i,item_i2){var _fid = (item_i2 !== undefined ? item_i2 : i);return _c('li',{attrs:{"_hid":1,"_fid":_fid}})},1,_self))}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},_l((items),function(item,i,item_i2){var _fid = (item_i2 !== undefined ? item_i2 : i);return _c('li',{attrs:{"_hid":1,"_fid":_fid}})},[1],_self))}`
     )
     // TODO: support for object
     // assertCodegen(
@@ -142,7 +142,17 @@ describe('codegen', () => {
     // v-for with extra element
     assertCodegen(
       '<div><p></p><li v-for="item in items"></li></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},[_c('p',{attrs:{"_hid":1}}),_l((items),function(item,item_i1,item_i2){var _fid = (item_i2 !== undefined ? item_i2 : item_i1);return _c('li',{attrs:{"_hid":2,"_fid":_fid}})},2,_self)],1)}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},[_c('p',{attrs:{"_hid":1}}),_l((items),function(item,item_i1,item_i2){var _fid = (item_i2 !== undefined ? item_i2 : item_i1);return _c('li',{attrs:{"_hid":2,"_fid":_fid}})},[2],_self)],1)}`
+    )
+    // embeded v-for
+    assertCodegen(
+      '<div><li v-for="i in 3"><span v-for="i in 3"></span></li></div>',
+      `with(this){return _c('div',{attrs:{"_hid":0}},_l((3),function(i,i_i1,i_i2){var _fid = (i_i2 !== undefined ? i_i2 : i_i1);return _c('li',{attrs:{"_hid":1,"_fid":_fid}},_l((3),function(i,i_i1,i_i2){var _fid = (i_i2 !== undefined ? i_i2 : i_i1) + '-' + (i_i2 !== undefined ? i_i2 : i_i1);return _c('span',{attrs:{"_hid":2,"_fid":_fid}})},[2, (i_i2 !== undefined ? i_i2 : i_i1)],_self))},[1],_self))}`
+    )
+    // component in v-for, slot element should not have fid
+    assertCodegen(
+      '<div><li v-for="i in 3"><compa><div></div></compa></li></div>',
+      `with(this){return _c('div',{attrs:{"_hid":0}},_l((3),function(i,i_i1,i_i2){var _fid = (i_i2 !== undefined ? i_i2 : i_i1);return _c('li',{attrs:{"_hid":1,"_fid":_fid}},[_c('compa',{attrs:{"_hid":2,"_fid":_fid,"_cid":0}},[_c('div',{attrs:{"_hid":4}})])],1)},[1],_self))}`
     )
   })
 
@@ -185,6 +195,21 @@ describe('codegen', () => {
     assertCodegen(
       '<div><p v-if="show">hello</p><p v-else-if="hide">world</p><p v-if="show">hello</p><p v-else-if="hide">world</p></div>',
       `with(this){return _c('div',{attrs:{"_hid":0}},[(_ri(!!(show), 1))?_c('p',{attrs:{"_hid":1}},[]):(_ri(!!(hide), 3))?_c('p',{attrs:{"_hid":3}},[]):_e(),(_ri(!!(show), 5))?_c('p',{attrs:{"_hid":5}},[]):(_ri(!!(hide), 7))?_c('p',{attrs:{"_hid":7}},[]):_e()],1)}`
+    )
+  })
+
+  it('generate v-if directive inside components', () => {
+    assertCodegen(
+      '<test><p v-if="show">hello</p></test>',
+      `with(this){return _c('test',{attrs:{"_hid":0,"_cid":0}},[(_ri(!!(show), 2))?_c('p',{attrs:{"_hid":2,"__if":[ !!(show), 2, null ]}},[]):_c("a", {attrs: {__if:[!!(show), 2, null]}})],1)}`
+    )
+    assertCodegen(
+      '<test><p v-if="show">hello</p><p v-else-if="show2"></p></test>',
+      `with(this){return _c('test',{attrs:{"_hid":0,"_cid":0}},[(_ri(!!(show), 2))?_c('p',{attrs:{"_hid":2,"__if":[ !!(show), 2, null,!!(show2), 4, null ]}},[]):(_ri(!!(show2), 4))?_c('p',{attrs:{"_hid":4,"__if":[ !!(show), 2, null,!!(show2), 4, null ]}}):_c("a", {attrs: {__if:[!!(show), 2, null,!!(show2), 4, null]}})],1)}`
+    )
+    assertCodegen(
+      '<test><p v-if="show">hello</p><p v-else></p></test>',
+      `with(this){return _c('test',{attrs:{"_hid":0,"_cid":0}},[(_ri(!!(show), 2))?_c('p',{attrs:{"_hid":2,"__if":[ !!(show), 2, null ]}},[]):_c('p',{attrs:{"_hid":4,"__if":[ !!(show), 2, null ]}})],1)}`
     )
   })
 
@@ -645,7 +670,7 @@ describe('codegen', () => {
     // normalize type: 2
     assertCodegen(
       '<div><child></child><template v-for="item in list">{{ item }}</template></div>',
-      `with(this){return _c('div',{attrs:{"_hid":0}},[_c('child',{attrs:{"_hid":1,"_cid":0}}),_l((list),function(item,item_i1,item_i2){var _fid = (item_i2 !== undefined ? item_i2 : item_i1);return [_v(_s(item),4,_fid)]},3,_self)],1)}`
+      `with(this){return _c('div',{attrs:{"_hid":0}},[_c('child',{attrs:{"_hid":1,"_cid":0}}),_l((list),function(item,item_i1,item_i2){var _fid = (item_i2 !== undefined ? item_i2 : item_i1);return [_v(_s(item),4,_fid)]},[3],_self)],1)}`
     )
   })
 
@@ -713,6 +738,17 @@ describe('codegen', () => {
     assertCodegen(
       '<div :a="A" v-bind:b="B" c></div>',
       `with(this){return _c('div',{attrs:{"a":A,"b":B,"c":"true","_hid":0,"_batrs":"a,b"}})}`
+    )
+  })
+
+  it('deal with mp:key', () => {
+    assertCodegen(
+      '<div mp:key="1"></div>',
+      `with(this){return _c('div',{attrs:{"key":"1","_hid":0}})}`
+    )
+    assertCodegen(
+      '<div :mp:key="test"></div>',
+      `with(this){return _c('div',{attrs:{"key":test,"_hid":0,"_batrs":"key"}})}`
     )
   })
 })
