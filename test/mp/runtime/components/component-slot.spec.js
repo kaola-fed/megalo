@@ -755,5 +755,54 @@ describe('Component slot', () => {
     expect(comp3.s['6-2-2'].t).toBe('3-3')
   })
 
+  it('embedded component slot with v-for, component with child component', () => {
+    const { page } = createPage({
+      template: '<div><test v-for="i in 3" :key="i"><test2 :v="i"></test2></test></div>',
+      components: {
+        test: {
+          template: '<div><slot></slot></div>'
+        },
+        test2: {
+          template: '<test3 :v="v"><slot></slot></test3>',
+          props: ['v'],
+          components: {
+            test3: {
+              template: '<div>{{v}}</div>',
+              props: ['v']
+            }
+          }
+        }
+      }
+    })
+
+    // test1.0
+    expect(getPageData(page, '0,0-0')).toBeDefined()
+    // test2.0
+    expect(getPageData(page, '0,0-0,1-0')).toBeDefined()
+    // test3.0
+    expect(getPageData(page, '0,0-0,1-0,0-0')).toBeDefined()
+
+    // test1.1
+    expect(getPageData(page, '0,0-1')).toBeDefined()
+    // test2.1
+    expect(getPageData(page, '0,0-1,1-1')).toBeDefined()
+    // test3.1
+    expect(getPageData(page, '0,0-1,1-1,0-1')).toBeDefined()
+
+    // test1.2
+    expect(getPageData(page, '0,0-2')).toBeDefined()
+    // test2.2
+    expect(getPageData(page, '0,0-2,1-2')).toBeDefined()
+    // test3.2
+    expect(getPageData(page, '0,0-2,1-2,0-2')).toBeDefined()
+
+    // test.3.0
+    expect(getPageData(page, '0,0-0,1-0,0-0').h[1].t).toBe('1')
+    // test.3.1
+    expect(getPageData(page, '0,0-1,1-1,0-1').h[1].t).toBe('2')
+    // test.3.2
+    expect(getPageData(page, '0,0-2,1-2,0-2').h[1].t).toBe('3')
+  })
+
   // TODO: '<div><test v-for="i in 3" :key="i"><test2><div slot-scope="scope" v-for="ele in scope.list">{{ i }}-{{ ele }}</div></test2></test></div>',
 })
