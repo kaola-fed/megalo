@@ -740,5 +740,16 @@ describe('codegen', () => {
       `with(this){return _c('div',{attrs:{"a":A,"b":B,"c":"true","_hid":0,"_batrs":"a,b"}})}`
     )
   })
+
+  it('deal with mp:key', () => {
+    assertCodegen(
+      '<div mp:key="1"></div>',
+      `with(this){return _c('div',{attrs:{"key":"1","_hid":0}})}`
+    )
+    assertCodegen(
+      '<div :mp:key="test"></div>',
+      `with(this){return _c('div',{attrs:{"key":test,"_hid":0,"_batrs":"key"}})}`
+    )
+  })
 })
 /* eslint-enable quotes */

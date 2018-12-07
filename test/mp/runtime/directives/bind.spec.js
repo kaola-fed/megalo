@@ -388,4 +388,39 @@ describe('Directive v-bind', () => {
       expect(vm.$el.innerHTML).toBe('<div>comp</div>')
     })
   })
+
+  it('deal with :mp:key', done => {
+    const options = {
+      template: '<div :mp:key="foo"></div>',
+      data: { foo: 'ok' }
+    }
+
+    const { page, vm } = createPage(options)
+
+    function expectAttr (expected) {
+      expect(getPageData(page, '0').h['0'].key).toEqual(expected)
+    }
+
+    console.log(page.data.$root)
+
+    expectAttr('ok')
+    vm.foo = 'again'
+    waitForUpdate(() => {
+      expectAttr('again')
+      vm.foo = null
+    }).then(() => {
+      expectAttr(null)
+      vm.foo = false
+    }).then(() => {
+      expectAttr(false)
+      vm.foo = true
+    }).then(() => {
+      expectAttr(true)
+      vm.foo = 0
+    }).then(() => {
+      expectAttr(0)
+    }).then(() => {
+      expectAttr(0)
+    }).then(done)
+  })
 })

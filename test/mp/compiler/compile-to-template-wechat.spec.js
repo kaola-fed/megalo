@@ -449,6 +449,17 @@ describe('compilteToTemplate: wechat', () => {
       }
     )
   })
+
+  it('deal with mp:key', () => {
+    assertCodegen(
+      '<div mp:key="1"></div>',
+      `<view class="_div" key="1"></view>`
+    )
+    assertCodegen(
+      '<div :mp:key="test"></div>',
+      `<view class="_div" key="{{ h[ 1 ][ 'key' ] }}"></view>`
+    )
+  })
 })
 
 describe('slot', () => {
