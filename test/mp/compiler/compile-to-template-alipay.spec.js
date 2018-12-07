@@ -28,13 +28,9 @@ function wrapHtml (code) {
 }
 
 function wrapMP (code, options = {}) {
-  const { imports = {}, name = 'defaultName', scopeId } = options
+  const { name = 'defaultName', scopeId } = options
   const scopedClass = scopeId ? ` ${scopeId}` : ''
-  const importStr = Object.keys(imports)
-    .map(k => `<import src="${imports[k].src}"/>`)
-    .join('')
   return (
-    importStr +
     `<template name="${name}">` +
       `<view class="_div {{ h[ 0 ].rcl }}${scopedClass}">${code}</view>` +
     `</template>`
@@ -651,7 +647,7 @@ describe('slot', () => {
         )
 
         expect(slot2.dependencies.length).toEqual(1)
-        expect(slot2.dependencies[0]).toEqual(CompB.src)
+        expect(slot2.dependencies[0]).toEqual(CompB.name)
         expect(slot2.body).toEqual(
           `<template name="${slot2.slotName}" parent="${options.name}">` +
             `<view class="_div">` +
@@ -1237,7 +1233,7 @@ describe('slot', () => {
       function assertRes (res) {
         res.slots.forEach(slot => {
           if (slot.name === 'default') {
-            expect(slot.dependencies[0]).toBe('./CompB$1234')
+            expect(slot.dependencies[0]).toBe('CompB$1234')
             expect(slot.body).toContain(`<template is="CompB$1234" data="{{ ...$root[ cp + 1 + (_t || '') ], $root, _t: _t || '' }}" />`)
           }
         })
@@ -1272,7 +1268,7 @@ describe('slot', () => {
       function assertRes (res) {
         res.slots.forEach(slot => {
           if (slot.name === 'default') {
-            expect(slot.dependencies[0]).toBe('./CompB$1234')
+            expect(slot.dependencies[0]).toBe('CompB$1234')
             expect(slot.body).toContain(`<template is="CompB$1234" data="{{ ...$root[ cp + 1 + (_t || '') ], $root, _t: _t || '' }}" />`)
           }
         })
