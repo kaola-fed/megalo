@@ -32,6 +32,9 @@ Vue.prototype.$mount = function (
           test: { name: 'test' },
           test2: { name: 'test2' },
           test3: { name: 'test3' }
+        },
+        transformAssetUrls: {
+          img: 'src'
         }
       }, this)
       options.render = render

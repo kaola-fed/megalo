@@ -1325,4 +1325,27 @@ describe('slot', () => {
       }
     )
   })
+
+  it('img with url-loader', () => {
+    const options = {
+      transformAssetUrls: {
+        img: 'src'
+      }
+    }
+    assertCodegen(
+      `<img src="https://pic.jpg">`,
+      `<image class="_img" src="https://pic.jpg"></image>`,
+      options
+    )
+    assertCodegen(
+      `<img src="data:image/123">`,
+      `<image class="_img" src="data:image/123"></image>`,
+      options
+    )
+    assertCodegen(
+      `<img src="./pic.jpg">`,
+      `<image class="_img" src="{{ h[ 1 ][ 'src' ] }}"></image>`,
+      options
+    )
+  })
 })
