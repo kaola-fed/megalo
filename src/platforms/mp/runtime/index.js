@@ -26,11 +26,13 @@ import {
 } from 'mp/util/index'
 
 // install platform specific utils
-Vue.config.mustUseProp = mustUseProp
-Vue.config.isReservedTag = isReservedTag
-Vue.config.isReservedAttr = isReservedAttr
-Vue.config.getTagNamespace = getTagNamespace
-Vue.config.isUnknownElement = isUnknownElement
+const VueConfig = Vue.config
+VueConfig.mustUseProp = mustUseProp
+VueConfig.isReservedTag = isReservedTag
+VueConfig.isReservedAttr = isReservedAttr
+VueConfig.getTagNamespace = getTagNamespace
+VueConfig.isUnknownElement = isUnknownElement
+updateOptionMergeStrategies(VueConfig)
 
 // install platform runtime directives & components
 extend(Vue.options.directives, platformDirectives)
@@ -86,6 +88,23 @@ Vue.prototype.$mount = function (
     initVMToMP(vm)
     return vm
   }
+}
+
+function updateOptionMergeStrategies (VueConfig) {
+  const mergeHook = VueConfig.optionMergeStrategies.created
+  const strats = [
+    // Page
+    'onLoad', 'onReady', 'onShow',
+    'onUnload', 'onHide', 'onPullDownRefresh',
+    'onReachBottom', 'onShareAppMessage', 'onPageScroll',
+    'onTabItemTap', 'onTitleClick',
+    // App
+    'onLaunch', 'onError', 'onPageNotFound'
+  ].reduce((res, hook) => {
+    res[hook] = mergeHook
+    return res
+  }, {})
+  Object.assign(VueConfig.optionMergeStrategies, strats)
 }
 
 export default Vue

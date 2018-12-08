@@ -21,6 +21,16 @@ function walkInTree (vm, fn, options = {}) {
   return result
 }
 
+function doCallHook (vm, hook, options) {
+  let handlers = vm.$options[hook] || []
+  if (!Array.isArray(handlers)) {
+    handlers = [handlers]
+  }
+  return handlers.reduce((res, handler) => {
+    return handler.call(vm, options)
+  }, undefined)
+}
+
 export function callHook (vm, hook, options) {
   /* istanbul ignore if */
   if (!vm) {
@@ -30,14 +40,12 @@ export function callHook (vm, hook, options) {
   let result
 
   if (hook === 'onReady') {
-    result = walkInTree(vm, function (_vm) {
-      const handler = _vm.$options[hook]
-      handler && handler.call(_vm, options)
+    result = walkInTree(vm, function (curVM) {
+      doCallHook(curVM, hook, options)
     }, { bottomToTop: true })
   } else {
-    result = walkInTree(vm, function (_vm) {
-      const handler = _vm.$options[hook]
-      return handler && handler.call(_vm, options)
+    result = walkInTree(vm, function (curVM) {
+      return doCallHook(curVM, hook, options)
     })
   }
 
