@@ -27,7 +27,12 @@ Vue.prototype.$mount = function (
         shouldDecodeNewlines,
         shouldDecodeNewlinesForHref,
         delimiters: options.delimiters,
-        comments: options.comments
+        comments: options.comments,
+        imports: {
+          test: { name: 'test' },
+          test2: { name: 'test2' },
+          test3: { name: 'test3' }
+        }
       }, this)
       options.render = render
       options.staticRenderFns = staticRenderFns

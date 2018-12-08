@@ -98,7 +98,7 @@ describe('Component slot', () => {
       childTemplate: '<div><slot><p>{{msg}}</p></slot></div>'
     })
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s[4].t).toBe('child message')
+    expect(comp1.s[3].t).toBe('child message')
     // expect(child.$el.children[0].tagName).toBe('P')
     // expect(child.$el.textContent).toBe('child message')
   })
@@ -478,12 +478,12 @@ describe('Component slot', () => {
       }
     })
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s[3].t).toBe('hellofoo')
-    expect(comp1.h[3].t).toBe('1')
+    expect(comp1.s[2].t).toBe('hellofoo')
+    expect(comp1.h[2].t).toBe('1')
     vm.$children[0].a = 2
     waitForUpdate(() => {
-      expect(comp1.s[3].t).toBe('hellofoo')
-      expect(comp1.h[3].t).toBe('2')
+      expect(comp1.s[2].t).toBe('hellofoo')
+      expect(comp1.h[2].t).toBe('2')
     }).then(done)
   })
 

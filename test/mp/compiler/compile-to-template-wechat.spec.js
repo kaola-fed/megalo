@@ -1170,7 +1170,7 @@ describe('slot', () => {
         `<view class="_div">` +
           `<CompA class="_CompA">` +
             `<view class="_div" slot="head">` +
-              `<view class="_div">{{ h[ 6 ].t }}</view>` +
+              `<view class="_div">{{ h[ 5 ].t }}</view>` +
             `</view>` +
           `</CompA>` +
         `</view>`
@@ -1192,8 +1192,8 @@ describe('slot', () => {
       (
         `<view class="_div">` +
           `<CompA class="_CompA">` +
-            `<label class="_span" slot="{{ h[ 4 ].slot }}">` +
-              `{{ h[ 5 ].t }}` +
+            `<label class="_span" slot="{{ h[ 3 ].slot }}">` +
+              `{{ h[ 4 ].t }}` +
             `</label>` +
           `</CompA>` +
         `</view>`

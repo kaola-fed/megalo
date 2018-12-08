@@ -150,7 +150,7 @@ describe('Component', () => {
       expect(pageData.h['0']._if).toBeTruthy()
       comp1 = getPageData(page, '0,0')
       expect(comp1.s['2'].t).toBe('hello')
-      expect(comp1.h['3'].t).toBe(' world')
+      expect(comp1.h['2'].t).toBe(' world')
     }).then(done)
   })
 

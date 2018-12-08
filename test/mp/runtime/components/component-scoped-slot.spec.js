@@ -251,7 +251,7 @@ describe('Component scoped slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     expect(pageData._h).toBeUndefined()
-    expect(comp1.s[4].t).toBe('hello fallback')
+    expect(comp1.s[3].t).toBe('hello fallback')
   })
 
   it('slot with v-for', done => {
