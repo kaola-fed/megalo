@@ -1,10 +1,16 @@
 /* @flow */
 
 import TAG_MAP from '../tag-map'
-import { cloneAST, removeQuotes, uid, escapeText } from '../util'
+import {
+  cloneAST,
+  removeQuotes,
+  uid,
+  escapeText,
+  getComponentInfo
+} from '../util'
 import presets from '../../util/presets/index'
 import { baseWarn } from 'compiler/helpers'
-import { capitalize, camelize, isDef } from 'shared/util'
+import { isDef } from 'shared/util'
 import {
   notEmpty,
   ROOT_DATA_VAR,
@@ -116,9 +122,7 @@ export class TemplateGenerator {
   // TODO: refactor component name problem
   genComponent (el): string {
     const { _cid, tag, _fid } = el
-    const pascalTag = pascalize(tag)
-    const camelizedTag = camelize(tag)
-    const compInfo = this.imports[tag] || this.imports[pascalTag] || this.imports[camelizedTag]
+    const compInfo = this.getComponent(tag)
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
@@ -549,19 +553,6 @@ export class TemplateGenerator {
     return deps
   }
 
-  getComponentName (name): string {
-    const { imports = {}} = this
-    const camelizedName = camelize(name)
-    const pascalizedName = pascalize(name)
-
-    const dep = imports[name] || imports[camelizedName] || imports[pascalizedName]
-    if (dep) {
-      return dep.name
-    } else {
-      return ''
-    }
-  }
-
   genVHtml (el): string {
     const { htmlParse } = this
     return `<template is="${htmlParse.templateName}"${[
@@ -611,14 +602,24 @@ export class TemplateGenerator {
   }
 
   isComponent (el = {}): boolean {
-    const { tag } = el
-    if (el._cid) {
-      const { imports = {}} = this
-      const pascalName = pascalize(tag)
-      const camelizedName = camelize(tag)
-      return !!(imports[tag] || imports[pascalName] || imports[camelizedName])
+    const { tag, _cid } = el
+    if (_cid) {
+      return !!this.getComponent(tag)
     }
     return false
+  }
+
+  getComponentName (name): string {
+    const info = this.getComponent(name)
+    if (info) {
+      return info.name
+    } else {
+      return ''
+    }
+  }
+
+  getComponent (name) {
+    return getComponentInfo(name, this.imports)
   }
 
   isVText (el = {}): boolean {
@@ -682,17 +683,4 @@ export class TemplateGenerator {
   wrapTemplateData (str) {
     return this.target === 'swan' ? `{{{ ${str} }}}` : `{{ ${str} }}`
   }
-}
-
-// function extractHidTail (hid = ''): string {
-//   const delimiter = `+ ${sep} +`
-//   let parts = hid.split(delimiter)
-//   parts = parts.slice(1).map(s => s.trim())
-//   return `${sep} + ${parts.join(delimiter)}`
-// }
-
-function pascalize (str = ''): string {
-  const camelized = camelize(str)
-  const pascalized = capitalize(camelized)
-  return pascalized
 }

@@ -1,5 +1,8 @@
-import TAG_MAP from '../tag-map'
-import { Stack, createUidFn } from '../util'
+import {
+  Stack,
+  createUidFn,
+  getComponentInfo
+} from '../util'
 import { LIST_TAIL_SEPS } from 'mp/util/index'
 import presets from '../../util/presets/index'
 
@@ -16,13 +19,14 @@ let sep = `'${LIST_TAIL_SEPS.wechat}'`
 
 // walk and modify ast before render function is generated
 export function mpify (node, options) {
-  const { target = 'wechat' } = options
+  const { target = 'wechat', imports } = options
   sep = LIST_TAIL_SEPS[target] ? `'${LIST_TAIL_SEPS[target]}'` : sep
   const preset = presets[target]
   const state = new State({
     rootNode: node,
     target,
-    preset
+    preset,
+    imports
   })
   walk(node, state)
 }
@@ -98,7 +102,8 @@ function walkElem (node, state) {
     addAttr(node, '_fk', `"${key}"`)
   }
 
-  if (!isTag(node)) {
+  // if (!isTag(node)) {
+  if (state.isComponent(node)) {
     return walkComponent(node, state)
   }
 
@@ -236,12 +241,9 @@ function addAttr (node, name, value) {
   Object.assign(node, { attrs, attrsMap })
 }
 
-function isTag (node) {
-  return !!TAG_MAP[node.tag] || node.tag === 'template'
-}
-
 class State {
   constructor (options = {}) {
+    this.imports = options.imports || {}
     this.rootNode = options.rootNode
     this.compCount = -1
     this.elemCount = -1
@@ -341,6 +343,11 @@ class State {
         addAttr(node, '_fid', '_fid')
       }
     }
+  }
+
+  isComponent (el) {
+    const { tag } = el
+    return !!getComponentInfo(tag, this.imports)
   }
 }
 

@@ -1,6 +1,10 @@
 /* @flow */
 
-import { makeMap } from 'shared/util'
+import {
+  makeMap,
+  capitalize,
+  camelize
+} from 'shared/util'
 
 export const isUnaryTag = makeMap(
   'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
@@ -74,4 +78,21 @@ export const uid = createUidFn()
 
 export const escapeText = (str = '') => {
   return str.replace(/\</g, `{{"<"}}`)
+}
+
+export function getComponentInfo (name, imports = {}) {
+  const camelizedName = camelize(name)
+  const pascalizedName = pascalize(name)
+  return (
+    imports[name] ||
+    imports[camelizedName] ||
+    imports[pascalizedName] ||
+    null
+  )
+}
+
+export function pascalize (str = ''): string {
+  const camelized = camelize(str)
+  const pascalized = capitalize(camelized)
+  return pascalized
 }
