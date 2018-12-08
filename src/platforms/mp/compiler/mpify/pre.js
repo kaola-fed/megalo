@@ -19,27 +19,32 @@ let sep = `'${LIST_TAIL_SEPS.wechat}'`
 
 // walk and modify ast before render function is generated
 export function mpify (node, options) {
-  const { target = 'wechat', imports } = options
+  const {
+    target = 'wechat',
+    imports = {},
+    transformAssetUrls = {}
+  } = options
   sep = LIST_TAIL_SEPS[target] ? `'${LIST_TAIL_SEPS[target]}'` : sep
   const preset = presets[target]
   const state = new State({
     rootNode: node,
     target,
     preset,
-    imports
+    imports,
+    transformAssetUrls
   })
   walk(node, state)
 }
 
-function visit (el, state) {
+function visit (node, state) {
   const { visitors = {}} = state.preset
 
   if (visitors.all) {
-    visitors.all(el)
+    visitors.all(node)
   }
 
-  if (visitors[el.tag]) {
-    visitors[el.tag](el)
+  if (visitors[node.tag]) {
+    visitors[node.tag](node)
   }
 }
 
@@ -96,7 +101,7 @@ function walkFor (node, state) {
 }
 
 function walkElem (node, state) {
-  processAttrs(node)
+  processAttrs(node, state)
   if (node.key) {
     const key = node.key.replace(/^\w*\./, '')
     addAttr(node, '_fk', `"${key}"`)
@@ -191,7 +196,7 @@ function walkChildren (node, state) {
   }
 }
 
-function processAttrs (node) {
+function processAttrs (node, state) {
   const { attrsList = [], attrs = [], attrsMap = {}} = node
   const bindingAttrs = []
 
@@ -216,6 +221,11 @@ function processAttrs (node) {
       // collect dynamic attrs, only update daynamic attrs in runtime
       const bindingName = name.replace(vbindReg, '') || 'value'
       bindingAttrs.push(bindingName)
+    }
+
+    // img.src
+    if (!/https?/.test(attr.value) && state.isTransformAssetUrl(node, name)) {
+      bindingAttrs.push(name)
     }
   })
 
@@ -243,7 +253,8 @@ function addAttr (node, name, value) {
 
 class State {
   constructor (options = {}) {
-    this.imports = options.imports || {}
+    this.transformAssetUrls = options.transformAssetUrls
+    this.imports = options.imports
     this.rootNode = options.rootNode
     this.compCount = -1
     this.elemCount = -1
@@ -345,20 +356,24 @@ class State {
     }
   }
 
-  isComponent (el) {
-    const { tag } = el
+  isComponent (node) {
+    const { tag } = node
     return !!getComponentInfo(tag, this.imports)
+  }
+
+  isTransformAssetUrl (node, name) {
+    return this.transformAssetUrls[node.tag] === name
   }
 }
 
-function findFirstNoneTemplateNode (el) {
+function findFirstNoneTemplateNode (node) {
   let res = null
-  if (el.tag !== 'template') {
-    return el
+  if (node.tag !== 'template') {
+    return node
   }
 
-  if (el.children) {
-    el.children.some(c => {
+  if (node.children) {
+    node.children.some(c => {
       const found = findFirstNoneTemplateNode(c)
       if (found) {
         res = found

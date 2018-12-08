@@ -41,7 +41,8 @@ export class TemplateGenerator {
       target = 'wechat',
       name = 'defaultName',
       scopeId = '',
-      imports = [],
+      imports = {},
+      transformAssetUrls = {},
       slots = [],
       warn = baseWarn,
       htmlParse = {}
@@ -55,6 +56,7 @@ export class TemplateGenerator {
       target,
       scopeId,
       imports,
+      transformAssetUrls,
       slots,
       preset,
       warn,
@@ -355,6 +357,9 @@ export class TemplateGenerator {
         return `${realName}="{{ ${HOLDER_VAR}[ ${this.genHid(el)} ][ '${realName}' ] }}"`
       } else if (vmodelReg.test(name)) {
         return `value="{{ ${this.genHolder(el, 'value')} }}"`
+      // img
+      } else if (!/^https?|data:/.test(value) && this.isTransformAssetUrl(el, name)) {
+        return `${name}="{{ ${HOLDER_VAR}[ ${this.genHid(el)} ][ '${name}' ] }}"`
       } else {
         return `${name}="${value}"`
       }
@@ -682,5 +687,9 @@ export class TemplateGenerator {
 
   wrapTemplateData (str) {
     return this.target === 'swan' ? `{{{ ${str} }}}` : `{{ ${str} }}`
+  }
+
+  isTransformAssetUrl (node, name) {
+    return this.transformAssetUrls[node.tag] === name
   }
 }
