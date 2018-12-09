@@ -40,7 +40,7 @@ export function renderClass (
     return concat(stringifyClass(dynamicClass))
   }
   /* istanbul ignore next */
-  return ''
+  return undefined
 }
 
 export function concat (a: ?string, b: ?string): string {

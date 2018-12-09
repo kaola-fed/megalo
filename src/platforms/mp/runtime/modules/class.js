@@ -29,8 +29,8 @@ function updateClass (oldVnode: any, vnode: any) {
   }
 
   let cls = genClassForVnode(vnode)
-  let rootClass = null
-  let rootVnode = null
+  let rootClass
+  let rootVnode
 
   if (isDef(cls) && isDef(vnode.componentInstance)) {
     const { staticClass = '' } = vnode.data
