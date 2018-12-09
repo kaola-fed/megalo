@@ -25,6 +25,7 @@ export function initVMToMP (vm) {
 
   vm = vm || this
   const vmId = getVMId(vm)
+  const { $vnode = '' } = vm
   const info = {
     cid: vmId,
     cpath: `${vmId}${VM_ID_SEP}`
@@ -33,6 +34,7 @@ export function initVMToMP (vm) {
   const prefix = `${ROOT_DATA_VAR}.${vmId}`
 
   vm.$mp._update({
+    [`${prefix}.n`]: $vnode.tag || '$root',
     [`${prefix}.${VM_ID_VAR}`]: info.cid,
     [`${prefix}.${VM_ID_PREFIX}`]: info.cpath
   })
