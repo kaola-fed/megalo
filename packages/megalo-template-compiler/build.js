@@ -1695,10 +1695,10 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 
 var ROOT_DATA_VAR = '$root';
 var HOLDER_VAR = 'h';
+var SLOT_HOLDER_VAR = 's';
 var FOR_TAIL_VAR = '_t';
 
 var VM_ID_PREFIX = 'cp';
-
 
 
 
@@ -2609,6 +2609,27 @@ var escapeText = function (str) {
 
   return str.replace(/\</g, "{{\"<\"}}")
 };
+
+function getComponentInfo (name, imports) {
+  if ( imports === void 0 ) imports = {};
+
+  var camelizedName = camelize(name);
+  var pascalizedName = pascalize(name);
+  return (
+    imports[name] ||
+    imports[camelizedName] ||
+    imports[pascalizedName] ||
+    null
+  )
+}
+
+function pascalize (str) {
+  if ( str === void 0 ) str = '';
+
+  var camelized = camelize(str);
+  var pascalized = capitalize(camelized);
+  return pascalized
+}
 
 /*  */
 
@@ -3684,7 +3705,9 @@ function genIf (
   altEmpty
 ) {
   el.ifProcessed = true; // avoid recursion
-  return genIfConditions(el.ifConditions.slice(), state, altGen, altEmpty)
+  var conditions = el.ifConditions.slice();
+  conditions.__extratExpression = el.ifConditions.__extratExpression;
+  return genIfConditions(conditions, state, altGen, altEmpty)
 }
 
 function genIfConditions (
@@ -3694,6 +3717,9 @@ function genIfConditions (
   altEmpty
 ) {
   if (!conditions.length) {
+    if (conditions.__extratExpression) {
+      return ("_c(\"a\", {attrs: {__if:[" + (conditions.__extratExpression.join(',')) + "]}})")
+    }
     return altEmpty || '_e()'
   }
   var condition = conditions.shift();
@@ -3736,15 +3762,15 @@ function genFor (
       true /* tip */
     );
   }
-  var _forId = el._forId;
+  var _forInfo = el._forInfo;
   var _fid = el._fid;
-
   el.forProcessed = true; // avoid recursion
+  var tailStr = _forInfo._hid + (isDef(_forInfo._fid) ? (", " + (_forInfo._fid)) : '');
   return (altHelper || '_l') + "((" + exp + ")," +
     "function(" + alias + iterator1 + iterator2 + "){" +
       "var _fid = " + _fid + ";" +
       "return " + ((altGen || genElement)(el, state)) +
-    "}," + _forId + ",_self)"
+    "},[" + tailStr + "],_self)"
 }
 
 function genData$2 (el, state) {
@@ -4297,157 +4323,6 @@ function createCompilerCreator (baseCompile) {
   }
 }
 
-var TAG_MAP = {
-  'template': 'block',
-  'br': 'view',
-  'hr': 'view',
-
-  'p': 'view',
-  'h1': 'view',
-  'h2': 'view',
-  'h3': 'view',
-  'h4': 'view',
-  'h5': 'view',
-  'h6': 'view',
-  'abbr': 'view',
-  'address': 'view',
-  'b': 'view',
-  'bdi': 'view',
-  'bdo': 'view',
-  'blockquote': 'view',
-  'cite': 'view',
-  'code': 'view',
-  'del': 'view',
-  'ins': 'view',
-  'dfn': 'view',
-  'em': 'view',
-  'strong': 'view',
-  'samp': 'view',
-  'kbd': 'view',
-  'var': 'view',
-  'i': 'view',
-  'mark': 'view',
-  'pre': 'view',
-  'q': 'view',
-  'ruby': 'view',
-  'rp': 'view',
-  'rt': 'view',
-  's': 'view',
-  'small': 'view',
-  'sub': 'view',
-  'sup': 'view',
-  'time': 'view',
-  'u': 'view',
-  'wbr': 'view',
-
-  // 表单元素
-  'form': 'form',
-  'input': 'input',
-  'textarea': 'textarea',
-  'button': 'button',
-  'select': 'picker',
-  'option': 'view',
-  'optgroup': 'view',
-  'label': 'label',
-  'fieldset': 'view',
-  'datalist': 'picker',
-  'legend': 'view',
-  'output': 'view',
-
-  // 框架
-  'iframe': 'view',
-  // 图像
-  'img': 'image',
-  'canvas': 'canvas',
-  'figure': 'view',
-  'figcaption': 'view',
-
-  // 音视频
-  'audio': 'audio',
-  'source': 'audio',
-  'video': 'video',
-  'track': 'video',
-  // 链接
-  'a': 'navigator',
-  'nav': 'view',
-  'link': 'navigator',
-  // 列表
-  'ul': 'view',
-  'ol': 'view',
-  'li': 'view',
-  'dl': 'view',
-  'dt': 'view',
-  'dd': 'view',
-  'menu': 'view',
-  'command': 'view',
-
-  // 表格table
-  'table': 'view',
-  'caption': 'view',
-  'th': 'view',
-  'td': 'view',
-  'tr': 'view',
-  'thead': 'view',
-  'tbody': 'view',
-  'tfoot': 'view',
-  'col': 'view',
-  'colgroup': 'view',
-
-  // 样式 节
-  'div': 'view',
-  'main': 'view',
-  'span': 'label',
-  'header': 'view',
-  'footer': 'view',
-  'section': 'view',
-  'article': 'view',
-  'aside': 'view',
-  'details': 'view',
-  'dialog': 'view',
-  'summary': 'view',
-
-  'progress': 'progress',
-  'meter': 'progress',
-  'head': 'view',
-  'meta': 'view',
-  'base': 'text',
-  'area': 'navigator',
-
-  'script': 'view',
-  'noscript': 'view',
-  'embed': 'view',
-  'object': 'view',
-  'param': 'view',
-
-  'view': 'view',
-  'scroll-view': 'scroll-view',
-  'swiper': 'swiper',
-  'swiper-item': 'swiper-item',
-  'rich-text': 'rich-text',
-  'movable-view': 'movable-view',
-  'cover-view': 'cover-view',
-  'icon': 'icon',
-  'text': 'text',
-  'checkbox': 'checkbox',
-  'checkbox-group': 'checkbox-group',
-  'radio': 'radio',
-  'radio-group': 'radio-group',
-  'picker': 'picker',
-  'picker-view': 'picker-view',
-  'slider': 'slider',
-  'switch': 'switch',
-  'navigator': 'navigator',
-  'image': 'image',
-  'map': 'map',
-  'contact-button': 'contact-button',
-  'block': 'block',
-  'live-player': 'live-player',
-  'live-pusher': 'live-pusher',
-  'web-view': 'web-view',
-  'open-data': 'open-data',
-  'official-account': 'official-account'
-}
-
 function createFindEventTypeFn (eventTypeMap) {
   return function findEventType (type) {
     var res = '';
@@ -4732,26 +4607,30 @@ var sep = "'" + (LIST_TAIL_SEPS.wechat) + "'";
 // walk and modify ast before render function is generated
 function mpify (node, options) {
   var target = options.target; if ( target === void 0 ) target = 'wechat';
+  var imports = options.imports; if ( imports === void 0 ) imports = {};
+  var transformAssetUrls = options.transformAssetUrls; if ( transformAssetUrls === void 0 ) transformAssetUrls = {};
   sep = LIST_TAIL_SEPS[target] ? ("'" + (LIST_TAIL_SEPS[target]) + "'") : sep;
   var preset = presets[target];
   var state = new State({
     rootNode: node,
     target: target,
-    preset: preset
+    preset: preset,
+    imports: imports,
+    transformAssetUrls: transformAssetUrls
   });
   walk(node, state);
 }
 
-function visit (el, state) {
+function visit (node, state) {
   var ref = state.preset;
   var visitors = ref.visitors; if ( visitors === void 0 ) visitors = {};
 
   if (visitors.all) {
-    visitors.all(el);
+    visitors.all(node);
   }
 
-  if (visitors[el.tag]) {
-    visitors[el.tag](el);
+  if (visitors[node.tag]) {
+    visitors[node.tag](node);
   }
 }
 
@@ -4811,13 +4690,14 @@ function walkFor (node, state) {
 }
 
 function walkElem (node, state) {
-  processAttrs$1(node);
+  processAttrs$1(node, state);
   if (node.key) {
     var key = node.key.replace(/^\w*\./, '');
     addAttr$1(node, '_fk', ("\"" + key + "\""));
   }
 
-  if (!isTag(node)) {
+  // if (!isTag(node)) {
+  if (state.isComponent(node)) {
     return walkComponent(node, state)
   }
 
@@ -4863,6 +4743,17 @@ function walkIf (node, state) {
 
     walk(block, state);
 
+    if (state.isInSlot()) {
+      condition.__isInSlot = true;
+      if (!conditions.__extratExpression) {
+        conditions.__extratExpression = [];
+      }
+      if (exp) {
+        var extratExpression = "!!(" + exp + "), " + (block._hid) + ", " + (block._fid || null);
+        conditions.__extratExpression.push(extratExpression);
+      }
+    }
+
     if (exp) {
       condition.rawexp = exp;
       if (block._fid) {
@@ -4872,6 +4763,14 @@ function walkIf (node, state) {
       }
     }
   });
+
+  if (conditions.__extratExpression) {
+    conditions.forEach(function (condition) {
+      var block = condition.block;
+      var noneTemplateBlock = findFirstNoneTemplateNode(block);
+      addAttr$1(noneTemplateBlock, '__if', ("[ " + (conditions.__extratExpression.join(',')) + " ]"));
+    });
+  }
 }
 
 function walkChildren (node, state) {
@@ -4891,24 +4790,38 @@ function walkChildren (node, state) {
   }
 }
 
-function processAttrs$1 (node) {
+function processAttrs$1 (node, state) {
   var attrsList = node.attrsList; if ( attrsList === void 0 ) attrsList = [];
   var attrs = node.attrs; if ( attrs === void 0 ) attrs = [];
   var attrsMap = node.attrsMap; if ( attrsMap === void 0 ) attrsMap = {};
   var bindingAttrs = [];
 
   attrsList.forEach(function (attr, i) {
-    if (!vbindReg.test(attr.name)) {
+    var name = attr.name;
+    if (/^:?mp:/.test(name)) {
+      var realName = attr.name.replace(/mp:/, '');
+      renameObjectPropName(attrsMap, name, realName);
+      modifyAttrName(attrs, name, realName);
+      attr.name = realName;
+      name = realName;
+    }
+
+    if (!vbindReg.test(name)) {
       // set default true, <div enable></div> -> <div enable="true"></div>
       if (attr.value === '') {
         attr.value = 'true';
-        attrs[i].value = '"true"';
-        attrsMap[attr.name] = 'true';
+        attrsMap[name] = 'true';
+        modifyAttr(attrs, name, '"true"');
       }
     } else {
       // collect dynamic attrs, only update daynamic attrs in runtime
-      var realName = attr.name.replace(vbindReg, '') || 'value';
-      bindingAttrs.push(realName);
+      var bindingName = name.replace(vbindReg, '') || 'value';
+      bindingAttrs.push(bindingName);
+    }
+
+    // img.src
+    if (!/https?/.test(attr.value) && state.isTransformAssetUrl(node, name)) {
+      bindingAttrs.push(name);
     }
   });
 
@@ -4935,29 +4848,25 @@ function addAttr$1 (node, name, value) {
   Object.assign(node, { attrs: attrs, attrsMap: attrsMap });
 }
 
-function isTag (node) {
-  return !!TAG_MAP[node.tag] || node.tag === 'template'
-}
-
 var State = function State (options) {
   if ( options === void 0 ) options = {};
 
+  this.transformAssetUrls = options.transformAssetUrls;
+  this.imports = options.imports;
   this.rootNode = options.rootNode;
   this.compCount = -1;
   this.elemCount = -1;
   this.compStack = new Stack();
   this.sep = options.sep || '-';
   this.preset = options.preset;
-  this.listStates = new Stack();
-  // this.listStates = new Stack()
   // init a root component state, like page
   this.pushComp();
 };
 State.prototype.pushComp = function pushComp () {
   this.compStack.push({
     id: ++this.compCount,
-    elems: 0
-    // listStates: new Stack()
+    elems: 0,
+    listStates: new Stack()
   });
 };
 State.prototype.popComp = function popComp () {
@@ -4967,17 +4876,20 @@ State.prototype.pushElem = function pushElem () {
   this.elemCount++;
 };
 State.prototype.popListState = function popListState () {
-  return this.listStates.pop()
+  return this.getCurrentComp().listStates.pop()
 };
 State.prototype.pushListState = function pushListState (state) {
-  var currentStates = this.listStates.top;
+  var currentStates = this.getCurrentListState();
   var newStates = [];
   if (currentStates && currentStates.length) {
     newStates = [].concat(currentStates);
   }
 
   newStates.push(state);
-  this.listStates.push(newStates);
+  this.getCurrentComp().listStates.push(newStates);
+};
+State.prototype.getCurrentListState = function getCurrentListState () {
+  return this.getCurrentComp().listStates.top
 };
 State.prototype.getCurrentComp = function getCurrentComp () {
   return this.compStack.top
@@ -4988,11 +4900,8 @@ State.prototype.getCurrentCompIndex = function getCurrentCompIndex () {
 State.prototype.getCurrentElemIndex = function getCurrentElemIndex () {
   return this.elemCount
 };
-State.prototype.getCurrentListState = function getCurrentListState () {
-  return this.listStates.top
-};
 State.prototype.getCurrentListNode = function getCurrentListNode () {
-  var top = this.listStates.top || [];
+  var top = this.getCurrentListState() || [];
   return (top[top.length - 1] || {}).node
 };
 State.prototype.getHId = function getHId (node) {
@@ -5010,6 +4919,9 @@ State.prototype.getFid = function getFid (node) {
   var _fid = currentListState.map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep + " + "));
   return _fid
 };
+State.prototype.isInSlot = function isInSlot () {
+  return this.getCurrentComp().id !== 0
+};
 State.prototype.assignHId = function assignHId (node) {
   var _hid = this.getHId(node);
   Object.assign(node, { _hid: _hid });
@@ -5022,11 +4934,11 @@ State.prototype.resolveForHolder = function resolveForHolder (node) {
 
   // remove last index, like '0-1-2', we only need '0-1'
   // store v-for list in this holder
+  node._forInfo = { _hid: _hid };
   if (_fid) {
     tail = currentListState.slice(0, -1).map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep + " + "));
-    tail = tail ? (" + " + sep + " + " + tail) : tail;
+    node._forInfo._fid = ("" + tail) || undefined;
   }
-  node._forId = _hid + tail;
 };
 State.prototype.resolveHolder = function resolveHolder (node) {
   if (node._hid === undefined) {
@@ -5042,6 +4954,61 @@ State.prototype.resolveHolder = function resolveHolder (node) {
     }
   }
 };
+
+State.prototype.isComponent = function isComponent (node) {
+  var tag = node.tag;
+  return !!getComponentInfo(tag, this.imports)
+};
+
+State.prototype.isTransformAssetUrl = function isTransformAssetUrl (node, name) {
+  return this.transformAssetUrls[node.tag] === name
+};
+
+function findFirstNoneTemplateNode (node) {
+  var res = null;
+  if (node.tag !== 'template') {
+    return node
+  }
+
+  if (node.children) {
+    node.children.some(function (c) {
+      var found = findFirstNoneTemplateNode(c);
+      if (found) {
+        res = found;
+        return true
+      }
+    });
+  }
+
+  return res
+}
+
+function renameObjectPropName (obj, from, to) {
+  if (obj.hasOwnProperty(from)) {
+    obj[to] = obj[from];
+    delete obj[from];
+  }
+}
+
+function modifyAttr (attrs, name, value) {
+  attrs.some(function (attr) {
+    if (attr.name === name) {
+      attr.value = value;
+      return true
+    }
+  });
+}
+
+function modifyAttrName (attrs, name, newName) {
+  var realName = name.replace(/^:/, '');
+  var realNewName = newName.replace(/^:/, '');
+  attrs.some(function (attr) {
+    if (attr.name === realName) {
+      attr.name = realNewName;
+      return true
+    }
+  });
+}
 
 /*  */
 
@@ -5083,216 +5050,156 @@ var createCompiler = createCompilerCreator(function baseCompile (
   return data
 });
 
-var iteratorUid$1 = createUidFn('item');
+var TAG_MAP = {
+  'template': 'block',
+  'br': 'view',
+  'hr': 'view',
 
-var TYPE$1 = {
-  ELEMENT: 1,
-  TEXT: 2,
-  STATIC_TEXT: 3
-};
+  'p': 'view',
+  'h1': 'view',
+  'h2': 'view',
+  'h3': 'view',
+  'h4': 'view',
+  'h5': 'view',
+  'h6': 'view',
+  'abbr': 'view',
+  'address': 'view',
+  'b': 'view',
+  'bdi': 'view',
+  'bdo': 'view',
+  'blockquote': 'view',
+  'cite': 'view',
+  'code': 'view',
+  'del': 'view',
+  'ins': 'view',
+  'dfn': 'view',
+  'em': 'view',
+  'strong': 'view',
+  'samp': 'view',
+  'kbd': 'view',
+  'var': 'view',
+  'i': 'view',
+  'mark': 'view',
+  'pre': 'view',
+  'q': 'view',
+  'ruby': 'view',
+  'rp': 'view',
+  'rt': 'view',
+  's': 'view',
+  'small': 'view',
+  'sub': 'view',
+  'sup': 'view',
+  'time': 'view',
+  'u': 'view',
+  'wbr': 'view',
 
-var sep$1 = "'" + (LIST_TAIL_SEPS.wechat) + "'";
+  // 表单元素
+  'form': 'form',
+  'input': 'input',
+  'textarea': 'textarea',
+  'button': 'button',
+  'select': 'picker',
+  'option': 'view',
+  'optgroup': 'view',
+  'label': 'label',
+  'fieldset': 'view',
+  'datalist': 'picker',
+  'legend': 'view',
+  'output': 'view',
 
-// walk and modify ast after render function is generated
-// modify some value before the template is generated
-function postMpify (node, options, tools) {
-  var target = options.target; if ( target === void 0 ) target = 'wechat';
-  sep$1 = LIST_TAIL_SEPS[target] ? ("'" + (LIST_TAIL_SEPS[target]) + "'") : sep$1;
-  var preset = presets[target];
-  var state = new State$1({
-    rootNode: node,
-    target: target,
-    preset: preset,
-    tools: tools
-  });
-  walk$1(node, state);
+  // 框架
+  'iframe': 'view',
+  // 图像
+  'img': 'image',
+  'canvas': 'canvas',
+  'figure': 'view',
+  'figcaption': 'view',
+
+  // 音视频
+  'audio': 'audio',
+  'source': 'audio',
+  'video': 'video',
+  'track': 'video',
+  // 链接
+  'a': 'navigator',
+  'nav': 'view',
+  'link': 'navigator',
+  // 列表
+  'ul': 'view',
+  'ol': 'view',
+  'li': 'view',
+  'dl': 'view',
+  'dt': 'view',
+  'dd': 'view',
+  'menu': 'view',
+  'command': 'view',
+
+  // 表格table
+  'table': 'view',
+  'caption': 'view',
+  'th': 'view',
+  'td': 'view',
+  'tr': 'view',
+  'thead': 'view',
+  'tbody': 'view',
+  'tfoot': 'view',
+  'col': 'view',
+  'colgroup': 'view',
+
+  // 样式 节
+  'div': 'view',
+  'main': 'view',
+  'span': 'label',
+  'header': 'view',
+  'footer': 'view',
+  'section': 'view',
+  'article': 'view',
+  'aside': 'view',
+  'details': 'view',
+  'dialog': 'view',
+  'summary': 'view',
+
+  'progress': 'progress',
+  'meter': 'progress',
+  'head': 'view',
+  'meta': 'view',
+  'base': 'text',
+  'area': 'navigator',
+
+  'script': 'view',
+  'noscript': 'view',
+  'embed': 'view',
+  'object': 'view',
+  'param': 'view',
+
+  'view': 'view',
+  'scroll-view': 'scroll-view',
+  'swiper': 'swiper',
+  'swiper-item': 'swiper-item',
+  'rich-text': 'rich-text',
+  'movable-view': 'movable-view',
+  'cover-view': 'cover-view',
+  'icon': 'icon',
+  'text': 'text',
+  'checkbox': 'checkbox',
+  'checkbox-group': 'checkbox-group',
+  'radio': 'radio',
+  'radio-group': 'radio-group',
+  'picker': 'picker',
+  'picker-view': 'picker-view',
+  'slider': 'slider',
+  'switch': 'switch',
+  'navigator': 'navigator',
+  'image': 'image',
+  'map': 'map',
+  'contact-button': 'contact-button',
+  'block': 'block',
+  'live-player': 'live-player',
+  'live-pusher': 'live-pusher',
+  'web-view': 'web-view',
+  'open-data': 'open-data',
+  'official-account': 'official-account'
 }
-
-function walk$1 (node, state) {
-  if (node.for && !node.postMpForWalked) {
-    return walkFor$1(node, state)
-  }
-
-  state.resolveFid(node);
-
-  if (node.ifConditions && !node.mpIfWalked) {
-    return walkIf$1(node, state)
-  }
-
-  /* istanbul ignore else */
-  if (node.type === TYPE$1.ELEMENT) {
-    walkElem$1(node, state);
-  } else if (
-    node.type === TYPE$1.TEXT || node.type === TYPE$1.STATIC_TEXT
-  ) {
-    
-  }
-}
-
-function walkFor$1 (node, state) {
-  var _for = node.for;
-  var key = node.key;
-  var alias = node.alias;
-  var prefix = /{/.test(alias) ? ("" + (iteratorUid$1())) : alias;
-  // create default iterator1, iterator2 for xml listing,
-  // which is needed for _hid generating
-  var iterator1 = node.iterator1; if ( iterator1 === void 0 ) iterator1 = prefix + "_i1";
-  var iterator2 = node.iterator2; if ( iterator2 === void 0 ) iterator2 = prefix + "_i2";
-  Object.assign(node, {
-    postMpForWalked: true,
-    iterator1: iterator1,
-    iterator2: iterator2
-  });
-
-  state.pushListState({
-    iterator1: iterator1,
-    iterator2: iterator2,
-    _for: _for,
-    key: key,
-    node: node,
-    alias: alias
-  });
-
-  walk$1(node, state);
-
-  state.popListState();
-}
-
-function walkElem$1 (node, state) {
-  if (state.tools.isComponent(node)) {
-    return walkComponent$1(node, state)
-  }
-
-  walkChildren$1(node, state);
-}
-
-function walkComponent$1 (node, state) {
-  state.pushComp();
-
-  walkChildren$1(node, state);
-  state.popComp();
-}
-
-function walkIf$1 (node, state) {
-}
-
-function walkChildren$1 (node, state) {
-  var children = node.children;
-  var scopedSlots = node.scopedSlots;
-  if (children && children.length) {
-    children.forEach(function (n) {
-      walk$1(n, state);
-    });
-  }
-
-  if (scopedSlots) {
-    Object.keys(scopedSlots).forEach(function (k) {
-      var slot = scopedSlots[k];
-      walk$1(slot, state);
-    });
-  }
-}
-
-var State$1 = function State (options) {
-  if ( options === void 0 ) options = {};
-
-  this.rootNode = options.rootNode;
-  this.compCount = -1;
-  this.elemCount = -1;
-  this.compStack = new Stack();
-  this.sep = options.sep || '-';
-  this.preset = options.preset;
-  this.tools = options.tools;
-  // init a root component state, like page
-  this.pushComp();
-};
-State$1.prototype.pushComp = function pushComp () {
-  /**
-   * major difference against pre procedure
-   * the listState is based on component context,
-   * which is, if the slot is inside of v-for, it's tail should be pased throw "_t" in templates
-   *
-   *exp:
-   * <div v-for="(item,index) in items">{{item}}</div>
-   *<compa>
-   *  <div v-for="(ele,i) in item.list">{{index}}-{{ele}}</div>
-   * </compa>
-   * </div>
-   *
-   * the slot should compile to:
-   * <template name="slot_a">
-   * <view wx:for="{{ h[ 1 + _t ].li }}" wx:for-item="ele" wx:for-index="i">
-   *   {{ h[ 2 + _t + '-' + i ].li }}
-   * </view>
-   * </template>
-   *
-   * the "_t" is passed by <compa>:
-   * <template is="slot_a" data="{{ _t: _t || '' }}"></template>
-   *
-   * the source is from main page:
-   * <template>
-   * <view wx:for="{{ h[ 1 + _t ].li }}" wx:for-item="item" wx:for-index="index">
-   *   <template is="compa" data="{{ _t: '-' + index }}"></template>
-   * </view>
-   * </template>
-   */
-  this.compStack.push({
-    id: ++this.compCount,
-    elems: 0,
-    listStates: new Stack()
-  });
-};
-State$1.prototype.popComp = function popComp () {
-  this.compStack.pop();
-};
-State$1.prototype.pushElem = function pushElem () {
-  this.elemCount++;
-};
-State$1.prototype.popListState = function popListState () {
-  return this.getCurrentComp().listStates.pop()
-};
-State$1.prototype.pushListState = function pushListState (state) {
-  var currentStates = this.getCurrentListState();
-  var newStates = [];
-  if (currentStates && currentStates.length) {
-    newStates = [].concat(currentStates);
-  }
-
-  newStates.push(state);
-  this.getCurrentComp().listStates.push(newStates);
-};
-State$1.prototype.getCurrentComp = function getCurrentComp () {
-  return this.compStack.top
-};
-State$1.prototype.getCurrentCompIndex = function getCurrentCompIndex () {
-  return ("" + (this.compCount))
-};
-State$1.prototype.getCurrentElemIndex = function getCurrentElemIndex () {
-  return this.elemCount
-};
-State$1.prototype.getCurrentListState = function getCurrentListState () {
-  return this.getCurrentComp().listStates.top
-};
-State$1.prototype.getCurrentListNode = function getCurrentListNode () {
-  var top = this.getCurrentListState() || [];
-  return (top[top.length - 1] || {}).node
-};
-State$1.prototype.resolveFid = function resolveFid (node) {
-  var _hid = node._hid;
-  var currentListState = this.getCurrentListState() || [];
-  var _fid = currentListState.map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep$1 + " + "));
-  var tail = '';
-
-  node._fid = _fid || undefined;
-
-  // remove last index, like '0-1-2', we only need '0-1'
-  // store v-for list in this holder
-  if (_fid) {
-    tail = currentListState.slice(0, -1).map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep$1 + " + "));
-    tail = tail ? (" + " + sep$1 + " + " + tail) : tail;
-  }
-  node._forId = _hid + tail;
-};
 
 /*  */
 
@@ -5301,7 +5208,7 @@ var vonReg = /^v-on:|@/;
 var vmodelReg = /^v-model/;
 var vtextReg = /^v-text/;
 
-var sep$2 = "'" + (LIST_TAIL_SEPS.wechat) + "'";
+var sep$1 = "'" + (LIST_TAIL_SEPS.wechat) + "'";
 
 function compileToTemplate (ast, options) {
   if ( options === void 0 ) options = {};
@@ -5317,19 +5224,21 @@ var TemplateGenerator = function TemplateGenerator (options) {
   var target = options.target; if ( target === void 0 ) target = 'wechat';
   var name = options.name; if ( name === void 0 ) name = 'defaultName';
   var scopeId = options.scopeId; if ( scopeId === void 0 ) scopeId = '';
-  var imports = options.imports; if ( imports === void 0 ) imports = [];
+  var imports = options.imports; if ( imports === void 0 ) imports = {};
+  var transformAssetUrls = options.transformAssetUrls; if ( transformAssetUrls === void 0 ) transformAssetUrls = {};
   var slots = options.slots; if ( slots === void 0 ) slots = [];
   var warn = options.warn; if ( warn === void 0 ) warn = baseWarn;
   var htmlParse = options.htmlParse; if ( htmlParse === void 0 ) htmlParse = {};
 
   var preset = presets[target];
-  sep$2 = LIST_TAIL_SEPS[target] ? ("'" + (LIST_TAIL_SEPS[target]) + "'") : sep$2;
+  sep$1 = LIST_TAIL_SEPS[target] ? ("'" + (LIST_TAIL_SEPS[target]) + "'") : sep$1;
 
   Object.assign(this, {
     name: name,
     target: target,
     scopeId: scopeId,
     imports: imports,
+    transformAssetUrls: transformAssetUrls,
     slots: slots,
     preset: preset,
     warn: warn,
@@ -5340,17 +5249,15 @@ var TemplateGenerator = function TemplateGenerator (options) {
   });
 
   this.slotSnippetBuffer = [];
+  this.fallbackSlot = 0;
 };
 
 TemplateGenerator.prototype.generate = function generate (ast) {
   try {
     var clonedAST = cloneAST(ast);
-    postMpify(clonedAST, this.options, {
-      isComponent: this.isComponent.bind(this)
-    });
     var code = this.genElement(clonedAST);
     var body = [
-      this.genImports(),
+      // this.genImports(),
       ("<template name=\"" + (this.name) + "\">" + code + "</template>")
     ].join('');
 
@@ -5403,9 +5310,7 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
   var _cid = el._cid;
     var tag = el.tag;
     var _fid = el._fid;
-  var pascalTag = pascalize(tag);
-  var camelizedTag = camelize(tag);
-  var compInfo = this.imports[tag] || this.imports[pascalTag] || this.imports[camelizedTag];
+  var compInfo = this.getComponent(tag);
   var compName = compInfo.name;
   var slots = this.genSlotSnippets(el);
   var slotsNames = slots.map(function (sl) { return ("s_" + (sl.name) + ": '" + (sl.slotName) + "'"); });
@@ -5414,17 +5319,12 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
 
   // passing parent v-for tail to slot inside v-for
   // TODO: refactor
-  if (this.isInSlotSnippet()) {
-    if (isDef(_fid)) {
-      cid = _cid + " + _t + " + sep$2 + " + " + _fid;
-      tail = ", " + FOR_TAIL_VAR + ": (" + FOR_TAIL_VAR + " || '') + " + sep$2 + " + " + _fid;
-    } else {
-      cid = _cid + " + _t";
-      tail = ", " + FOR_TAIL_VAR + ": " + FOR_TAIL_VAR + " || ''";
-    }
-  } else if (isDef(_fid)) {
-    cid = _cid + " + " + sep$2 + " + " + _fid;
-    tail = ", " + FOR_TAIL_VAR + ": " + sep$2 + " + " + _fid;
+  if (isDef(_fid)) {
+    cid = _cid + " + (_t || '') + " + sep$1 + " + " + _fid;
+    tail = ", " + FOR_TAIL_VAR + ": (" + FOR_TAIL_VAR + " || '') + " + sep$1 + " + " + _fid;
+  } else {
+    cid = _cid + " + (_t || '')";
+    tail = ", " + FOR_TAIL_VAR + ": " + FOR_TAIL_VAR + " || ''";
   }
 
   var data = [
@@ -5651,6 +5551,9 @@ TemplateGenerator.prototype.genAttrs = function genAttrs (el) {
       return (realName + "=\"{{ " + HOLDER_VAR + "[ " + (this$1.genHid(el)) + " ][ '" + realName + "' ] }}\"")
     } else if (vmodelReg.test(name)) {
       return ("value=\"{{ " + (this$1.genHolder(el, 'value')) + " }}\"")
+    // img
+    } else if (!/^https?|data:/.test(value) && this$1.isTransformAssetUrl(el, name)) {
+      return (name + "=\"{{ " + HOLDER_VAR + "[ " + (this$1.genHid(el)) + " ][ '" + name + "' ] }}\"")
     } else {
       return (name + "=\"" + value + "\"")
     }
@@ -5722,16 +5625,22 @@ TemplateGenerator.prototype.genFor = function genFor (el) {
   }
   var iterator1 = el.iterator1;
     var alias = el.alias;
-    var _forId = el._forId;
-    var _hid = el._hid;
+    var _forInfo = el._forInfo; if ( _forInfo === void 0 ) _forInfo = {};
   var FOR = this.directive('for');
   var FOR_ITEM = this.directive('forItem');
   var FOR_INDEX = this.directive('forIndex');
+  var forHid = _forInfo._hid;
+    var forFid = _forInfo._fid;
+
   var forHolderId = '';
+
   if (this.isInSlotSnippet()) {
-    forHolderId = _hid + " + _t";
+    forHolderId =
+      isDef(forFid)
+        ? (forHid + " + (" + FOR_TAIL_VAR + " || '') + " + sep$1 + " + " + forFid)
+        : (forHid + " + (" + FOR_TAIL_VAR + " || '')");
   } else {
-    forHolderId = _forId;
+    forHolderId = isDef(forFid) ? (forHid + " + " + sep$1 + " + " + forFid) : forHid;
   }
 
   var _for = [
@@ -5767,12 +5676,13 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
   var slotName = el.slotName; if ( slotName === void 0 ) slotName = 'default';
   slotName = slotName.replace(/"/g, '');
   var fallbackSlotName = slotName + "$" + (uid$1());
+  this.enterFallbackSlot();
   var fallbackSlotBody = this.genChildren(el);
+  this.leaveFallbackSlot();
   var fallbackSlot = "<template name=\"" + fallbackSlotName + "\">" + (fallbackSlotBody || '') + "</template>";
   var tail = ", " + FOR_TAIL_VAR + ": " + FOR_TAIL_VAR + " || ''";
-  // sloped-slot inside v-for
-  if (el.hasBindings && isDef(_fid)) {
-    tail = ", " + FOR_TAIL_VAR + ": '-' + " + _fid + " + (" + FOR_TAIL_VAR + " || '')";
+  if (isDef(_fid)) {
+    tail = ", " + FOR_TAIL_VAR + ": (" + FOR_TAIL_VAR + " || '') + " + sep$1 + " + " + _fid;
   }
 
   /**
@@ -5788,7 +5698,7 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
       ("<block s-if=\"s_" + slotName + "\">"),
       ("<template is=\"{{ s_" + slotName + " }}\" "),
       "data=\"",
-      this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ s ], " + ROOT_DATA_VAR + tail + ", _c: c")),
+      this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ c ], " + ROOT_DATA_VAR + tail + ", _c: c")),
       ("\"" + (this.genFor(el)) + "/>"),
       "</block>",
 
@@ -5796,7 +5706,7 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
       "<block s-else>",
       ("<template is=\"{{ '" + fallbackSlotName + "' }}\" "),
       "data=\"",
-      this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ s ], " + ROOT_DATA_VAR + tail + ", _c: c")),
+      this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ c ], " + ROOT_DATA_VAR + tail + ", _c: c")),
       ("\"" + (this.genFor(el)) + "/>"),
       "</block>"
     ].join('')
@@ -5806,7 +5716,7 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
     ("" + fallbackSlot),
     ("<template is=\"{{ s_" + slotName + " || '" + fallbackSlotName + "' }}\" "),
     "data=\"",
-    this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ s ], " + ROOT_DATA_VAR + tail + ", _c: c")),
+    this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ c ], " + ROOT_DATA_VAR + tail + ", _c: c")),
     ("\"" + (this.genFor(el)) + "/>")
   ].join('')
 };
@@ -5827,6 +5737,9 @@ TemplateGenerator.prototype.genHolder = function genHolder (el, type) {
   if (!varName) {
     throw new Error((type + " holder HOLDER_TYPE_VARS not found"))
   }
+  if (this.isInSlotSnippet() || this.isInFallbackSlot()) {
+    return (SLOT_HOLDER_VAR + "[ " + hid + " ]." + varName)
+  }
   return (HOLDER_VAR + "[ " + hid + " ]." + varName)
 };
 
@@ -5842,7 +5755,7 @@ TemplateGenerator.prototype.collectDependencies = function collectDependencies (
   var tag = el.tag;
     var children = el.children;
   if (this.isComponent(el)) {
-    deps.push(this.getComponentSrc(tag));
+    deps.push(this.getComponentName(tag));
   }
   if (children) {
     children.forEach(function (c) {
@@ -5850,20 +5763,6 @@ TemplateGenerator.prototype.collectDependencies = function collectDependencies (
     });
   }
   return deps
-};
-
-TemplateGenerator.prototype.getComponentSrc = function getComponentSrc (name) {
-  var ref = this;
-    var imports = ref.imports; if ( imports === void 0 ) imports = {};
-  var camelizedName = camelize(name);
-  var pascalizedName = pascalize(name);
-
-  var dep = imports[name] || imports[camelizedName] || imports[pascalizedName];
-  if (dep) {
-    return dep.src
-  } else {
-    return ''
-  }
 };
 
 TemplateGenerator.prototype.genVHtml = function genVHtml (el) {
@@ -5923,14 +5822,24 @@ TemplateGenerator.prototype.isComponent = function isComponent (el) {
     if ( el === void 0 ) el = {};
 
   var tag = el.tag;
-  if (el._cid) {
-    var ref = this;
-      var imports = ref.imports; if ( imports === void 0 ) imports = {};
-    var pascalName = pascalize(tag);
-    var camelizedName = camelize(tag);
-    return !!(imports[tag] || imports[pascalName] || imports[camelizedName])
+    var _cid = el._cid;
+  if (_cid) {
+    return !!this.getComponent(tag)
   }
   return false
+};
+
+TemplateGenerator.prototype.getComponentName = function getComponentName (name) {
+  var info = this.getComponent(name);
+  if (info) {
+    return info.name
+  } else {
+    return ''
+  }
+};
+
+TemplateGenerator.prototype.getComponent = function getComponent (name) {
+  return getComponentInfo(name, this.imports)
 };
 
 TemplateGenerator.prototype.isVText = function isVText (el) {
@@ -5957,7 +5866,7 @@ TemplateGenerator.prototype.genHid = function genHid (el) {
     tail = " + " + FOR_TAIL_VAR;
   }
   if (_fid) {
-    return ("" + _hid + tail + " + " + sep$2 + " + " + _fid)
+    return ("" + _hid + tail + " + " + sep$1 + " + " + _fid)
   } else {
     return ("" + hid + tail)
   }
@@ -5966,36 +5875,41 @@ TemplateGenerator.prototype.enterSlotSnippet = function enterSlotSnippet (slot) 
   this.slotSnippetBuffer.push(slot);
 };
 
+TemplateGenerator.prototype.enterFallbackSlot = function enterFallbackSlot () {
+  this.fallbackSlot++;
+};
+
 TemplateGenerator.prototype.leaveSlotSnippet = function leaveSlotSnippet () {
   this.slotSnippetBuffer.pop();
+};
+
+TemplateGenerator.prototype.leaveFallbackSlot = function leaveFallbackSlot () {
+  this.fallbackSlot--;
 };
 
 TemplateGenerator.prototype.isInSlotSnippet = function isInSlotSnippet () {
   return this.slotSnippetBuffer.length > 0
 };
 
-// getCurrentSlotSnippet () {
-// return this.slotSnippetBuffer[this.slotSnippetBuffer.length - 1]
-// }
+TemplateGenerator.prototype.isInFallbackSlot = function isInFallbackSlot () {
+  return this.fallbackSlot > 0
+};
+
+TemplateGenerator.prototype.isInScopedSlotSnippet = function isInScopedSlotSnippet () {
+  return this.slotSnippetBuffer.length > 0 && this.getCurrentSlotSnippet().scoped
+};
+
+TemplateGenerator.prototype.getCurrentSlotSnippet = function getCurrentSlotSnippet () {
+  return this.slotSnippetBuffer[this.slotSnippetBuffer.length - 1]
+};
 
 TemplateGenerator.prototype.wrapTemplateData = function wrapTemplateData (str) {
   return this.target === 'swan' ? ("{{{ " + str + " }}}") : ("{{ " + str + " }}")
 };
 
-// function extractHidTail (hid = ''): string {
-//   const delimiter = `+ ${sep} +`
-//   let parts = hid.split(delimiter)
-//   parts = parts.slice(1).map(s => s.trim())
-//   return `${sep} + ${parts.join(delimiter)}`
-// }
-
-function pascalize (str) {
-  if ( str === void 0 ) str = '';
-
-  var camelized = camelize(str);
-  var pascalized = capitalize(camelized);
-  return pascalized
-}
+TemplateGenerator.prototype.isTransformAssetUrl = function isTransformAssetUrl (node, name) {
+  return this.transformAssetUrls[node.tag] === name
+};
 
 /*  */
 

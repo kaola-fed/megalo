@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.5.4';
+Vue.version = '0.6.0';
 
 /*  */
 
@@ -4448,7 +4448,7 @@ function renderClass (
     return concat(stringifyClass(dynamicClass))
   }
   /* istanbul ignore next */
-  return ''
+  return undefined
 }
 
 function concat (a, b) {
@@ -4632,13 +4632,13 @@ function getMPPlatform () {
 
 var ROOT_DATA_VAR = '$root';
 var HOLDER_VAR = 'h';
+var SLOT_HOLDER_VAR = 's';
 
 var VM_ID_VAR = 'c';
 var VM_ID_PREFIX = 'cp';
 
 var VM_ID_SEP = 'v';
 
-var SLOT_CONTEXT_ID_VAR = 's';
 
 var LIST_TAIL_SEPS = {
   swan: '_',
@@ -4732,10 +4732,18 @@ function deepEqual (a, b) {
   return true
 }
 
+var sep = null;
+
+function updateSep (vm) {
+  if (!sep) {
+    sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat;
+  }
+}
+
 function getHid (vm, vnode) {
   if ( vnode === void 0 ) vnode = {};
 
-  var sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat;
+  updateSep(vm);
   var data = vnode.data; if ( data === void 0 ) data = {};
   var _hid = isDef(data._hid) ? data._hid : (data.attrs && data.attrs._hid);
   var _fid = isDef(data._fid) ? data._fid : (data.attrs && data.attrs._fid);
@@ -4775,32 +4783,55 @@ function getFid (vm) {
   return fid
 }
 
+function getFidPath (vm) {
+  updateSep(vm);
+  var fids = [];
+  var cursor = vm;
+  while (cursor) {
+    var fid = getFid(cursor);
+    if (isDef(fid)) {
+      fids.unshift(fid);
+    }
+    cursor = cursor.$parent;
+  }
+  return fids.join(sep) || undefined
+}
+
 function getVMId (vm) {
   var sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat;
   var res = [];
+  var fids = [];
   var cursor = vm;
-  var prev;
   while (cursor) {
-    if (cursor === vm || !isSlotParent(cursor, prev)) {
-      res.unshift(getCid(cursor));
+    var tmp = getCid(cursor);
+    var fidPath = getFidPath(cursor);
+    if (cursor !== vm && isDef(fidPath)) {
+      tmp += "" + sep + fidPath;
     }
-    prev = cursor;
+    var fid$1 = getFid(cursor);
+    if (cursor !== vm && isDef(fid$1)) {
+      fids.unshift(fid$1);
+    }
+    res.unshift(tmp);
+
     cursor = cursor.$parent;
   }
   var vmId = res.join(VM_ID_SEP);
   var fid = getFid(vm);
   if (isDef(fid)) {
-    return ("" + vmId + sep + fid)
+    fids.push(fid);
+  }
+  if (fids.length) {
+    return ("" + vmId + sep + (fids.join(sep)))
   }
   return vmId
 }
 
-function isSlotParent (parent, child) {
-  var ref = child || {};
-  var $vnode = ref.$vnode; if ( $vnode === void 0 ) $vnode = {};
-  var childSlotParentUId = $vnode._mpSlotParentUId;
-  return isDef(childSlotParentUId) && childSlotParentUId === parent._uid
-}
+// function isSlotParent (parent, child) {
+//   const { $vnode = {}} = child || {}
+//   const childSlotParentUId = $vnode._mpSlotParentUId
+//   return isDef(childSlotParentUId) && childSlotParentUId === parent._uid
+// }
 
 // export function getVMParentId (vm) {
 //   if (vm.$parent) {
@@ -4818,37 +4849,19 @@ function isEmptyObj (obj) {
 function initVMToMP (vm) {
   var obj;
 
-  var sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat;
+  // const sep = LIST_TAIL_SEPS[vm.$mp.platform] || LIST_TAIL_SEPS.wechat
 
   vm = vm || this;
-  // const cid = getVMId(vm)
   var vmId = getVMId(vm);
-  // console.log(vmId)
-  var i = vmId.indexOf(sep);
-  var cid = i > -1 ? vmId.slice(0, i) : vmId;
+  var $vnode = vm.$vnode; if ( $vnode === void 0 ) $vnode = '';
   var info = {
     cid: vmId,
-    cpath: ("" + cid + VM_ID_SEP)
+    cpath: ("" + vmId + VM_ID_SEP)
   };
 
   var prefix = ROOT_DATA_VAR + "." + vmId;
 
-  vm.$mp._update(( obj = {}, obj[(prefix + "." + VM_ID_VAR)] = info.cid, obj[(prefix + "." + VM_ID_PREFIX)] = info.cpath, obj));
-}
-
-function updateSlotId (vm, sid) {
-  var obj;
-
-  vm = vm || this;
-  var vmId = getVMId(vm);
-  var dataPaths = [ROOT_DATA_VAR, vmId, SLOT_CONTEXT_ID_VAR];
-  var curValue = getValue(vm.$mp.page.data, dataPaths);
-  var dataPathStr = dataPaths.join('.');
-
-  /* istanbul ignore else */
-  if (isDef(sid) && curValue !== sid) {
-    vm.$mp._update(( obj = {}, obj[dataPathStr] = sid, obj));
-  }
+  vm.$mp._update(( obj = {}, obj[(prefix + ".n")] = $vnode.tag || '$root', obj[(prefix + "." + VM_ID_VAR)] = info.cid, obj[(prefix + "." + VM_ID_PREFIX)] = info.cpath, obj));
 }
 
 function updateMPData (type, data, vnode) {
@@ -4861,7 +4874,7 @@ function updateMPData (type, data, vnode) {
   var dataPaths = [
     ROOT_DATA_VAR,
     vmId,
-    HOLDER_VAR,
+    vnode.slotContext ? SLOT_HOLDER_VAR : HOLDER_VAR,
     hid,
     type
   ];
@@ -4925,20 +4938,20 @@ function updateVnodeToMP (vnode, key, value) {
   }
 }
 
-var sep = '';
+var sep$1 = '';
 
 function assertHid (vnode, hid) {
   var data = vnode.data; if ( data === void 0 ) data = {};
   var attrs = data.attrs; if ( attrs === void 0 ) attrs = {};
   var _hid = attrs._hid;
   var _fid = attrs._fid;
-  var curHid = isDef(_fid) ? ("" + _hid + sep + _fid) : _hid;
+  var curHid = isDef(_fid) ? ("" + _hid + sep$1 + _fid) : _hid;
   return ("" + curHid) === ("" + hid)
 }
 
 function proxyEvent (rootVM, event) {
-  if (!sep) {
-    sep = LIST_TAIL_SEPS[rootVM.$mp.platform] || LIST_TAIL_SEPS.wechat;
+  if (!sep$1) {
+    sep$1 = LIST_TAIL_SEPS[rootVM.$mp.platform] || LIST_TAIL_SEPS.wechat;
   }
   var type = event.type;
   var detail = event.detail; if ( detail === void 0 ) detail = {};
@@ -5028,7 +5041,8 @@ function getHandlers (vm, rawType, hid) {
 
 /*  */
 
-// import { extend, warn, isObject } from 'core/util/index'
+var sep$2 = null;
+
 /**
  * Runtime helper for rendering <slot>
  */
@@ -5039,44 +5053,133 @@ function afterRenderSlot (
   props,
   bindObject
 ) {
-  var _fid = props._fid;
+  if (!sep$2) {
+    sep$2 = LIST_TAIL_SEPS[this.$mp.platform] || LIST_TAIL_SEPS.wechat;
+  }
+
   // single tag:
   // <CompA><span slot-scope="props">{{ props.msg }}</span></CompA>
   if (nodes && nodes.tag) {
     nodes = [nodes];
   }
-  if (nodes && nodes.length) {
-    var firstNode = getFirstNode(nodes);
-    var context = firstNode.context;
-    if (context !== this) {
-      var sid = getVMId(context);
-      updateSlotId(this, sid);
-    }
-    markComponents(nodes, this._uid);
+
+  if (!nodes || !nodes.length) {
+    return nodes
   }
 
-  // scopedSlotFn with v-for
-  var scopedSlotFn = this.$scopedSlots[name];
-  // update vnode hid in scoped slot with the slot host's actual fid
-  if (scopedSlotFn && isDef(_fid)) {
-    updateNodesHid(nodes, ("-" + _fid));
+  var firstNode = getFirstNode(nodes);
+
+  if (firstNode.__slotWalked) {
+    return nodes
   }
+
+  firstNode.__slotWalked = true;
+
+  var slotFid = props._fid;
+  var hostFId = this.$vnode.data.attrs._fid;
+  walkVnodes(
+    nodes,
+    {
+      hostFId: hostFId,
+      slotContext: this,
+      slotFid: slotFid
+    }
+  );
 
   return nodes
 }
 
-function updateNodesHid (nodes, tail) {
-  if ( nodes === void 0 ) nodes = [];
-
-  nodes.forEach(function (node) {
-    /* istanbul ignore else */
-    if (node.data && node.data._hid) {
-      node.data._hid += tail;
-    } else if (node && node.data && node.data.attrs && node.data.attrs._hid) {
-      node.data.attrs._hid += tail;
+function getFidPath$1 (vm) {
+  var fids = [];
+  var cursor = vm;
+  while (cursor) {
+    var fid = getFid(cursor);
+    if (isDef(fid)) {
+      fids.unshift(fid);
     }
-    updateNodesHid(node.children || [], tail);
+    cursor = cursor.$parent;
+  }
+  return fids.join(sep$2) || undefined
+}
+
+function walkVnodes (nodes, ref) {
+  if ( nodes === void 0 ) nodes = [];
+  var hostFid = ref.hostFid;
+  var slotContext = ref.slotContext;
+  var slotFid = ref.slotFid;
+
+  var fidPath = getFidPath$1(slotContext);
+  var parentUId = slotContext._uid;
+  nodes.forEach(function (node) {
+    setSlotContextAndParentUid(node, slotContext, parentUId);
+
+    // update vnode hid in scoped slot with the slot host's actual fid
+    if (node.data && node.data.attrs) {
+      if (/^vue-component/.test(node.tag)) {
+        node.data.attrs._fid = resolveFid(
+          [slotFid, node.data.attrs._fid]
+        );
+      } else {
+        node.data.attrs._fid = resolveFid(
+          [fidPath, slotFid, node.data.attrs._fid]
+        );
+      }
+    } else if (node.data) {
+      node.data._fid = resolveFid(
+        [fidPath, slotFid, node.data._fid]
+      );
+    }
+
+    walkVnodes(node.children, { hostFid: hostFid, slotContext: slotContext, fidPath: fidPath, slotFid: slotFid });
+
+    renderIf(node, { fidPath: fidPath, slotFid: slotFid, slotContext: slotContext });
+
+    if (node.__renderListFn) {
+      var renderListVnode = node.__renderListVnode;
+      renderListVnode.data.attrs._fid = resolveFid(
+        [fidPath, slotFid, renderListVnode.data.attrs._fid]
+      );
+      renderListVnode.slotContext = slotContext;
+      node.__renderListFn();
+    }
   });
+}
+
+function renderIf (node, ref) {
+  var fidPath = ref.fidPath;
+  var slotFid = ref.slotFid;
+  var slotContext = ref.slotContext;
+
+  if (node.data && node.data.attrs && node.data.attrs.__if) {
+    var _if = node.data.attrs.__if;
+    for (var i = 0, len = _if.length; i < len; i += 3) {
+      var cond = _if[i];
+      var _ifHid = _if[i + 1];
+      var _ifFid = _if[i + 2];
+      var realIfFid = resolveFid(
+        [fidPath, slotFid, _ifFid]
+      );
+      var ifNode = {
+        slotContext: slotContext,
+        data: {
+          attrs: {
+            _hid: _ifHid,
+            _fid: realIfFid
+          }
+        }
+      };
+
+      updateVnodeToMP(ifNode, HOLDER_TYPE_VARS.if, cond);
+    }
+  }
+}
+
+function resolveFid (ids) {
+  if ( ids === void 0 ) ids = [];
+
+  return ids
+    .filter(function (e) { return isDef(e) && e !== ''; })
+    .join(sep$2) || undefined
 }
 
 function getFirstNode (nodes) {
@@ -5087,19 +5190,15 @@ function getFirstNode (nodes) {
   return firstNode
 }
 
-function markComponents (nodes, parentUId) {
-  if ( nodes === void 0 ) nodes = [];
-
-  nodes.forEach(function (node) {
-    var componentOptions = node.componentOptions;
-    if (componentOptions) {
-      node._mpSlotParentUId = parentUId;
-    }
-    markComponents(node.children, parentUId);
-  });
+function setSlotContextAndParentUid (node, slotContext, parentUId) {
+  var componentOptions = node.componentOptions;
+  if (componentOptions) {
+    node._mpSlotParentUId = parentUId;
+  }
+  node.slotContext = slotContext;
 }
 
-function renderIf (cond, _hid, _fid) {
+function renderIf$1 (cond, _hid, _fid) {
   var cloneVnode = {
     context: this,
     data: {
@@ -5119,16 +5218,16 @@ function afterRenderList (
   ret,
   val,
   render,
-  forId,
+  forInfo,
   context
 ) {
-  updateListToMP(ret, val, forId, context);
+  updateListToMP(ret, val, forInfo, context);
 }
 
 // TODO: support for destructuring
 // TODO: keys collecting method needs improve for
 // <li v-for="i in 3" :key="i"></li>
-function updateListToMP (vnodeList, val, forId, context) {
+function updateListToMP (vnodeList, val, forInfo, context) {
   if ( vnodeList === void 0 ) vnodeList = [];
 
   var firstItem = vnodeList[0];
@@ -5184,7 +5283,7 @@ function updateListToMP (vnodeList, val, forId, context) {
   var cloneVnode = {
     context: context,
     data: {
-      attrs: { _hid: forId }
+      attrs: { _hid: forInfo[0], _fid: forInfo[1] }
     }
   };
 
@@ -5207,6 +5306,16 @@ function updateListToMP (vnodeList, val, forId, context) {
   }
 
   updateVnodeToMP(cloneVnode, HOLDER_TYPE_VARS.for, list);
+
+  var fnStoreNode = Array.isArray(firstItem) ? firstItem[0] : firstItem;
+
+  if (fnStoreNode) {
+    fnStoreNode.__renderListFn = function (vnode) {
+      updateVnodeToMP(vnode || cloneVnode, HOLDER_TYPE_VARS.for, list);
+    };
+
+    fnStoreNode.__renderListVnode = cloneVnode;
+  }
 }
 
 var app = null;
@@ -6216,6 +6325,10 @@ function updateAttrs (oldVnode, vnode) {
 
     // only update daynamic attrs in runtime
     if (old !== cur && (bindingAttrs.indexOf(key) > -1 || key === 'slot')) {
+      // if using local image file, set path to the root
+      if (vnode.tag === 'img' && key === 'src' && !/^\/|https?|data:/.test(cur)) {
+        cur = "/" + cur;
+      }
       updateVnodeToMP(vnode, key, cur);
     }
   }
@@ -6245,8 +6358,8 @@ function updateClass (oldVnode, vnode) {
   }
 
   var cls = genClassForVnode(vnode);
-  var rootClass = null;
-  var rootVnode = null;
+  var rootClass;
+  var rootVnode;
 
   if (isDef(cls) && isDef(vnode.componentInstance)) {
     var ref = vnode.data;
@@ -6678,6 +6791,16 @@ function walkInTree (vm, fn, options) {
   return result
 }
 
+function doCallHook (vm, hook, options) {
+  var handlers = vm.$options[hook] || [];
+  if (!Array.isArray(handlers)) {
+    handlers = [handlers];
+  }
+  return handlers.reduce(function (res, handler) {
+    return handler.call(vm, options)
+  }, undefined)
+}
+
 function callHook$2 (vm, hook, options) {
   /* istanbul ignore if */
   if (!vm) {
@@ -6687,14 +6810,12 @@ function callHook$2 (vm, hook, options) {
   var result;
 
   if (hook === 'onReady') {
-    result = walkInTree(vm, function (_vm) {
-      var handler = _vm.$options[hook];
-      handler && handler.call(_vm, options);
+    result = walkInTree(vm, function (curVM) {
+      doCallHook(curVM, hook, options);
     }, { bottomToTop: true });
   } else {
-    result = walkInTree(vm, function (_vm) {
-      var handler = _vm.$options[hook];
-      return handler && handler.call(_vm, options)
+    result = walkInTree(vm, function (curVM) {
+      return doCallHook(curVM, hook, options)
     });
   }
 
@@ -7005,11 +7126,13 @@ var platformDirectives = {
 
 // import config from 'core/config'
 // install platform specific utils
-Vue.config.mustUseProp = mustUseProp;
-Vue.config.isReservedTag = isReservedTag;
-Vue.config.isReservedAttr = isReservedAttr;
-Vue.config.getTagNamespace = getTagNamespace;
-Vue.config.isUnknownElement = isUnknownElement;
+var VueConfig = Vue.config;
+VueConfig.mustUseProp = mustUseProp;
+VueConfig.isReservedTag = isReservedTag;
+VueConfig.isReservedAttr = isReservedAttr;
+VueConfig.getTagNamespace = getTagNamespace;
+VueConfig.isUnknownElement = isUnknownElement;
+updateOptionMergeStrategies(VueConfig);
 
 // install platform runtime directives & components
 extend(Vue.options.directives, platformDirectives);
@@ -7017,7 +7140,7 @@ extend(Vue.options.directives, platformDirectives);
 // install platform patch function
 Vue.prototype.__patch__ = patch;
 Vue.prototype._v = createTextVNode$1;
-Vue.prototype._ri = renderIf;
+Vue.prototype._ri = renderIf$1;
 Vue.prototype.$updateMPData = updateMPData;
 
 Vue.prototype._l = aop(Vue.prototype._l, {
@@ -7069,6 +7192,23 @@ Vue.prototype.$mount = function (
     return vm
   }
 };
+
+function updateOptionMergeStrategies (VueConfig) {
+  var mergeHook = VueConfig.optionMergeStrategies.created;
+  var strats = [
+    // Page
+    'onLoad', 'onReady', 'onShow',
+    'onUnload', 'onHide', 'onPullDownRefresh',
+    'onReachBottom', 'onShareAppMessage', 'onPageScroll',
+    'onTabItemTap', 'onTitleClick',
+    // App
+    'onLaunch', 'onError', 'onPageNotFound'
+  ].reduce(function (res, hook) {
+    res[hook] = mergeHook;
+    return res
+  }, {});
+  Object.assign(VueConfig.optionMergeStrategies, strats);
+}
 
 /*  */
 
