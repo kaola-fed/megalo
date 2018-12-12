@@ -254,4 +254,25 @@ describe(':class', () => {
       expectRootClass('foo a')
     }).then(done)
   })
+
+  it('class merge between parent and child and only static class on parent', () => {
+    function expectRootClass (expected) {
+      expect(page.data.$root['0v0'].h[0].rcl).toBe(expected)
+    }
+
+    const pageOptions = {
+      mpType: 'page',
+      template: '<child class="a" ></child>',
+      data: { value: 'b' },
+      components: {
+        child: {
+          template: '<div class="c"></div>'
+        }
+      }
+    }
+
+    const { page } = createPage(pageOptions)
+
+    expectRootClass('a')
+  })
 })
