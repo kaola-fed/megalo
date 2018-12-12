@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.6.0';
+Vue.version = '0.6.1';
 
 /*  */
 

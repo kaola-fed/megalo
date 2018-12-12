@@ -5546,14 +5546,15 @@ TemplateGenerator.prototype.genAttrs = function genAttrs (el) {
       name === 'v-show'
     ) {
       return ''
-    } else if (vbindReg$1.test(name)) {
-      var realName = name.replace(vbindReg$1, '');
-      return (realName + "=\"{{ " + HOLDER_VAR + "[ " + (this$1.genHid(el)) + " ][ '" + realName + "' ] }}\"")
     } else if (vmodelReg.test(name)) {
       return ("value=\"{{ " + (this$1.genHolder(el, 'value')) + " }}\"")
-    // img
+    // <img :data-a="a" :src="img">
+    } else if (vbindReg$1.test(name)) {
+      var realName = name.replace(vbindReg$1, '');
+      return (realName + "=\"{{ " + (this$1.genHolderVar()) + "[ " + (this$1.genHid(el)) + " ][ '" + realName + "' ] }}\"")
+    // <img src="../assets/img.jpg">
     } else if (!/^https?|data:/.test(value) && this$1.isTransformAssetUrl(el, name)) {
-      return (name + "=\"{{ " + HOLDER_VAR + "[ " + (this$1.genHid(el)) + " ][ '" + name + "' ] }}\"")
+      return (name + "=\"{{ " + (this$1.genHolderVar()) + "[ " + (this$1.genHid(el)) + " ][ '" + name + "' ] }}\"")
     } else {
       return (name + "=\"" + value + "\"")
     }
@@ -5730,6 +5731,13 @@ TemplateGenerator.prototype.genChildren = function genChildren (el) {
   return el.children.map(function (child) { return this$1.genElement(child); }).join('')
 };
 
+TemplateGenerator.prototype.genHolderVar = function genHolderVar () {
+  if (this.isInSlotSnippet() || this.isInFallbackSlot()) {
+    return SLOT_HOLDER_VAR
+  }
+  return HOLDER_VAR
+};
+
 TemplateGenerator.prototype.genHolder = function genHolder (el, type) {
   var varName = HOLDER_TYPE_VARS[type];
   var hid = typeof el === 'string' ? el : this.genHid(el);
@@ -5737,10 +5745,7 @@ TemplateGenerator.prototype.genHolder = function genHolder (el, type) {
   if (!varName) {
     throw new Error((type + " holder HOLDER_TYPE_VARS not found"))
   }
-  if (this.isInSlotSnippet() || this.isInFallbackSlot()) {
-    return (SLOT_HOLDER_VAR + "[ " + hid + " ]." + varName)
-  }
-  return (HOLDER_VAR + "[ " + hid + " ]." + varName)
+  return ((this.genHolderVar()) + "[ " + hid + " ]." + varName)
 };
 
 /* istanbul ignore next */
