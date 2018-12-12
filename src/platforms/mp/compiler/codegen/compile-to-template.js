@@ -352,14 +352,15 @@ export class TemplateGenerator {
         name === 'v-show'
       ) {
         return ''
-      } else if (vbindReg.test(name)) {
-        const realName = name.replace(vbindReg, '')
-        return `${realName}="{{ ${HOLDER_VAR}[ ${this.genHid(el)} ][ '${realName}' ] }}"`
       } else if (vmodelReg.test(name)) {
         return `value="{{ ${this.genHolder(el, 'value')} }}"`
-      // img
+      // <img :data-a="a" :src="img">
+      } else if (vbindReg.test(name)) {
+        const realName = name.replace(vbindReg, '')
+        return `${realName}="{{ ${this.genHolderVar()}[ ${this.genHid(el)} ][ '${realName}' ] }}"`
+      // <img src="../assets/img.jpg">
       } else if (!/^https?|data:/.test(value) && this.isTransformAssetUrl(el, name)) {
-        return `${name}="{{ ${HOLDER_VAR}[ ${this.genHid(el)} ][ '${name}' ] }}"`
+        return `${name}="{{ ${this.genHolderVar()}[ ${this.genHid(el)} ][ '${name}' ] }}"`
       } else {
         return `${name}="${value}"`
       }
@@ -526,6 +527,13 @@ export class TemplateGenerator {
     return el.children.map(child => this.genElement(child)).join('')
   }
 
+  genHolderVar () {
+    if (this.isInSlotSnippet() || this.isInFallbackSlot()) {
+      return SLOT_HOLDER_VAR
+    }
+    return HOLDER_VAR
+  }
+
   genHolder (el, type): string {
     const varName = HOLDER_TYPE_VARS[type]
     const hid = typeof el === 'string' ? el : this.genHid(el)
@@ -533,10 +541,7 @@ export class TemplateGenerator {
     if (!varName) {
       throw new Error(`${type} holder HOLDER_TYPE_VARS not found`)
     }
-    if (this.isInSlotSnippet() || this.isInFallbackSlot()) {
-      return `${SLOT_HOLDER_VAR}[ ${hid} ].${varName}`
-    }
-    return `${HOLDER_VAR}[ ${hid} ].${varName}`
+    return `${this.genHolderVar()}[ ${hid} ].${varName}`
   }
 
   /* istanbul ignore next */
