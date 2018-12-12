@@ -1348,4 +1348,33 @@ describe('slot', () => {
       options
     )
   })
+
+  it('attr in slot should use slot holder "s"', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    const options = {
+      name: 'App$1234',
+      transformAssetUrls: {
+        img: 'src'
+      },
+      imports: {
+        CompA,
+        CompB
+      }
+    }
+    assertCodegen(
+      `<CompA><img src="./static/pic.jpg"></CompA>`,
+      `<template is="CompA$1234" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', _t: _t || '' }}" />`,
+      options,
+      function aasertRes (res) {
+        res.slots.forEach((slot) => {
+          expect(slot.name).toEqual('default')
+          expect(slot.body).toEqual(
+            `<template name="${slot.slotName}" parent="${options.name}">` +
+              `<image class="_img" src="{{ s[ 3 + _t ][ 'src' ] }}"></image>` +
+            `</template>`
+          )
+        })
+      }
+    )
+  })
 })
