@@ -32,11 +32,12 @@ function updateClass (oldVnode: any, vnode: any) {
   let rootClass
   let rootVnode
 
-  if (isDef(cls) && isDef(vnode.componentInstance)) {
+  if (isDef(vnode.componentInstance)) {
     const { staticClass = '' } = vnode.data
-    const rootClassList = cls
+    const rootClassList = (cls || '')
       .split(/\s+/)
       .concat(staticClass.split(/\s+/))
+      .filter(e => e)
     rootVnode = vnode.componentInstance._vnode
     rootClass = rootClassList.join(' ')
     cls = undefined
