@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.6.1';
+Vue.version = '0.6.2';
 
 /*  */
 
@@ -6361,12 +6361,13 @@ function updateClass (oldVnode, vnode) {
   var rootClass;
   var rootVnode;
 
-  if (isDef(cls) && isDef(vnode.componentInstance)) {
+  if (isDef(vnode.componentInstance)) {
     var ref = vnode.data;
     var staticClass = ref.staticClass; if ( staticClass === void 0 ) staticClass = '';
-    var rootClassList = cls
+    var rootClassList = (cls || '')
       .split(/\s+/)
-      .concat(staticClass.split(/\s+/));
+      .concat(staticClass.split(/\s+/))
+      .filter(function (e) { return e; });
     rootVnode = vnode.componentInstance._vnode;
     rootClass = rootClassList.join(' ');
     cls = undefined;
