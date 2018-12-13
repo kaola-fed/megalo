@@ -568,7 +568,7 @@ export class TemplateGenerator {
     return `<template is="${htmlParse.templateName}"${[
       this.genIf(el),
       this.genFor(el)
-    ].join('')} data="{{ nodes: ${this.genHolder(el, 'vhtml')} }}"/>`
+    ].join('')} data="${this.wrapTemplateData(`nodes: ${this.genHolder(el, 'vhtml')}`)}"/>`
   }
 
   genNativeSlotName (el): string {
