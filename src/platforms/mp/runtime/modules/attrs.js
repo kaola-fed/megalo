@@ -41,7 +41,7 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
     // only update daynamic attrs in runtime
     if (old !== cur && (bindingAttrs.indexOf(key) > -1 || key === 'slot')) {
       // if using local image file, set path to the root
-      if (vnode.tag === 'img' && key === 'src' && !/^\/|https?|data:/.test(cur)) {
+      if (cur && vnode.tag === 'img' && key === 'src' && !/^\/|https?|data:/.test(cur)) {
         cur = `/${cur}`
       }
       updateVnodeToMP(vnode, key, cur)
