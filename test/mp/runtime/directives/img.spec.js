@@ -33,4 +33,23 @@ describe('Directive v-bind', () => {
       expectAttr('data:image//123')
     }).then(done)
   })
+
+  it('normal attr', done => {
+    const options = {
+      template: '<img :src="img">',
+      data: { img: '' }
+    }
+
+    const { page, vm } = createPage(options)
+
+    function expectAttr (expected) {
+      expect(getPageData(page, '0').h['0'].src).toEqual(expected)
+    }
+
+    expectAttr('')
+    vm.img = '/static/src/2.jpg'
+    waitForUpdate(() => {
+      expectAttr('/static/src/2.jpg')
+    }).then(done)
+  })
 })
