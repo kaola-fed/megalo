@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.6.2';
+Vue.version = '0.6.3';
 
 /*  */
 
@@ -6326,7 +6326,7 @@ function updateAttrs (oldVnode, vnode) {
     // only update daynamic attrs in runtime
     if (old !== cur && (bindingAttrs.indexOf(key) > -1 || key === 'slot')) {
       // if using local image file, set path to the root
-      if (vnode.tag === 'img' && key === 'src' && !/^\/|https?|data:/.test(cur)) {
+      if (cur && vnode.tag === 'img' && key === 'src' && !/^\/|https?|data:/.test(cur)) {
         cur = "/" + cur;
       }
       updateVnodeToMP(vnode, key, cur);
