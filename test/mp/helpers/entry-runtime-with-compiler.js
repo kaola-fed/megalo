@@ -31,7 +31,8 @@ Vue.prototype.$mount = function (
         imports: {
           test: { name: 'test' },
           test2: { name: 'test2' },
-          test3: { name: 'test3' }
+          test3: { name: 'test3' },
+          child: { name: 'child' }
         },
         transformAssetUrls: {
           img: 'src'
