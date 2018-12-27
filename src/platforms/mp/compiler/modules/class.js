@@ -32,7 +32,8 @@ function transformNode (el: ASTElement, options: CompilerOptions) {
 
 function genData (el: ASTElement): string {
   let data = ''
-  if (el.staticClass) {
+  // don't gen static class on none components
+  if (el.c_ && el.staticClass) {
     data += `staticClass:${el.staticClass},`
   }
   if (el.classBinding) {
