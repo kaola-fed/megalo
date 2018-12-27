@@ -68,6 +68,8 @@ export class TemplateGenerator {
 
     this.slotSnippetBuffer = []
     this.fallbackSlot = 0
+    this.children = []
+    this.componentsStack = []
   }
 
   generate (ast) {
@@ -84,7 +86,8 @@ export class TemplateGenerator {
         body,
         slots: this.slots,
         needHtmlParse,
-        errors: this.errors
+        errors: this.errors,
+        children: this.children
       }
     } catch (err) {
       console.error('[compile template error]', err)
@@ -125,6 +128,8 @@ export class TemplateGenerator {
   genComponent (el): string {
     const { _cid, tag, _fid } = el
     const compInfo = this.getComponent(tag)
+    this.enterComponent(compInfo)
+
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
@@ -153,6 +158,11 @@ export class TemplateGenerator {
       this.genIf(el),
       this.genFor(el)
     ].filter(notEmpty).join('')
+
+    const currentComponent = this.getCurrentCompoent()
+    currentComponent.slots = slots
+
+    this.leaveComponent()
 
     return `<template${attrs} />`
   }
@@ -696,5 +706,23 @@ export class TemplateGenerator {
 
   isTransformAssetUrl (node, name) {
     return this.transformAssetUrls[node.tag] === name
+  }
+
+  enterComponent (compInfo) {
+    const newComp = {
+      name: compInfo.name,
+      slots: [],
+      children: []
+    }
+    this.getCurrentCompoent().children.push(newComp)
+    this.componentsStack.push(newComp)
+  }
+
+  leaveComponent (compInfo) {
+    this.componentsStack.pop()
+  }
+
+  getCurrentCompoent (compInfo) {
+    return this.componentsStack[this.componentsStack.length - 1] || this
   }
 }

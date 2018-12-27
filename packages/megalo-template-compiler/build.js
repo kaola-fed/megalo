@@ -159,6 +159,9 @@ var capitalize = cached(function (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 });
 
+/**
+ * Hyphenate a camelCase string.
+ */
 
 
 /**
@@ -284,7 +287,6 @@ var isNonPhrasingTag = makeMap(
  * http://erik.eae.net/simplehtmlparser/simplehtmlparser.js
  */
 
-// Regular Expressions for parsing tags and attributes
 var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
 // could use https://www.w3.org/TR/1999/REC-xml-names-19990114/#NT-QName
 // but for Vue templates we can enforce a simple charset
@@ -715,6 +717,10 @@ function def (obj, key, val, enumerable) {
   });
 }
 
+/**
+ * Parse simple path.
+ */
+
 /*  */
 
 // can we use __proto__?
@@ -778,7 +784,6 @@ var hasSymbol =
   typeof Symbol !== 'undefined' && isNative(Symbol) &&
   typeof Reflect !== 'undefined' && isNative(Reflect.ownKeys);
 
-/* istanbul ignore if */ // $flow-disable-line
 if (typeof Set !== 'undefined' && isNative(Set)) {
   // use native Set when available.
   
@@ -1027,9 +1032,6 @@ Dep.prototype.notify = function notify () {
   }
 };
 
-// the current target watcher being evaluated.
-// this is globally unique because there could be only one
-// watcher being evaluated at any time.
 Dep.target = null;
 
 /*  */
@@ -1361,11 +1363,6 @@ function dependArray (value) {
 
 /*  */
 
-/**
- * Option overwriting strategies are functions that handle
- * how to merge a parent option value and a child option
- * value into the final value.
- */
 var strats = config.optionMergeStrategies;
 
 /**
@@ -1584,8 +1581,15 @@ var defaultStrat = function (parentVal, childVal) {
     : childVal
 };
 
+/**
+ * Validate component names
+ */
 
 
+/**
+ * Ensure all props option syntax are normalized into the
+ * Object-based format.
+ */
 function assertObjectType (name, value, vm) {
   if (!isPlainObject(value)) {
     warn(
@@ -1610,6 +1614,12 @@ function assertObjectType (name, value, vm) {
 
 /*  */
 
+
+
+/**
+ * Get the default value of a prop.
+ */
+
 /*  */
 
 /*  */
@@ -1624,11 +1634,14 @@ function flushCallbacks () {
   }
 }
 
-// Determine (macro) task defer implementation.
-// Technically setImmediate should be the ideal choice, but it's only available
-// in IE. The only polyfill that consistently queues the callback after all DOM
-// events triggered in the same loop is by using MessageChannel.
-/* istanbul ignore if */
+// Here we have async deferring wrappers using both microtasks and (macro) tasks.
+// In < 2.4 we used microtasks everywhere, but there are some scenarios where
+// microtasks have too high a priority and fire in between supposedly
+// sequential events (e.g. #4521, #6690) or even between bubbling of the same
+// event (#6566). However, using (macro) tasks everywhere also has subtle problems
+// when state is changed right before repaint (e.g. #6813, out-in transitions).
+// Here we use microtask by default, but expose a way to force (macro) task when
+// needed (e.g. in event handlers attached by v-on).
 if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {
   
 } else if (typeof MessageChannel !== 'undefined' && (
@@ -2118,7 +2131,7 @@ var parseStyleText = cached(function (cssText) {
   return res
 });
 
-// normalize possible array / string values into Object
+// merge static and dynamic style data on the same vnode
 
 
 /**
@@ -3487,6 +3500,8 @@ function genHandlers (
   return res.slice(0, -1) + '}'
 }
 
+// Generate handler code with binding params on Weex
+/* istanbul ignore next */
 function genHandler (
   name,
   handler
@@ -4060,7 +4075,7 @@ function genProps (props) {
   return res.slice(0, -1)
 }
 
-// #3895, #4268
+/* istanbul ignore next */
 function transformSpecialNewlines (text) {
   return text
     .replace(/\u2028/g, '\\u2028')
@@ -4069,8 +4084,6 @@ function transformSpecialNewlines (text) {
 
 /*  */
 
-// these keywords should not appear inside expressions, but operators like
-// typeof, instanceof and in are allowed
 var prohibitedKeywordRE = new RegExp('\\b' + (
   'do,if,for,let,new,try,var,case,else,with,await,break,catch,class,const,' +
   'super,throw,while,yield,delete,export,import,return,switch,default,' +
@@ -5250,6 +5263,8 @@ var TemplateGenerator = function TemplateGenerator (options) {
 
   this.slotSnippetBuffer = [];
   this.fallbackSlot = 0;
+  this.children = [];
+  this.componentsStack = [];
 };
 
 TemplateGenerator.prototype.generate = function generate (ast) {
@@ -5267,7 +5282,8 @@ TemplateGenerator.prototype.generate = function generate (ast) {
       body: body,
       slots: this.slots,
       needHtmlParse: needHtmlParse,
-      errors: this.errors
+      errors: this.errors,
+      children: this.children
     }
   } catch (err) {
     console.error('[compile template error]', err);
@@ -5311,6 +5327,8 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
     var tag = el.tag;
     var _fid = el._fid;
   var compInfo = this.getComponent(tag);
+  this.enterComponent(compInfo);
+
   var compName = compInfo.name;
   var slots = this.genSlotSnippets(el);
   var slotsNames = slots.map(function (sl) { return ("s_" + (sl.name) + ": '" + (sl.slotName) + "'"); });
@@ -5338,6 +5356,11 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
     this.genIf(el),
     this.genFor(el)
   ].filter(notEmpty).join('');
+
+  var currentComponent = this.getCurrentCompoent();
+  currentComponent.slots = slots;
+
+  this.leaveComponent();
 
   return ("<template" + attrs + " />")
 };
@@ -5914,6 +5937,24 @@ TemplateGenerator.prototype.wrapTemplateData = function wrapTemplateData (str) {
 
 TemplateGenerator.prototype.isTransformAssetUrl = function isTransformAssetUrl (node, name) {
   return this.transformAssetUrls[node.tag] === name
+};
+
+TemplateGenerator.prototype.enterComponent = function enterComponent (compInfo) {
+  var newComp = {
+    name: compInfo.name,
+    slots: [],
+    children: []
+  };
+  this.getCurrentCompoent().children.push(newComp);
+  this.componentsStack.push(newComp);
+};
+
+TemplateGenerator.prototype.leaveComponent = function leaveComponent (compInfo) {
+  this.componentsStack.pop();
+};
+
+TemplateGenerator.prototype.getCurrentCompoent = function getCurrentCompoent (compInfo) {
+  return this.componentsStack[this.componentsStack.length - 1] || this
 };
 
 /*  */
