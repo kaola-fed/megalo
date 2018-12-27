@@ -149,7 +149,7 @@ function genIfConditions (
 ): string {
   if (!conditions.length) {
     if (conditions.__extratExpression) {
-      return `_c\("a", {attrs: {__if:[${conditions.__extratExpression.join(',')}]}})`
+      return `_c\("a", {attrs: {i_:[${conditions.__extratExpression.join(',')}]}})`
     }
     return altEmpty || '_e()'
   }
@@ -197,12 +197,12 @@ export function genFor (
       true /* tip */
     )
   }
-  const { _forInfo, _fid } = el
+  const { _forInfo, f_ } = el
   el.forProcessed = true // avoid recursion
-  const tailStr = _forInfo._hid + (isDef(_forInfo._fid) ? `, ${_forInfo._fid}` : '')
+  const tailStr = _forInfo.h_ + (isDef(_forInfo.f_) ? `, ${_forInfo.f_}` : '')
   return `${altHelper || '_l'}((${exp}),` +
     `function(${alias}${iterator1}${iterator2}){` +
-      `var _fid = ${_fid};` +
+      `var f_ = ${f_};` +
       `return ${(altGen || genElement)(el, state)}` +
     `},[${tailStr}],_self)`
 }
@@ -238,11 +238,11 @@ export function genData (el: ASTElement, state: CodegenState): string {
   }
   // attributes
   if (el.attrs) {
-    data += `attrs:{${genProps(el.attrs)}},`
+    data += `attrs:{${genProps(el.attrs, 'attrs')}},`
   }
   // DOM props
   if (el.props) {
-    data += `domProps:{${genProps(el.props)}},`
+    data += `domProps:{${genProps(el.props, 'domProps')}},`
   }
   // event handlers
   if (el.events) {
@@ -506,10 +506,28 @@ function genComponent (
   })`
 }
 
-function genProps (props: Array<{ name: string, value: any }>): string {
+const propKeys = ['h_', 'f_', 'k_', 'c_', 'slot', 'i_']
+
+function genProps (props: Array<{ name: string, value: any }>, mode: string): string {
   let res = ''
+  const bindingProp = props.filter(e => e.name === 'b_')[0] || {}
+  const isComponent = !!props.filter(e => e.name === 'c_')[0]
+  let bindings = [].concat(propKeys)
+  if (bindingProp.value) {
+    bindings = bindings.concat(bindingProp.value.replace(/"/g, '').split(','))
+  }
+
   for (let i = 0; i < props.length; i++) {
     const prop = props[i]
+    // for non-component static props will be compiled to template
+    // so there it's not nessarry to render in vnode,
+    // only binding props in vnode
+    if (
+      (mode === 'attrs' && !isComponent && bindings.indexOf(prop.name) === -1) ||
+      prop.name === 'b_'
+    ) {
+      continue
+    }
     /* istanbul ignore if */
     if (__WEEX__) {
       res += `"${prop.name}":${generateValue(prop.value)},`

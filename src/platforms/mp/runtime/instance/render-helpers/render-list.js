@@ -34,13 +34,13 @@ function updateListToMP (vnodeList = [], val, forInfo, context) {
     if (Array.isArray(firstItem)) {
       forKeys = firstItem.map(e => {
         const { attrs = {}} = e.data || /* istanbul ignore next */ {}
-        const { _fk = '' } = attrs
-        return _fk
+        const { k_ = '' } = attrs
+        return k_
       })
     } else {
       const { attrs = {}} = firstItem.data || {}
-      const { _fk = '' } = attrs
-      forKeys = [_fk]
+      const { k_ = '' } = attrs
+      forKeys = [k_]
     }
 
     forKeys = forKeys.filter(e => e)
@@ -76,7 +76,7 @@ function updateListToMP (vnodeList = [], val, forInfo, context) {
   const cloneVnode = {
     context,
     data: {
-      attrs: { _hid: forInfo[0], _fid: forInfo[1] }
+      attrs: { h_: forInfo[0], f_: forInfo[1] }
     }
   }
 

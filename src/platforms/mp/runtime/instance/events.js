@@ -7,8 +7,8 @@ let sep = ''
 function assertHid (vnode, hid) {
   const { data = {}} = vnode
   const { attrs = {}} = data
-  const { _hid, _fid } = attrs
-  const curHid = isDef(_fid) ? `${_hid}${sep}${_fid}` : _hid
+  const { h_, f_ } = attrs
+  const curHid = isDef(f_) ? `${h_}${sep}${f_}` : h_
   return `${curHid}` === `${hid}`
 }
 

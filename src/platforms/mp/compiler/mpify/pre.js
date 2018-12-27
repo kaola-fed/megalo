@@ -75,7 +75,7 @@ function walkFor (node, state) {
   const { for: _for, key, alias } = node
   const prefix = /{/.test(alias) ? `${iteratorUid()}` : alias
   // create default iterator1, iterator2 for xml listing,
-  // which is needed for _hid generating
+  // which is needed for h_ generating
   const { iterator1 = `${prefix}_i1`, iterator2 = `${prefix}_i2` } = node
   Object.assign(node, {
     mpForWalked: true,
@@ -104,7 +104,7 @@ function walkElem (node, state) {
   processAttrs(node, state)
   if (node.key) {
     const key = node.key.replace(/^\w*\./, '')
-    addAttr(node, '_fk', `"${key}"`)
+    addAttr(node, 'k_', `"${key}"`)
   }
 
   // if (!isTag(node)) {
@@ -116,27 +116,27 @@ function walkElem (node, state) {
 }
 
 function walkComponent (node, state) {
-  // generate _cid first
-  const _cid = state.getCId()
+  // generate c_ first
+  const c_ = state.getCId()
 
   // enter a component
   state.pushComp()
 
-  Object.assign(node, { _cid })
-  addAttr(node, '_cid', _cid)
+  Object.assign(node, { c_ })
+  addAttr(node, 'c_', c_)
 
   walkChildren(node, state)
   state.popComp()
 }
 
 function walkText (node, state) {
-  const { expression, type, _hid, _fid } = node
+  const { expression, type, h_, f_ } = node
   if (type === TYPE.STATIC_TEXT) {
     node.mpNotGenRenderFn = true
-  } else if (_fid) {
-    node.expression = `${expression},${_hid},_fid`
+  } else if (f_) {
+    node.expression = `${expression},${h_},f_`
   } else {
-    node.expression = `${expression},${_hid}`
+    node.expression = `${expression},${h_}`
   }
 }
 
@@ -156,17 +156,17 @@ function walkIf (node, state) {
         conditions.__extratExpression = []
       }
       if (exp) {
-        const extratExpression = `!!(${exp}), ${block._hid}, ${block._fid || null}`
+        const extratExpression = `!!(${exp}), ${block.h_}, ${block.f_ || null}`
         conditions.__extratExpression.push(extratExpression)
       }
     }
 
     if (exp) {
       condition.rawexp = exp
-      if (block._fid) {
-        condition.exp = `_ri(!!(${exp}), ${block._hid}, ${block._fid})`
+      if (block.f_) {
+        condition.exp = `_ri(!!(${exp}), ${block.h_}, ${block.f_})`
       } else {
-        condition.exp = `_ri(!!(${exp}), ${block._hid})`
+        condition.exp = `_ri(!!(${exp}), ${block.h_})`
       }
     }
   })
@@ -175,7 +175,7 @@ function walkIf (node, state) {
     conditions.forEach(condition => {
       const { block } = condition
       const noneTemplateBlock = findFirstNoneTemplateNode(block)
-      addAttr(noneTemplateBlock, '__if', `[ ${conditions.__extratExpression.join(',')} ]`)
+      addAttr(noneTemplateBlock, 'i_', `[ ${conditions.__extratExpression.join(',')} ]`)
     })
   }
 }
@@ -230,7 +230,7 @@ function processAttrs (node, state) {
   })
 
   if (bindingAttrs.length) {
-    addAttr(node, '_batrs', `"${bindingAttrs.join(',')}"`)
+    addAttr(node, 'b_', `"${bindingAttrs.join(',')}"`)
   }
 }
 
@@ -308,50 +308,50 @@ class State {
   }
   getHId (node) {
     this.pushElem()
-    const _hid = `${this.getCurrentElemIndex()}`
-    return `${_hid}`
+    const h_ = `${this.getCurrentElemIndex()}`
+    return `${h_}`
   }
   getCId (node) {
     this.pushElem()
-    const _cid = `${this.getCurrentCompIndex()}`
-    return `${_cid}`
+    const c_ = `${this.getCurrentCompIndex()}`
+    return `${c_}`
   }
   getFid (node) {
     const currentListState = this.getCurrentListState() || []
-    const _fid = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
-    return _fid
+    const f_ = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
+    return f_
   }
   isInSlot () {
     return this.getCurrentComp().id !== 0
   }
   assignHId (node) {
-    const _hid = this.getHId(node)
-    Object.assign(node, { _hid })
+    const h_ = this.getHId(node)
+    Object.assign(node, { h_ })
   }
   resolveForHolder (node) {
-    const { _hid, _fid } = node
+    const { h_, f_ } = node
     const currentListState = this.getCurrentListState() || []
     let tail = ''
 
     // remove last index, like '0-1-2', we only need '0-1'
     // store v-for list in this holder
-    node._forInfo = { _hid }
-    if (_fid) {
+    node._forInfo = { h_ }
+    if (f_) {
       tail = currentListState.slice(0, -1).map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
-      node._forInfo._fid = `${tail}` || undefined
+      node._forInfo.f_ = `${tail}` || undefined
     }
   }
   resolveHolder (node) {
-    if (node._hid === undefined) {
+    if (node.h_ === undefined) {
       // holder id
       this.assignHId(node)
-      addAttr(node, '_hid', node._hid)
+      addAttr(node, 'h_', node.h_)
 
       // list tail in v-for, exp: '0-0', '0-1'
-      const _fid = this.getFid(node)
-      if (_fid) {
-        Object.assign(node, { _fid })
-        addAttr(node, '_fid', '_fid')
+      const f_ = this.getFid(node)
+      if (f_) {
+        Object.assign(node, { f_ })
+        addAttr(node, 'f_', 'f_')
       }
     }
   }

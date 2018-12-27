@@ -123,21 +123,21 @@ export class TemplateGenerator {
 
   // TODO: refactor component name problem
   genComponent (el): string {
-    const { _cid, tag, _fid } = el
+    const { c_, tag, f_ } = el
     const compInfo = this.getComponent(tag)
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
-    let cid = _cid
+    let cid = c_
     let tail = `, ${FOR_TAIL_VAR}: _t || ''`
 
     // passing parent v-for tail to slot inside v-for
     // TODO: refactor
-    if (isDef(_fid)) {
-      cid = `${_cid} + (_t || '') + ${sep} + ${_fid}`
-      tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '') + ${sep} + ${_fid}`
+    if (isDef(f_)) {
+      cid = `${c_} + (_t || '') + ${sep} + ${f_}`
+      tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '') + ${sep} + ${f_}`
     } else {
-      cid = `${_cid} + (_t || '')`
+      cid = `${c_} + (_t || '')`
       tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
     }
 
@@ -296,7 +296,7 @@ export class TemplateGenerator {
   }
 
   genClass (el): string {
-    const { tag, classBinding, _hid } = el
+    const { tag, classBinding, h_ } = el
     let { staticClass = '' } = el
     let klass = []
     staticClass = removeQuotes(staticClass)
@@ -306,7 +306,7 @@ export class TemplateGenerator {
     if (classBinding) {
       klass.push(`{{ ${this.genHolder(el, 'class')} }}`)
     }
-    if (_hid === '0') {
+    if (h_ === '0') {
       klass.push(`{{ ${this.genHolder(el, 'rootClass')} }}`)
     }
     // scoped id class
@@ -429,7 +429,7 @@ export class TemplateGenerator {
     const FOR = this.directive('for')
     const FOR_ITEM = this.directive('forItem')
     const FOR_INDEX = this.directive('forIndex')
-    const { _hid: forHid, _fid: forFid } = _forInfo
+    const { h_: forHid, f_: forFid } = _forInfo
 
     let forHolderId = ''
 
@@ -471,7 +471,7 @@ export class TemplateGenerator {
   }
 
   genSlot (el): string {
-    const { _fid } = el
+    const { f_ } = el
     let { slotName = 'default' } = el
     slotName = slotName.replace(/"/g, '')
     const fallbackSlotName = `${slotName}$${uid()}`
@@ -480,8 +480,8 @@ export class TemplateGenerator {
     this.leaveFallbackSlot()
     const fallbackSlot = `<template name="${fallbackSlotName}">${fallbackSlotBody || ''}</template>`
     let tail = `, ${FOR_TAIL_VAR}: ${FOR_TAIL_VAR} || ''`
-    if (isDef(_fid)) {
-      tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '') + ${sep} + ${_fid}`
+    if (isDef(f_)) {
+      tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '') + ${sep} + ${f_}`
     }
 
     /**
@@ -612,8 +612,8 @@ export class TemplateGenerator {
   }
 
   isComponent (el = {}): boolean {
-    const { tag, _cid } = el
-    if (_cid) {
+    const { tag, c_ } = el
+    if (c_) {
       return !!this.getComponent(tag)
     }
     return false
@@ -646,14 +646,14 @@ export class TemplateGenerator {
   }
 
   genHid (el): string {
-    const { _hid, _fid } = el
+    const { h_, f_ } = el
     let tail = ''
-    const hid = _hid
+    const hid = h_
     if (this.isInSlotSnippet()) {
       tail = ` + ${FOR_TAIL_VAR}`
     }
-    if (_fid) {
-      return `${_hid}${tail} + ${sep} + ${_fid}`
+    if (f_) {
+      return `${h_}${tail} + ${sep} + ${f_}`
     } else {
       return `${hid}${tail}`
     }
