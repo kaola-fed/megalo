@@ -506,7 +506,7 @@ function genComponent (
   })`
 }
 
-const propKeys = ['h_', 'f_', 'k_', 'c_', 'slot', 'i_']
+const propKeys = ['h_', 'f_', 'k_', 'c_', 'slot', 'i_', 'sc_']
 
 function genProps (props: Array<{ name: string, value: any }>, mode: string): string {
   let res = ''

@@ -22,7 +22,8 @@ export function mpify (node, options) {
   const {
     target = 'wechat',
     imports = {},
-    transformAssetUrls = {}
+    transformAssetUrls = {},
+    scopeId = ''
   } = options
   sep = LIST_TAIL_SEPS[target] ? `'${LIST_TAIL_SEPS[target]}'` : sep
   const preset = presets[target]
@@ -31,8 +32,12 @@ export function mpify (node, options) {
     target,
     preset,
     imports,
-    transformAssetUrls
+    transformAssetUrls,
+    scopeId
   })
+  if (scopeId) {
+    addAttr(node, 'sc_', `"${scopeId}"`)
+  }
   walk(node, state)
 }
 

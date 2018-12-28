@@ -1,5 +1,5 @@
 import { isDef } from 'core/util/index'
-import { getVMId, getHid } from './helper'
+import { getVMId, getHid, calculateScopeId } from './helper'
 import {
   throttle,
   getValue,
@@ -8,6 +8,7 @@ import {
   VM_ID_SEP,
   VM_ID_VAR,
   VM_ID_PREFIX,
+  SCOPE_ID_VAR,
   // LIST_TAIL_SEPS,
   ROOT_DATA_VAR,
   SLOT_HOLDER_VAR,
@@ -25,6 +26,7 @@ export function initVMToMP (vm) {
 
   vm = vm || this
   const vmId = getVMId(vm)
+  const scopeId = calculateScopeId(vm)
   const { $vnode = '' } = vm
   const info = {
     cid: vmId,
@@ -35,6 +37,7 @@ export function initVMToMP (vm) {
 
   vm.$mp._update({
     [`${prefix}.n`]: $vnode.tag || '$root',
+    [`${prefix}.${SCOPE_ID_VAR}`]: ' ' + (scopeId || ''),
     [`${prefix}.${VM_ID_VAR}`]: info.cid,
     [`${prefix}.${VM_ID_PREFIX}`]: info.cpath
   })

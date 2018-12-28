@@ -7,7 +7,7 @@ import {
 } from 'shared/util'
 import { updateVnodeToMP } from '../instance/index'
 
-const ignoreKeys = ['h_', 'f_', 'k_', 'c_', 'b_']
+const ignoreKeys = ['h_', 'f_', 'k_', 'c_', 'b_', 'sc_']
 
 function isIgnoreKey (key) {
   return ignoreKeys.indexOf(key) > -1 ||

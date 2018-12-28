@@ -19,6 +19,26 @@ export function getHid (vm, vnode = {}) {
   return h_
 }
 
+export function getScopeId (vm) {
+  const vnode = vm._vnode
+  const { data = {}} = vnode
+  const sc_ = isDef(data.sc_) ? data.sc_ : (data.attrs && data.attrs.sc_)
+  return sc_
+}
+
+export function calculateScopeId (vm) {
+  const scopeIds = []
+  let cursor = vm
+  while (cursor) {
+    const scopeId = getScopeId(cursor)
+    if (scopeId) {
+      scopeIds.unshift(scopeId)
+    }
+    cursor = cursor.$parent
+  }
+  return scopeIds.join(' ') || ''
+}
+
 export function getVM (vm = {}, id) {
   let res
   if (getVMId(vm) === `${id}`) {

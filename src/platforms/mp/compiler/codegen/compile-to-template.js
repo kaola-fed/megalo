@@ -16,6 +16,7 @@ import {
   ROOT_DATA_VAR,
   LIST_TAIL_SEPS,
   SLOT_HOLDER_VAR,
+  SCOPE_ID_VAR,
   HOLDER_VAR,
   FOR_TAIL_VAR,
   VM_ID_PREFIX,
@@ -310,7 +311,7 @@ export class TemplateGenerator {
       klass.push(`{{ ${this.genHolder(el, 'rootClass')} }}`)
     }
     // scoped id class
-    klass.push(this.scopeId)
+    klass.push(`{{${SCOPE_ID_VAR}}}`)
     klass.unshift(`_${tag}`)
     klass = klass.filter(notEmpty).join(' ')
     return ` class="${klass}"`
