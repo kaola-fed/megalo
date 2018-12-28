@@ -28,11 +28,10 @@ function wrapHtml (code) {
 }
 
 function wrapMP (code, options = {}) {
-  const { name = 'defaultName', scopeId } = options
-  const scopedClass = scopeId ? ` ${scopeId}` : ''
+  const { name = 'defaultName' } = options
   return (
     `<template name="${name}">` +
-      `<view class="_div {{ h[ 0 ].rcl }}${scopedClass}">${code}</view>` +
+      `<view class="_div {{ h[ 0 ].rcl }} {{d}}">${code}</view>` +
     `</template>`
   )
 }
@@ -67,12 +66,12 @@ describe('compilteToTemplate: swan', () => {
       if (mpTag === 'input') {
         assertCodegen(
           `<${htmlTag}></${htmlTag}>`,
-          `<${mpTag} class="_${htmlTag}"/>`
+          `<${mpTag} class="_${htmlTag} {{d}}"/>`
         )
       } else {
         assertCodegen(
           `<${htmlTag}></${htmlTag}>`,
-          `<${mpTag} class="_${htmlTag}"></${mpTag}>`
+          `<${mpTag} class="_${htmlTag} {{d}}"></${mpTag}>`
         )
       }
     })
@@ -81,32 +80,32 @@ describe('compilteToTemplate: swan', () => {
   it('static text', () => {
     assertCodegen(
       `<div>static text</div>`,
-      `<view class="_div">static text</view>`,
+      `<view class="_div {{d}}">static text</view>`,
     )
 
     assertCodegen(
       `<div>static text with &lt;</div>`,
-      `<view class="_div">static text with {{"<"}}</view>`,
+      `<view class="_div {{d}}">static text with {{"<"}}</view>`,
     )
 
     assertCodegen(
       `<div>static text with <</div>`,
-      `<view class="_div">static text with {{"<"}}</view>`,
+      `<view class="_div {{d}}">static text with {{"<"}}</view>`,
     )
 
     assertCodegen(
       `<div>static text with ~\`!@#$%^&*()_+={}[]>,./?</div>`,
-      `<view class="_div">static text with ~\`!@#$%^&*()_+={}[]>,./?</view>`,
+      `<view class="_div {{d}}">static text with ~\`!@#$%^&*()_+={}[]>,./?</view>`,
     )
 
     assertCodegen(
       `<div>{{ title }}<div>{{ info.name }}</div></div>`,
-      `<view class="_div">{{ h[ 2 ].t }}<view class="_div">{{ h[ 4 ].t }}</view></view>`,
+      `<view class="_div {{d}}">{{ h[ 2 ].t }}<view class="_div {{d}}">{{ h[ 4 ].t }}</view></view>`,
     )
 
     assertCodegen(
       `<div>head {{ title }} tail</div>`,
-      `<view class="_div">{{ h[ 2 ].t }}</view>`,
+      `<view class="_div {{d}}">{{ h[ 2 ].t }}</view>`,
     )
   })
 
@@ -114,37 +113,37 @@ describe('compilteToTemplate: swan', () => {
   it('generate class', () => {
     assertCodegen(
       `<div class=""></div>`,
-      `<view class="_div"></view>`
+      `<view class="_div {{d}}"></view>`
     )
     assertCodegen(
       `<div class="app"></div>`,
-      `<view class="_div app"></view>`
+      `<view class="_div app {{d}}"></view>`
     )
     assertCodegen(
       `<div :class="{ show: true }"></div>`,
-      `<view class="_div {{ h[ 1 ].cl }}"></view>`
+      `<view class="_div {{ h[ 1 ].cl }} {{d}}"></view>`
     )
     assertCodegen(
       `<div :class="[ showClass ]"></div>`,
-      `<view class="_div {{ h[ 1 ].cl }}"></view>`
+      `<view class="_div {{ h[ 1 ].cl }} {{d}}"></view>`
     )
     assertCodegen(
       `<div class="app" :class="[ showClass ]"></div>`,
-      `<view class="_div app {{ h[ 1 ].cl }}"></view>`
+      `<view class="_div app {{ h[ 1 ].cl }} {{d}}"></view>`
     )
     assertCodegen(
       `<div class="app"></div>`,
-      `<view class="_div app v-2333"></view>`,
+      `<view class="_div app {{d}}"></view>`,
       { scopeId: 'v-2333' }
     )
     assertCodegen(
       `<div :class="[ showClass ]"></div>`,
-      `<view class="_div {{ h[ 1 ].cl }} v-2333"></view>`,
+      `<view class="_div {{ h[ 1 ].cl }} {{d}}"></view>`,
       { scopeId: 'v-2333' }
     )
     assertCodegen(
       `<div class="app" :class="[ showClass ]"></div>`,
-      `<view class="_div app {{ h[ 1 ].cl }} v-2333"></view>`,
+      `<view class="_div app {{ h[ 1 ].cl }} {{d}}"></view>`,
       { scopeId: 'v-2333' }
     )
   })
@@ -152,92 +151,92 @@ describe('compilteToTemplate: swan', () => {
   it('generate style', () => {
     assertCodegen(
       `<div style="height: 10px"></div>`,
-      `<view class="_div" style="height:10px"></view>`
+      `<view class="_div {{d}}" style="height:10px"></view>`
     )
     assertCodegen(
       `<div :style="{ backgroundColor: 'red' }"></div>`,
-      `<view class="_div" style="{{ h[ 1 ].st }}"></view>`
+      `<view class="_div {{d}}" style="{{ h[ 1 ].st }}"></view>`
     )
     assertCodegen(
       `<div style="height: 10px" :style="{ backgroundColor: 'red' }"></div>`,
-      `<view class="_div" style="height:10px; {{ h[ 1 ].st }}"></view>`
+      `<view class="_div {{d}}" style="height:10px; {{ h[ 1 ].st }}"></view>`
     )
   })
 
   it('generate attributes', () => {
     assertCodegen(
       `<div disable></div>`,
-      `<view class="_div" disable="true"></view>`
+      `<view class="_div {{d}}" disable="true"></view>`
     )
     assertCodegen(
       `<div disable=""></div>`,
-      `<view class="_div" disable="true"></view>`
+      `<view class="_div {{d}}" disable="true"></view>`
     )
     assertCodegen(
       `<div disable="false"></div>`,
-      `<view class="_div" disable="false"></view>`
+      `<view class="_div {{d}}" disable="false"></view>`
     )
     assertCodegen(
       `<div data-store="123"></div>`,
-      `<view class="_div" data-store="123"></view>`
+      `<view class="_div {{d}}" data-store="123"></view>`
     )
     assertCodegen(
       `<div :data-store="store"></div>`,
-      `<view class="_div" data-store="{{ h[ 1 ][ 'data-store' ] }}"></view>`
+      `<view class="_div {{d}}" data-store="{{ h[ 1 ][ 'data-store' ] }}"></view>`
     )
     assertCodegen(
       `<div :data-store="true"></div>`,
-      `<view class="_div" data-store="{{ h[ 1 ][ 'data-store' ] }}"></view>`
+      `<view class="_div {{d}}" data-store="{{ h[ 1 ][ 'data-store' ] }}"></view>`
     )
   })
 
   it('generate events', () => {
     assertCodegen(
       `<div @click="onClick"></div>`,
-      `<view class="_div" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
+      `<view class="_div {{d}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
     )
     assertCodegen(
       `<scoll-view @scrolltoupper="onScollToUpper"></scoll-view>`,
-      `<scoll-view class="_scoll-view" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindscrolltoupper="_pe"></scoll-view>`
+      `<scoll-view class="_scoll-view {{d}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindscrolltoupper="_pe"></scoll-view>`
     )
     assertCodegen(
       `<scoll-view @scroll="onScroll" @scrolltoupper="onScollToUpper"></scoll-view>`,
-      `<scoll-view class="_scoll-view" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindscroll="_pe" bindscrolltoupper="_pe"></scoll-view>`
+      `<scoll-view class="_scoll-view {{d}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindscroll="_pe" bindscrolltoupper="_pe"></scoll-view>`
     )
     assertCodegen(
       `<input @change="onInput">`,
-      `<input class="_input" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindblur="_pe"/>`
+      `<input class="_input {{d}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindblur="_pe"/>`
     )
     assertCodegen(
       `<textarea @change="onInput"></textarea>`,
-      `<textarea class="_textarea" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindblur="_pe"></textarea>`
+      `<textarea class="_textarea {{d}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindblur="_pe"></textarea>`
     )
     // .stop
     assertCodegen(
       `<div @click.stop="onClick"></div>`,
-      `<view class="_div" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" catchtap="_pe"></view>`
+      `<view class="_div {{d}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" catchtap="_pe"></view>`
     )
     // .captrue
     assertCodegen(
       `<div @click.capture="onClick"></div>`,
-      `<view class="_div" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" capture-bindtap="_pe"></view>`
+      `<view class="_div {{d}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" capture-bindtap="_pe"></view>`
     )
     // .capture.stop
     assertCodegen(
       `<div @click.capture.stop="onClick"></div>`,
-      `<view class="_div" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" capture-catchtap="_pe"></view>`
+      `<view class="_div {{d}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" capture-catchtap="_pe"></view>`
     )
     // .once
     assertCodegen(
       `<div @click.once="onClick"></div>`,
-      `<view class="_div" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
+      `<view class="_div {{d}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
     )
   })
 
   it('generate v-if', () => {
     assertCodegen(
       `<div v-if="code === 200"></div>`,
-      `<view s-if="{{ h[ 1 ]._if }}" class="_div"></view>`
+      `<view s-if="{{ h[ 1 ]._if }}" class="_div {{d}}"></view>`
     )
     assertCodegen(
       (
@@ -245,8 +244,8 @@ describe('compilteToTemplate: swan', () => {
         `<div v-else></div>`
       ),
       (
-        `<view s-if="{{ h[ 1 ]._if }}" class="_div"></view>` +
-        `<view s-else class="_div"></view>`
+        `<view s-if="{{ h[ 1 ]._if }}" class="_div {{d}}"></view>` +
+        `<view s-else class="_div {{d}}"></view>`
       )
     )
     assertCodegen(
@@ -255,8 +254,8 @@ describe('compilteToTemplate: swan', () => {
         `<div v-else-if="code < 400">{{ code }}</div>`
       ),
       (
-        `<view s-if="{{ h[ 1 ]._if }}" class="_div">{{ h[ 2 ].t }}</view>` +
-        `<view s-elif="{{ h[ 3 ]._if }}" class="_div">{{ h[ 4 ].t }}</view>`
+        `<view s-if="{{ h[ 1 ]._if }}" class="_div {{d}}">{{ h[ 2 ].t }}</view>` +
+        `<view s-elif="{{ h[ 3 ]._if }}" class="_div {{d}}">{{ h[ 4 ].t }}</view>`
       )
     )
     assertCodegen(
@@ -266,9 +265,9 @@ describe('compilteToTemplate: swan', () => {
         `<div v-else>{{ code }}</div>`
       ),
       (
-        `<view s-if="{{ h[ 1 ]._if }}" class="_div">{{ h[ 2 ].t }}</view>` +
-        `<view s-elif="{{ h[ 3 ]._if }}" class="_div">{{ h[ 4 ].t }}</view>` +
-        `<view s-else class="_div">{{ h[ 6 ].t }}</view>`
+        `<view s-if="{{ h[ 1 ]._if }}" class="_div {{d}}">{{ h[ 2 ].t }}</view>` +
+        `<view s-elif="{{ h[ 3 ]._if }}" class="_div {{d}}">{{ h[ 4 ].t }}</view>` +
+        `<view s-else class="_div {{d}}">{{ h[ 6 ].t }}</view>`
       )
     )
   })
@@ -282,8 +281,8 @@ describe('compilteToTemplate: swan', () => {
         `</div>`
       ),
       (
-        `<view s-for="{{ h[ 1 ].li }}" s-for-item="item" s-for-index="item_i1" class="_div">` +
-          `<view class="_div">{{ h[ 3 + '_' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}</view>` +
+        `<view s-for="{{ h[ 1 ].li }}" s-for-item="item" s-for-index="item_i1" class="_div {{d}}">` +
+          `<view class="_div {{d}}">{{ h[ 3 + '_' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}</view>` +
         `</view>`
       )
     )
@@ -294,8 +293,8 @@ describe('compilteToTemplate: swan', () => {
         `</div>`
       ),
       (
-        `<view s-for="{{ h[ 1 ].li }}" s-for-item="item" s-for-index="index" class="_div">` +
-          `<view class="_div">{{ h[ 3 + '_' + (item_i2 !== undefined ? item_i2 : index) ].t }}</view>` +
+        `<view s-for="{{ h[ 1 ].li }}" s-for-item="item" s-for-index="index" class="_div {{d}}">` +
+          `<view class="_div {{d}}">{{ h[ 3 + '_' + (item_i2 !== undefined ? item_i2 : index) ].t }}</view>` +
         `</view>`
       )
     )
@@ -306,8 +305,8 @@ describe('compilteToTemplate: swan', () => {
         `</div>`
       ),
       (
-        `<view s-for="{{ h[ 1 ].li }}" s-key="id" s-for-item="item" s-for-index="index" class="_div">` +
-          `<view class="_div">{{ h[ 3 + '_' + (item_i2 !== undefined ? item_i2 : index) ].t }}</view>` +
+        `<view s-for="{{ h[ 1 ].li }}" s-key="id" s-for-item="item" s-for-index="index" class="_div {{d}}">` +
+          `<view class="_div {{d}}">{{ h[ 3 + '_' + (item_i2 !== undefined ? item_i2 : index) ].t }}</view>` +
         `</view>`
       )
     )
@@ -320,8 +319,8 @@ describe('compilteToTemplate: swan', () => {
         `</div>`
       ),
       (
-        `<view s-for="{{ h[ 1 ].li }}" s-key="id" s-for-item="item" s-for-index="index" class="_div">` +
-          `<view s-for="{{ h[ 2 + '_' + (item_i2 !== undefined ? item_i2 : index) ].li }}" s-key="id" s-for-item="e" s-for-index="i" class="_div">` +
+        `<view s-for="{{ h[ 1 ].li }}" s-key="id" s-for-item="item" s-for-index="index" class="_div {{d}}">` +
+          `<view s-for="{{ h[ 2 + '_' + (item_i2 !== undefined ? item_i2 : index) ].li }}" s-key="id" s-for-item="e" s-for-index="i" class="_div {{d}}">` +
             `{{ h[ 3 + '_' + (item_i2 !== undefined ? item_i2 : index) + '_' + (e_i2 !== undefined ? e_i2 : i) ].t }}` +
           `</view>` +
         `</view>`
@@ -336,8 +335,8 @@ describe('compilteToTemplate: swan', () => {
         `</div>`
       ),
       (
-        `<view s-for="{{ h[ 1 ].li }}" s-key="id" s-for-item="item" s-for-index="item_i1" class="_div">` +
-          `<view s-for="{{ h[ 2 + '_' + (item_i2 !== undefined ? item_i2 : item_i1) ].li }}" s-key="id" s-for-item="e" s-for-index="e_i1" class="_div">` +
+        `<view s-for="{{ h[ 1 ].li }}" s-key="id" s-for-item="item" s-for-index="item_i1" class="_div {{d}}">` +
+          `<view s-for="{{ h[ 2 + '_' + (item_i2 !== undefined ? item_i2 : item_i1) ].li }}" s-key="id" s-for-item="e" s-for-index="e_i1" class="_div {{d}}">` +
             `{{ h[ 3 + '_' + (item_i2 !== undefined ? item_i2 : item_i1) + '_' + (e_i2 !== undefined ? e_i2 : e_i1) ].t }}` +
           `</view>` +
         `</view>`
@@ -351,7 +350,7 @@ describe('compilteToTemplate: swan', () => {
       ),
       (
         `<block s-for="{{ h[ 1 ].li }}" s-for-item="item" s-for-index="item_i1">` +
-          `<view s-key="id" class="_div">{{ h[ 3 + '_' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}</view>` +
+          `<view s-key="id" class="_div {{d}}">{{ h[ 3 + '_' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}</view>` +
         `</block>`
       )
     )
@@ -416,7 +415,7 @@ describe('compilteToTemplate: swan', () => {
         `</div>`
       ),
       (
-        `<view hidden="{{ h[ 1 ].vs }}" class="_div">` +
+        `<view hidden="{{ h[ 1 ].vs }}" class="_div {{d}}">` +
           `{{ h[ 2 ].t }}` +
         `</view>`
       )
@@ -426,19 +425,19 @@ describe('compilteToTemplate: swan', () => {
   it('generate v-model', () => {
     assertCodegen(
       `<input v-model="input">`,
-      `<input class="_input" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindinput="_pe"/>`
+      `<input class="_input {{d}}" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindinput="_pe"/>`
     )
     assertCodegen(
       `<input value="otherInput" v-model="input">`,
-      `<input class="_input" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindinput="_pe"/>`
+      `<input class="_input {{d}}" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindinput="_pe"/>`
     )
     assertCodegen(
       `<input v-model.lazy="input">`,
-      `<input class="_input" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindblur="_pe"/>`
+      `<input class="_input {{d}}" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindblur="_pe"/>`
     )
     assertCodegen(
       `<input v-model.number="input">`,
-      `<input class="_input" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindinput="_pe" bindblur="_pe"/>`
+      `<input class="_input {{d}}" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindinput="_pe" bindblur="_pe"/>`
     )
   })
 
@@ -469,7 +468,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template name="${slot1}">default slot</template>` +
           `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, _t: (_t || ''), _c: c }}"/>` +
         `</view>`
@@ -491,7 +490,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template name="${slot1}">head default slot</template>` +
           `<template is="{{ s_head || '${slot1}' }}" data="{{ ...$root[ s ], $root, _t: (_t || ''), _c: c }}"/>` +
           `<template name="${slot2}">default slot</template>` +
@@ -517,7 +516,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -527,7 +526,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<view class="_div">{{ h[ 6 + _t ].t }}</view>` +
+              `<view class="_div {{d}}">{{ h[ 6 + _t ].t }}</view>` +
             `</template>`
           )
         })
@@ -551,7 +550,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', s_head: '${slot2}', _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -562,8 +561,8 @@ describe('slot', () => {
           if (slot.name === 'head') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<view class="_p">` +
-                  `<label class="_span">{{ h[ 7 + _t ].t }}</label>` +
+                `<view class="_p {{d}}">` +
+                  `<label class="_span {{d}}">{{ h[ 7 + _t ].t }}</label>` +
                 `</view>` +
               `</template>`
             )
@@ -592,7 +591,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_first: '${slot1}', s_second: '${slot2}', _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -603,14 +602,14 @@ describe('slot', () => {
           if (slot.name === 'first') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<view class="_div">1</view>` +
+                `<view class="_div {{d}}">1</view>` +
               `</template>`
             )
           } else if (slot.name === 'second') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<view class="_div">2</view>` +
-                `<view class="_div">2+</view>` +
+                `<view class="_div {{d}}">2</view>` +
+                `<view class="_div {{d}}">2+</view>` +
               `</template>`
             )
           }
@@ -636,7 +635,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slotName2}', _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -650,7 +649,7 @@ describe('slot', () => {
         expect(slot1.dependencies.length).toEqual(0)
         expect(slot1.body).toEqual(
           `<template name="${slot1.slotName}" parent="${options.name}">` +
-            `<view class="_div">{{ h[ 8 + _t ].t }}</view>` +
+            `<view class="_div {{d}}">{{ h[ 8 + _t ].t }}</view>` +
           `</template>`
         )
 
@@ -658,7 +657,7 @@ describe('slot', () => {
         expect(slot2.dependencies[0]).toEqual(CompB.src)
         expect(slot2.body).toEqual(
           `<template name="${slot2.slotName}" parent="${options.name}">` +
-            `<view class="_div">` +
+            `<view class="_div {{d}}">` +
               `<template is="${CompB.name}" data="{{ ...$root[ cp + 1 + (_t || '') ], $root, s_default: '${slot1.slotName}', _t: _t || '' }}" />` +
             `</view>` +
           `</template>`
@@ -680,7 +679,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -691,7 +690,7 @@ describe('slot', () => {
           if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<view class="_div">{{ h[ 6 + _t ].t }}</view>` +
+                `<view class="_div {{d}}">{{ h[ 6 + _t ].t }}</view>` +
               `</template>`
             )
           }
@@ -714,7 +713,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_b: '${slot1}', s_default: '${slot2}', _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -725,14 +724,14 @@ describe('slot', () => {
           if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<label class="_span"></label>` +
-                `<label class="_span"></label>` +
+                `<label class="_span {{d}}"></label>` +
+                `<label class="_span {{d}}"></label>` +
               `</template>`
             )
           } else if (slot.name === 'b') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<view class="_p">select b</view>` +
+                `<view class="_p {{d}}">select b</view>` +
               `</template>`
             )
           }
@@ -757,7 +756,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', s_head: '${slot2}', _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -768,8 +767,8 @@ describe('slot', () => {
           if (slot.name === 'head') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<view class="_p">` +
-                  `<label class="_span">{{ h[ 7 + _t ].t }}</label>` +
+                `<view class="_p {{d}}">` +
+                  `<label class="_span {{d}}">{{ h[ 7 + _t ].t }}</label>` +
                 `</view>` +
               `</template>`
             )
@@ -796,7 +795,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -807,7 +806,7 @@ describe('slot', () => {
           if (slot.name === 'foo') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<label class="_span">foo</label>` +
+                `<label class="_span {{d}}">foo</label>` +
               `</template>`
             )
           } else if (slot.name === 'default') {
@@ -831,7 +830,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -842,7 +841,7 @@ describe('slot', () => {
           if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<label class="_span">foo.bar</label>` +
+                `<label class="_span {{d}}">foo.bar</label>` +
               `</template>`
             )
           }
@@ -859,7 +858,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -881,8 +880,8 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
-          `<view s-for="{{ h[ 2 ].li }}" s-for-item="item" s-for-index="item_i1" class="_div">` +
+        `<view class="_div {{d}}">` +
+          `<view s-for="{{ h[ 2 ].li }}" s-for-item="item" s-for-index="item_i1" class="_div {{d}}">` +
             `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, _t: (_t || ''), _c: c }}"/>` +
           `</view>` +
         `</view>`
@@ -900,7 +899,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, _t: (_t || ''), _c: c }}" s-for="{{ h[ 2 ].li }}" s-for-item="item" s-for-index="item_i1"/>` +
         `</view>`
       ),
@@ -919,8 +918,8 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
-          `<view s-for="{{ h[ 2 ].li }}" s-for-item="item" s-for-index="item_i1" class="_div">` +
+        `<view class="_div {{d}}">` +
+          `<view s-for="{{ h[ 2 ].li }}" s-for-item="item" s-for-index="item_i1" class="_div {{d}}">` +
             `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, _t: '_' + (item_i2 !== undefined ? item_i2 : item_i1), _c: c }}"/>` +
           `</view>` +
         `</view>`
@@ -938,7 +937,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="{{ s_default || '${slot1}' }}" data="{{ ...$root[ s ], $root, _t: '_' + (item_i2 !== undefined ? item_i2 : item_i1), _c: c }}" s-for="{{ h[ 2 ].li }}" s-for-item="item" s-for-index="item_i1"/>` +
         `</view>`
       ),
@@ -957,7 +956,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -967,7 +966,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label s-for="{{ h[ 4 ].li }}" s-for-item="item" s-for-index="item_i1" class="_span">` +
+              `<label s-for="{{ h[ 4 ].li }}" s-for-item="item" s-for-index="item_i1" class="_span {{d}}">` +
                 `{{ h[ 5 + '_' + (item_i2 !== undefined ? item_i2 : item_i1) + _t ].t }}` +
               `</label>` +
             `</template>`
@@ -989,7 +988,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -999,7 +998,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label s-for="{{ h[ 4 ].li }}" s-for-item="item" s-for-index="item_i1" class="_span">` +
+              `<label s-for="{{ h[ 4 ].li }}" s-for-item="item" s-for-index="item_i1" class="_span {{d}}">` +
                 `{{ h[ 5 + '_' + (item_i2 !== undefined ? item_i2 : item_i1) + _t ].t }}` +
               `</label>` +
             `</template>`
@@ -1022,7 +1021,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<block s-for="{{ h[ 2 ].li }}" s-for-item="item" s-for-index="item_i1">` +
             `<template is="${CompA.name}"` +
               ` data="{{ ...$root[ cp + 0 + (_t || '') + '_' + (item_i2 !== undefined ? item_i2 : item_i1) ], $root, s_default: '${slot1}', _t: '_' + (item_i2 !== undefined ? item_i2 : item_i1) }}"` +
@@ -1036,7 +1035,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label class="_span">` +
+              `<label class="_span {{d}}">` +
                 `{{ h[ 6 + _t ].t }}` +
               `</label>` +
             `</template>`
@@ -1059,7 +1058,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<block s-for="{{ h[ 2 ].li }}" s-for-item="item" s-for-index="item_i1">` +
             `<template is="${CompA.name}"` +
               ` data="{{ ...$root[ cp + 0 + (_t || '') + '_' + (item_i2 !== undefined ? item_i2 : item_i1) ], $root, s_default: '${slot1}', _t: '_' + (item_i2 !== undefined ? item_i2 : item_i1) }}"` +
@@ -1073,7 +1072,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label class="_span">` +
+              `<label class="_span {{d}}">` +
                 `{{ h[ 6 + _t ].t }}` +
               `</label>` +
             `</template>`
@@ -1096,7 +1095,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<block s-for="{{ h[ 2 ].li }}" s-for-item="item" s-for-index="item_i1">` +
             `<template is="${CompA.name}"` +
               ` data="{{ ...$root[ cp + 0 + (_t || '') + '_' + (item_i2 !== undefined ? item_i2 : item_i1) ], $root, s_default: '${slot1}', _t: '_' + (item_i2 !== undefined ? item_i2 : item_i1) }}"` +
@@ -1110,7 +1109,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label s-for="{{ h[ 5 ].li }}" s-for-item="item" s-for-index="item_i1" class="_span">` +
+              `<label s-for="{{ h[ 5 ].li }}" s-for-item="item" s-for-index="item_i1" class="_span {{d}}">` +
                 `{{ h[ 6 + '_' + (item_i2 !== undefined ? item_i2 : item_i1) + _t ].t }}` +
               `</label>` +
             `</template>`
@@ -1132,7 +1131,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', _t: _t || '' }}" />` +
         `</view>`
       ),
@@ -1142,7 +1141,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label class="_span" data-cid="{{ _c || c }}" data-hid="{{ 4 + _t }}" bindtap="_pe">` +
+              `<label class="_span {{d}}" data-cid="{{ _c || c }}" data-hid="{{ 4 + _t }}" bindtap="_pe">` +
                 `click` +
               `</label>` +
             `</template>`
@@ -1164,10 +1163,10 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<CompA class="_CompA">` +
-            `<view class="_div" slot="head">` +
-              `<view class="_div">{{ h[ 6 ].t }}</view>` +
+            `<view class="_div {{d}}" slot="head">` +
+              `<view class="_div {{d}}">{{ h[ 6 ].t }}</view>` +
             `</view>` +
           `</CompA>` +
         `</view>`
@@ -1187,9 +1186,9 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<CompA class="_CompA">` +
-            `<label class="_span" slot="{{ h[ 4 ].slot }}">` +
+            `<label class="_span {{d}}" slot="{{ h[ 4 ].slot }}">` +
               `{{ h[ 5 ].t }}` +
             `</label>` +
           `</CompA>` +
@@ -1201,12 +1200,12 @@ describe('slot', () => {
   it('v-text', () => {
     assertCodegen(
       `<div v-text="title"></div>`,
-      `<view class="_div">{{ h[ 1 ].vt }}</view>`,
+      `<view class="_div {{d}}">{{ h[ 1 ].vt }}</view>`,
     )
 
     assertCodegen(
       `<div v-text="title">{{ notShow }}<div>{{ notShow }}</div>{{ notShow }}</div>`,
-      `<view class="_div">{{ h[ 1 ].vt }}</view>`,
+      `<view class="_div {{d}}">{{ h[ 1 ].vt }}</view>`,
     )
   })
 
@@ -1221,7 +1220,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', _t: _t || '' }}}" />` +
         `</view>`
       ),
@@ -1256,7 +1255,7 @@ describe('slot', () => {
         `</div>`
       ),
       (
-        `<view class="_div">` +
+        `<view class="_div {{d}}">` +
           `<template is="${CompA.name}" data="{{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', _t: _t || '' }}}" />` +
         `</view>`
       ),
