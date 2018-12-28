@@ -55,7 +55,6 @@ describe('Directive v-model text', () => {
     expect(vm.obj.test).toBe('b')
   })
 
-  // TODO: change input to blur
   it('.lazy modifier', () => {
     const { page, vm } = createPage({
       data: {
@@ -68,7 +67,7 @@ describe('Directive v-model text', () => {
     expect(vm.test).toBe('b')
     triggerInput(page, 'c')
     expect(vm.test).toBe('b')
-    triggerInput(page, 'c', { type: 'change' })
+    triggerInput(page, 'c', { type: 'blur' })
     expect(vm.test).toBe('c')
   })
 
