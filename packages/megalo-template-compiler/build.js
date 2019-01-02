@@ -159,9 +159,6 @@ var capitalize = cached(function (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 });
 
-/**
- * Hyphenate a camelCase string.
- */
 
 
 /**
@@ -287,6 +284,7 @@ var isNonPhrasingTag = makeMap(
  * http://erik.eae.net/simplehtmlparser/simplehtmlparser.js
  */
 
+// Regular Expressions for parsing tags and attributes
 var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
 // could use https://www.w3.org/TR/1999/REC-xml-names-19990114/#NT-QName
 // but for Vue templates we can enforce a simple charset
@@ -717,10 +715,6 @@ function def (obj, key, val, enumerable) {
   });
 }
 
-/**
- * Parse simple path.
- */
-
 /*  */
 
 // can we use __proto__?
@@ -784,6 +778,7 @@ var hasSymbol =
   typeof Symbol !== 'undefined' && isNative(Symbol) &&
   typeof Reflect !== 'undefined' && isNative(Reflect.ownKeys);
 
+/* istanbul ignore if */ // $flow-disable-line
 if (typeof Set !== 'undefined' && isNative(Set)) {
   // use native Set when available.
   
@@ -1032,6 +1027,9 @@ Dep.prototype.notify = function notify () {
   }
 };
 
+// the current target watcher being evaluated.
+// this is globally unique because there could be only one
+// watcher being evaluated at any time.
 Dep.target = null;
 
 /*  */
@@ -1363,6 +1361,11 @@ function dependArray (value) {
 
 /*  */
 
+/**
+ * Option overwriting strategies are functions that handle
+ * how to merge a parent option value and a child option
+ * value into the final value.
+ */
 var strats = config.optionMergeStrategies;
 
 /**
@@ -1581,15 +1584,8 @@ var defaultStrat = function (parentVal, childVal) {
     : childVal
 };
 
-/**
- * Validate component names
- */
 
 
-/**
- * Ensure all props option syntax are normalized into the
- * Object-based format.
- */
 function assertObjectType (name, value, vm) {
   if (!isPlainObject(value)) {
     warn(
@@ -1614,12 +1610,6 @@ function assertObjectType (name, value, vm) {
 
 /*  */
 
-
-
-/**
- * Get the default value of a prop.
- */
-
 /*  */
 
 /*  */
@@ -1634,14 +1624,11 @@ function flushCallbacks () {
   }
 }
 
-// Here we have async deferring wrappers using both microtasks and (macro) tasks.
-// In < 2.4 we used microtasks everywhere, but there are some scenarios where
-// microtasks have too high a priority and fire in between supposedly
-// sequential events (e.g. #4521, #6690) or even between bubbling of the same
-// event (#6566). However, using (macro) tasks everywhere also has subtle problems
-// when state is changed right before repaint (e.g. #6813, out-in transitions).
-// Here we use microtask by default, but expose a way to force (macro) task when
-// needed (e.g. in event handlers attached by v-on).
+// Determine (macro) task defer implementation.
+// Technically setImmediate should be the ideal choice, but it's only available
+// in IE. The only polyfill that consistently queues the callback after all DOM
+// events triggered in the same loop is by using MessageChannel.
+/* istanbul ignore if */
 if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {
   
 } else if (typeof MessageChannel !== 'undefined' && (
@@ -1709,6 +1696,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 var ROOT_DATA_VAR = '$root';
 var HOLDER_VAR = 'h';
 var SLOT_HOLDER_VAR = 's';
+var SCOPE_ID_VAR = 'd';
 var FOR_TAIL_VAR = '_t';
 
 var VM_ID_PREFIX = 'cp';
@@ -2101,7 +2089,8 @@ function transformNode (el, options) {
 
 function genData (el) {
   var data = '';
-  if (el.staticClass) {
+  // don't gen static class on none components
+  if (el.c_ && el.staticClass) {
     data += "staticClass:" + (el.staticClass) + ",";
   }
   if (el.classBinding) {
@@ -2131,7 +2120,7 @@ var parseStyleText = cached(function (cssText) {
   return res
 });
 
-// merge static and dynamic style data on the same vnode
+// normalize possible array / string values into Object
 
 
 /**
@@ -2168,7 +2157,7 @@ function transformNode$1 (el, options) {
 
 function genData$1 (el) {
   var data = '';
-  if (el.staticStyle) {
+  if (el.c_ && el.staticStyle) {
     data += "staticStyle:" + (el.staticStyle) + ",";
   }
   if (el.styleBinding) {
@@ -2490,7 +2479,7 @@ function genDefaultModel (
   var needCompositionGuard = !lazy && type !== 'range';
   // input.type=range not supported
   var event = lazy
-    ? 'change'
+    ? 'blur'
     : type === 'range'
     /* istanbul ignore next */ ? RANGE_TOKEN
       : 'input';
@@ -3500,8 +3489,6 @@ function genHandlers (
   return res.slice(0, -1) + '}'
 }
 
-// Generate handler code with binding params on Weex
-/* istanbul ignore next */
 function genHandler (
   name,
   handler
@@ -3733,7 +3720,7 @@ function genIfConditions (
 ) {
   if (!conditions.length) {
     if (conditions.__extratExpression) {
-      return ("_c(\"a\", {attrs: {__if:[" + (conditions.__extratExpression.join(',')) + "]}})")
+      return ("_c(\"a\", {attrs: {i_:[" + (conditions.__extratExpression.join(',')) + "]}})")
     }
     return altEmpty || '_e()'
   }
@@ -3778,12 +3765,12 @@ function genFor (
     );
   }
   var _forInfo = el._forInfo;
-  var _fid = el._fid;
+  var f_ = el.f_;
   el.forProcessed = true; // avoid recursion
-  var tailStr = _forInfo._hid + (isDef(_forInfo._fid) ? (", " + (_forInfo._fid)) : '');
+  var tailStr = _forInfo.h_ + (isDef(_forInfo.f_) ? (", " + (_forInfo.f_)) : '');
   return (altHelper || '_l') + "((" + exp + ")," +
     "function(" + alias + iterator1 + iterator2 + "){" +
-      "var _fid = " + _fid + ";" +
+      "var f_ = " + f_ + ";" +
       "return " + ((altGen || genElement)(el, state)) +
     "},[" + tailStr + "],_self)"
 }
@@ -3819,11 +3806,11 @@ function genData$2 (el, state) {
   }
   // attributes
   if (el.attrs) {
-    data += "attrs:{" + (genProps(el.attrs)) + "},";
+    data += "attrs:{" + (genProps(el.attrs, 'attrs')) + "},";
   }
   // DOM props
   if (el.props) {
-    data += "domProps:{" + (genProps(el.props)) + "},";
+    data += "domProps:{" + (genProps(el.props, 'domProps')) + "},";
   }
   // event handlers
   if (el.events) {
@@ -4063,10 +4050,28 @@ function genComponent (
   return ("_c(" + componentName + "," + (genData$2(el, state)) + (children ? ("," + children) : '') + ")")
 }
 
-function genProps (props) {
+var propKeys = ['h_', 'f_', 'k_', 'c_', 'slot', 'i_', 'sc_'];
+
+function genProps (props, mode) {
   var res = '';
+  var bindingProp = props.filter(function (e) { return e.name === 'b_'; })[0] || {};
+  var isComponent = !!props.filter(function (e) { return e.name === 'c_'; })[0];
+  var bindings = [].concat(propKeys);
+  if (bindingProp.value) {
+    bindings = bindings.concat(bindingProp.value.replace(/"/g, '').split(','));
+  }
+
   for (var i = 0; i < props.length; i++) {
     var prop = props[i];
+    // for non-component static props will be compiled to template
+    // so there it's not nessarry to render in vnode,
+    // only binding props in vnode
+    if (
+      (mode === 'attrs' && !isComponent && bindings.indexOf(prop.name) === -1) ||
+      prop.name === 'b_'
+    ) {
+      continue
+    }
     /* istanbul ignore if */
     {
       res += "\"" + (prop.name) + "\":" + (transformSpecialNewlines(prop.value)) + ",";
@@ -4075,7 +4080,7 @@ function genProps (props) {
   return res.slice(0, -1)
 }
 
-/* istanbul ignore next */
+// #3895, #4268
 function transformSpecialNewlines (text) {
   return text
     .replace(/\u2028/g, '\\u2028')
@@ -4084,6 +4089,8 @@ function transformSpecialNewlines (text) {
 
 /*  */
 
+// these keywords should not appear inside expressions, but operators like
+// typeof, instanceof and in are allowed
 var prohibitedKeywordRE = new RegExp('\\b' + (
   'do,if,for,let,new,try,var,case,else,with,await,break,catch,class,const,' +
   'super,throw,while,yield,delete,export,import,return,switch,default,' +
@@ -4622,6 +4629,7 @@ function mpify (node, options) {
   var target = options.target; if ( target === void 0 ) target = 'wechat';
   var imports = options.imports; if ( imports === void 0 ) imports = {};
   var transformAssetUrls = options.transformAssetUrls; if ( transformAssetUrls === void 0 ) transformAssetUrls = {};
+  var scopeId = options.scopeId; if ( scopeId === void 0 ) scopeId = '';
   sep = LIST_TAIL_SEPS[target] ? ("'" + (LIST_TAIL_SEPS[target]) + "'") : sep;
   var preset = presets[target];
   var state = new State({
@@ -4629,8 +4637,12 @@ function mpify (node, options) {
     target: target,
     preset: preset,
     imports: imports,
-    transformAssetUrls: transformAssetUrls
+    transformAssetUrls: transformAssetUrls,
+    scopeId: scopeId
   });
+  if (scopeId) {
+    addAttr$1(node, 'sc_', ("\"" + scopeId + "\""));
+  }
   walk(node, state);
 }
 
@@ -4676,7 +4688,7 @@ function walkFor (node, state) {
   var alias = node.alias;
   var prefix = /{/.test(alias) ? ("" + (iteratorUid())) : alias;
   // create default iterator1, iterator2 for xml listing,
-  // which is needed for _hid generating
+  // which is needed for h_ generating
   var iterator1 = node.iterator1; if ( iterator1 === void 0 ) iterator1 = prefix + "_i1";
   var iterator2 = node.iterator2; if ( iterator2 === void 0 ) iterator2 = prefix + "_i2";
   Object.assign(node, {
@@ -4706,7 +4718,7 @@ function walkElem (node, state) {
   processAttrs$1(node, state);
   if (node.key) {
     var key = node.key.replace(/^\w*\./, '');
-    addAttr$1(node, '_fk', ("\"" + key + "\""));
+    addAttr$1(node, 'k_', ("\"" + key + "\""));
   }
 
   // if (!isTag(node)) {
@@ -4718,14 +4730,14 @@ function walkElem (node, state) {
 }
 
 function walkComponent (node, state) {
-  // generate _cid first
-  var _cid = state.getCId();
+  // generate c_ first
+  var c_ = state.getCId();
 
   // enter a component
   state.pushComp();
 
-  Object.assign(node, { _cid: _cid });
-  addAttr$1(node, '_cid', _cid);
+  Object.assign(node, { c_: c_ });
+  addAttr$1(node, 'c_', c_);
 
   walkChildren(node, state);
   state.popComp();
@@ -4734,14 +4746,14 @@ function walkComponent (node, state) {
 function walkText (node, state) {
   var expression = node.expression;
   var type = node.type;
-  var _hid = node._hid;
-  var _fid = node._fid;
+  var h_ = node.h_;
+  var f_ = node.f_;
   if (type === TYPE.STATIC_TEXT) {
     node.mpNotGenRenderFn = true;
-  } else if (_fid) {
-    node.expression = expression + "," + _hid + ",_fid";
+  } else if (f_) {
+    node.expression = expression + "," + h_ + ",f_";
   } else {
-    node.expression = expression + "," + _hid;
+    node.expression = expression + "," + h_;
   }
 }
 
@@ -4762,17 +4774,17 @@ function walkIf (node, state) {
         conditions.__extratExpression = [];
       }
       if (exp) {
-        var extratExpression = "!!(" + exp + "), " + (block._hid) + ", " + (block._fid || null);
+        var extratExpression = "!!(" + exp + "), " + (block.h_) + ", " + (block.f_ || null);
         conditions.__extratExpression.push(extratExpression);
       }
     }
 
     if (exp) {
       condition.rawexp = exp;
-      if (block._fid) {
-        condition.exp = "_ri(!!(" + exp + "), " + (block._hid) + ", " + (block._fid) + ")";
+      if (block.f_) {
+        condition.exp = "_ri(!!(" + exp + "), " + (block.h_) + ", " + (block.f_) + ")";
       } else {
-        condition.exp = "_ri(!!(" + exp + "), " + (block._hid) + ")";
+        condition.exp = "_ri(!!(" + exp + "), " + (block.h_) + ")";
       }
     }
   });
@@ -4781,7 +4793,7 @@ function walkIf (node, state) {
     conditions.forEach(function (condition) {
       var block = condition.block;
       var noneTemplateBlock = findFirstNoneTemplateNode(block);
-      addAttr$1(noneTemplateBlock, '__if', ("[ " + (conditions.__extratExpression.join(',')) + " ]"));
+      addAttr$1(noneTemplateBlock, 'i_', ("[ " + (conditions.__extratExpression.join(',')) + " ]"));
     });
   }
 }
@@ -4839,7 +4851,7 @@ function processAttrs$1 (node, state) {
   });
 
   if (bindingAttrs.length) {
-    addAttr$1(node, '_batrs', ("\"" + (bindingAttrs.join(',')) + "\""));
+    addAttr$1(node, 'b_', ("\"" + (bindingAttrs.join(',')) + "\""));
   }
 }
 
@@ -4919,51 +4931,51 @@ State.prototype.getCurrentListNode = function getCurrentListNode () {
 };
 State.prototype.getHId = function getHId (node) {
   this.pushElem();
-  var _hid = "" + (this.getCurrentElemIndex());
-  return ("" + _hid)
+  var h_ = "" + (this.getCurrentElemIndex());
+  return ("" + h_)
 };
 State.prototype.getCId = function getCId (node) {
   this.pushElem();
-  var _cid = "" + (this.getCurrentCompIndex());
-  return ("" + _cid)
+  var c_ = "" + (this.getCurrentCompIndex());
+  return ("" + c_)
 };
 State.prototype.getFid = function getFid (node) {
   var currentListState = this.getCurrentListState() || [];
-  var _fid = currentListState.map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep + " + "));
-  return _fid
+  var f_ = currentListState.map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep + " + "));
+  return f_
 };
 State.prototype.isInSlot = function isInSlot () {
   return this.getCurrentComp().id !== 0
 };
 State.prototype.assignHId = function assignHId (node) {
-  var _hid = this.getHId(node);
-  Object.assign(node, { _hid: _hid });
+  var h_ = this.getHId(node);
+  Object.assign(node, { h_: h_ });
 };
 State.prototype.resolveForHolder = function resolveForHolder (node) {
-  var _hid = node._hid;
-    var _fid = node._fid;
+  var h_ = node.h_;
+    var f_ = node.f_;
   var currentListState = this.getCurrentListState() || [];
   var tail = '';
 
   // remove last index, like '0-1-2', we only need '0-1'
   // store v-for list in this holder
-  node._forInfo = { _hid: _hid };
-  if (_fid) {
+  node._forInfo = { h_: h_ };
+  if (f_) {
     tail = currentListState.slice(0, -1).map(function (s) { return ("(" + (s.iterator2) + " !== undefined ? " + (s.iterator2) + " : " + (s.iterator1) + ")"); }).join((" + " + sep + " + "));
-    node._forInfo._fid = ("" + tail) || undefined;
+    node._forInfo.f_ = ("" + tail) || undefined;
   }
 };
 State.prototype.resolveHolder = function resolveHolder (node) {
-  if (node._hid === undefined) {
+  if (node.h_ === undefined) {
     // holder id
     this.assignHId(node);
-    addAttr$1(node, '_hid', node._hid);
+    addAttr$1(node, 'h_', node.h_);
 
     // list tail in v-for, exp: '0-0', '0-1'
-    var _fid = this.getFid(node);
-    if (_fid) {
-      Object.assign(node, { _fid: _fid });
-      addAttr$1(node, '_fid', '_fid');
+    var f_ = this.getFid(node);
+    if (f_) {
+      Object.assign(node, { f_: f_ });
+      addAttr$1(node, 'f_', 'f_');
     }
   }
 };
@@ -5323,25 +5335,25 @@ TemplateGenerator.prototype.genElement = function genElement (el) {
 
 // TODO: refactor component name problem
 TemplateGenerator.prototype.genComponent = function genComponent (el) {
-  var _cid = el._cid;
+  var c_ = el.c_;
     var tag = el.tag;
-    var _fid = el._fid;
+    var f_ = el.f_;
   var compInfo = this.getComponent(tag);
   this.enterComponent(compInfo);
 
   var compName = compInfo.name;
   var slots = this.genSlotSnippets(el);
   var slotsNames = slots.map(function (sl) { return ("s_" + (sl.name) + ": '" + (sl.slotName) + "'"); });
-  var cid = _cid;
+  var cid = c_;
   var tail = ", " + FOR_TAIL_VAR + ": _t || ''";
 
   // passing parent v-for tail to slot inside v-for
   // TODO: refactor
-  if (isDef(_fid)) {
-    cid = _cid + " + (_t || '') + " + sep$1 + " + " + _fid;
-    tail = ", " + FOR_TAIL_VAR + ": (" + FOR_TAIL_VAR + " || '') + " + sep$1 + " + " + _fid;
+  if (isDef(f_)) {
+    cid = c_ + " + (_t || '') + " + sep$1 + " + " + f_;
+    tail = ", " + FOR_TAIL_VAR + ": (" + FOR_TAIL_VAR + " || '') + " + sep$1 + " + " + f_;
   } else {
-    cid = _cid + " + (_t || '')";
+    cid = c_ + " + (_t || '')";
     tail = ", " + FOR_TAIL_VAR + ": " + FOR_TAIL_VAR + " || ''";
   }
 
@@ -5510,7 +5522,7 @@ TemplateGenerator.prototype.genTag = function genTag (el) {
 TemplateGenerator.prototype.genClass = function genClass (el) {
   var tag = el.tag;
     var classBinding = el.classBinding;
-    var _hid = el._hid;
+    var h_ = el.h_;
   var staticClass = el.staticClass; if ( staticClass === void 0 ) staticClass = '';
   var klass = [];
   staticClass = removeQuotes(staticClass);
@@ -5520,11 +5532,11 @@ TemplateGenerator.prototype.genClass = function genClass (el) {
   if (classBinding) {
     klass.push(("{{ " + (this.genHolder(el, 'class')) + " }}"));
   }
-  if (_hid === '0') {
+  if (h_ === '0') {
     klass.push(("{{ " + (this.genHolder(el, 'rootClass')) + " }}"));
   }
   // scoped id class
-  klass.push(this.scopeId);
+  klass.push(("{{" + SCOPE_ID_VAR + "}}"));
   klass.unshift(("_" + tag));
   klass = klass.filter(notEmpty).join(' ');
   return (" class=\"" + klass + "\"")
@@ -5653,8 +5665,8 @@ TemplateGenerator.prototype.genFor = function genFor (el) {
   var FOR = this.directive('for');
   var FOR_ITEM = this.directive('forItem');
   var FOR_INDEX = this.directive('forIndex');
-  var forHid = _forInfo._hid;
-    var forFid = _forInfo._fid;
+  var forHid = _forInfo.h_;
+    var forFid = _forInfo.f_;
 
   var forHolderId = '';
 
@@ -5696,7 +5708,7 @@ TemplateGenerator.prototype.genText = function genText (el) {
 };
 
 TemplateGenerator.prototype.genSlot = function genSlot (el) {
-  var _fid = el._fid;
+  var f_ = el.f_;
   var slotName = el.slotName; if ( slotName === void 0 ) slotName = 'default';
   slotName = slotName.replace(/"/g, '');
   var fallbackSlotName = slotName + "$" + (uid$1());
@@ -5705,8 +5717,8 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
   this.leaveFallbackSlot();
   var fallbackSlot = "<template name=\"" + fallbackSlotName + "\">" + (fallbackSlotBody || '') + "</template>";
   var tail = ", " + FOR_TAIL_VAR + ": " + FOR_TAIL_VAR + " || ''";
-  if (isDef(_fid)) {
-    tail = ", " + FOR_TAIL_VAR + ": (" + FOR_TAIL_VAR + " || '') + " + sep$1 + " + " + _fid;
+  if (isDef(f_)) {
+    tail = ", " + FOR_TAIL_VAR + ": (" + FOR_TAIL_VAR + " || '') + " + sep$1 + " + " + f_;
   }
 
   /**
@@ -5850,8 +5862,8 @@ TemplateGenerator.prototype.isComponent = function isComponent (el) {
     if ( el === void 0 ) el = {};
 
   var tag = el.tag;
-    var _cid = el._cid;
-  if (_cid) {
+    var c_ = el.c_;
+  if (c_) {
     return !!this.getComponent(tag)
   }
   return false
@@ -5886,15 +5898,15 @@ TemplateGenerator.prototype.directive = function directive (grammar) {
 };
 
 TemplateGenerator.prototype.genHid = function genHid (el) {
-  var _hid = el._hid;
-    var _fid = el._fid;
+  var h_ = el.h_;
+    var f_ = el.f_;
   var tail = '';
-  var hid = _hid;
+  var hid = h_;
   if (this.isInSlotSnippet()) {
     tail = " + " + FOR_TAIL_VAR;
   }
-  if (_fid) {
-    return ("" + _hid + tail + " + " + sep$1 + " + " + _fid)
+  if (f_) {
+    return ("" + h_ + tail + " + " + sep$1 + " + " + f_)
   } else {
     return ("" + hid + tail)
   }

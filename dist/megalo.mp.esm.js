@@ -558,7 +558,7 @@ if (typeof Set !== 'undefined' && isNative(Set)) {
   _Set = Set;
 } else {
   // a non-standard Set polyfill that only works with primitive keys.
-  _Set = (function () {
+  _Set = /*@__PURE__*/(function () {
     function Set () {
       this.set = Object.create(null);
     }
@@ -2050,12 +2050,10 @@ function updateComponentListeners (
 function eventsMixin (Vue) {
   var hookRE = /^hook:/;
   Vue.prototype.$on = function (event, fn) {
-    var this$1 = this;
-
     var vm = this;
     if (Array.isArray(event)) {
       for (var i = 0, l = event.length; i < l; i++) {
-        this$1.$on(event[i], fn);
+        this.$on(event[i], fn);
       }
     } else {
       (vm._events[event] || (vm._events[event] = [])).push(fn);
@@ -2080,8 +2078,6 @@ function eventsMixin (Vue) {
   };
 
   Vue.prototype.$off = function (event, fn) {
-    var this$1 = this;
-
     var vm = this;
     // all
     if (!arguments.length) {
@@ -2091,7 +2087,7 @@ function eventsMixin (Vue) {
     // array of events
     if (Array.isArray(event)) {
       for (var i = 0, l = event.length; i < l; i++) {
-        this$1.$off(event[i], fn);
+        this.$off(event[i], fn);
       }
       return vm
     }
@@ -2703,13 +2699,11 @@ Watcher.prototype.addDep = function addDep (dep) {
  * Clean up for dependency collection.
  */
 Watcher.prototype.cleanupDeps = function cleanupDeps () {
-    var this$1 = this;
-
   var i = this.deps.length;
   while (i--) {
-    var dep = this$1.deps[i];
-    if (!this$1.newDepIds.has(dep.id)) {
-      dep.removeSub(this$1);
+    var dep = this.deps[i];
+    if (!this.newDepIds.has(dep.id)) {
+      dep.removeSub(this);
     }
   }
   var tmp = this.depIds;
@@ -2781,11 +2775,9 @@ Watcher.prototype.evaluate = function evaluate () {
  * Depend on all deps collected by this watcher.
  */
 Watcher.prototype.depend = function depend () {
-    var this$1 = this;
-
   var i = this.deps.length;
   while (i--) {
-    this$1.deps[i].depend();
+    this.deps[i].depend();
   }
 };
 
@@ -2793,8 +2785,6 @@ Watcher.prototype.depend = function depend () {
  * Remove self from all dependencies' subscriber list.
  */
 Watcher.prototype.teardown = function teardown () {
-    var this$1 = this;
-
   if (this.active) {
     // remove self from vm's watcher list
     // this is a somewhat expensive operation so we skip it
@@ -2804,7 +2794,7 @@ Watcher.prototype.teardown = function teardown () {
     }
     var i = this.deps.length;
     while (i--) {
-      this$1.deps[i].removeSub(this$1);
+      this.deps[i].removeSub(this);
     }
     this.active = false;
   }
@@ -4280,10 +4270,8 @@ var KeepAlive = {
   },
 
   destroyed: function destroyed () {
-    var this$1 = this;
-
-    for (var key in this$1.cache) {
-      pruneCacheEntry(this$1.cache, key, this$1.keys);
+    for (var key in this.cache) {
+      pruneCacheEntry(this.cache, key, this.keys);
     }
   },
 
@@ -4406,7 +4394,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.6.3';
+Vue.version = '0.7.0';
 
 /*  */
 
@@ -4633,6 +4621,7 @@ function getMPPlatform () {
 var ROOT_DATA_VAR = '$root';
 var HOLDER_VAR = 'h';
 var SLOT_HOLDER_VAR = 's';
+var SCOPE_ID_VAR = 'd';
 
 var VM_ID_VAR = 'c';
 var VM_ID_PREFIX = 'cp';
@@ -4745,12 +4734,32 @@ function getHid (vm, vnode) {
 
   updateSep(vm);
   var data = vnode.data; if ( data === void 0 ) data = {};
-  var _hid = isDef(data._hid) ? data._hid : (data.attrs && data.attrs._hid);
-  var _fid = isDef(data._fid) ? data._fid : (data.attrs && data.attrs._fid);
-  if (isDef(_fid)) {
-    return ("" + _hid + sep + _fid)
+  var h_ = isDef(data.h_) ? data.h_ : (data.attrs && data.attrs.h_);
+  var f_ = isDef(data.f_) ? data.f_ : (data.attrs && data.attrs.f_);
+  if (isDef(f_)) {
+    return ("" + h_ + sep + f_)
   }
-  return _hid
+  return h_
+}
+
+function getScopeId (vm) {
+  var vnode = vm._vnode;
+  var data = vnode.data; if ( data === void 0 ) data = {};
+  var sc_ = isDef(data.sc_) ? data.sc_ : (data.attrs && data.attrs.sc_);
+  return sc_
+}
+
+function calculateScopeId (vm) {
+  var scopeIds = [];
+  var cursor = vm;
+  while (cursor) {
+    var scopeId = getScopeId(cursor);
+    if (scopeId) {
+      scopeIds.unshift(scopeId);
+    }
+    cursor = cursor.$parent;
+  }
+  return scopeIds.join(' ') || ''
 }
 
 function getVM (vm, id) {
@@ -4772,14 +4781,14 @@ function getVM (vm, id) {
 
 function getCid (vm) {
   var $vnode = vm.$vnode;
-  var cid = $vnode && $vnode.data && $vnode.data.attrs._cid;
+  var cid = $vnode && $vnode.data && $vnode.data.attrs.c_;
   cid = cid || '0';
   return cid
 }
 
 function getFid (vm) {
   var $vnode = vm.$vnode;
-  var fid = $vnode && $vnode.data && $vnode.data.attrs._fid;
+  var fid = $vnode && $vnode.data && $vnode.data.attrs.f_;
   return fid
 }
 
@@ -4853,6 +4862,7 @@ function initVMToMP (vm) {
 
   vm = vm || this;
   var vmId = getVMId(vm);
+  var scopeId = calculateScopeId(vm);
   var $vnode = vm.$vnode; if ( $vnode === void 0 ) $vnode = '';
   var info = {
     cid: vmId,
@@ -4861,7 +4871,7 @@ function initVMToMP (vm) {
 
   var prefix = ROOT_DATA_VAR + "." + vmId;
 
-  vm.$mp._update(( obj = {}, obj[(prefix + ".n")] = $vnode.tag || '$root', obj[(prefix + "." + VM_ID_VAR)] = info.cid, obj[(prefix + "." + VM_ID_PREFIX)] = info.cpath, obj));
+  vm.$mp._update(( obj = {}, obj[(prefix + ".n")] = $vnode.tag || '$root', obj[(prefix + "." + SCOPE_ID_VAR)] = ' ' + (scopeId || ''), obj[(prefix + "." + VM_ID_VAR)] = info.cid, obj[(prefix + "." + VM_ID_PREFIX)] = info.cpath, obj));
 }
 
 function updateMPData (type, data, vnode) {
@@ -4943,9 +4953,9 @@ var sep$1 = '';
 function assertHid (vnode, hid) {
   var data = vnode.data; if ( data === void 0 ) data = {};
   var attrs = data.attrs; if ( attrs === void 0 ) attrs = {};
-  var _hid = attrs._hid;
-  var _fid = attrs._fid;
-  var curHid = isDef(_fid) ? ("" + _hid + sep$1 + _fid) : _hid;
+  var h_ = attrs.h_;
+  var f_ = attrs.f_;
+  var curHid = isDef(f_) ? ("" + h_ + sep$1 + f_) : h_;
   return ("" + curHid) === ("" + hid)
 }
 
@@ -5075,8 +5085,8 @@ function afterRenderSlot (
 
   firstNode.__slotWalked = true;
 
-  var slotFid = props._fid;
-  var hostFId = this.$vnode.data.attrs._fid;
+  var slotFid = props.f_;
+  var hostFId = this.$vnode.data.attrs.f_;
   walkVnodes(
     nodes,
     {
@@ -5116,17 +5126,17 @@ function walkVnodes (nodes, ref) {
     // update vnode hid in scoped slot with the slot host's actual fid
     if (node.data && node.data.attrs) {
       if (/^vue-component/.test(node.tag)) {
-        node.data.attrs._fid = resolveFid(
-          [slotFid, node.data.attrs._fid]
+        node.data.attrs.f_ = resolveFid(
+          [slotFid, node.data.attrs.f_]
         );
       } else {
-        node.data.attrs._fid = resolveFid(
-          [fidPath, slotFid, node.data.attrs._fid]
+        node.data.attrs.f_ = resolveFid(
+          [fidPath, slotFid, node.data.attrs.f_]
         );
       }
     } else if (node.data) {
-      node.data._fid = resolveFid(
-        [fidPath, slotFid, node.data._fid]
+      node.data.f_ = resolveFid(
+        [fidPath, slotFid, node.data.f_]
       );
     }
 
@@ -5136,8 +5146,8 @@ function walkVnodes (nodes, ref) {
 
     if (node.__renderListFn) {
       var renderListVnode = node.__renderListVnode;
-      renderListVnode.data.attrs._fid = resolveFid(
-        [fidPath, slotFid, renderListVnode.data.attrs._fid]
+      renderListVnode.data.attrs.f_ = resolveFid(
+        [fidPath, slotFid, renderListVnode.data.attrs.f_]
       );
       renderListVnode.slotContext = slotContext;
       node.__renderListFn();
@@ -5150,12 +5160,12 @@ function renderIf (node, ref) {
   var slotFid = ref.slotFid;
   var slotContext = ref.slotContext;
 
-  if (node.data && node.data.attrs && node.data.attrs.__if) {
-    var _if = node.data.attrs.__if;
-    for (var i = 0, len = _if.length; i < len; i += 3) {
-      var cond = _if[i];
-      var _ifHid = _if[i + 1];
-      var _ifFid = _if[i + 2];
+  if (node.data && node.data.attrs && node.data.attrs.i_) {
+    var i_ = node.data.attrs.i_;
+    for (var i = 0, len = i_.length; i < len; i += 3) {
+      var cond = i_[i];
+      var _ifHid = i_[i + 1];
+      var _ifFid = i_[i + 2];
       var realIfFid = resolveFid(
         [fidPath, slotFid, _ifFid]
       );
@@ -5163,8 +5173,8 @@ function renderIf (node, ref) {
         slotContext: slotContext,
         data: {
           attrs: {
-            _hid: _ifHid,
-            _fid: realIfFid
+            h_: _ifHid,
+            f_: realIfFid
           }
         }
       };
@@ -5198,11 +5208,11 @@ function setSlotContextAndParentUid (node, slotContext, parentUId) {
   node.slotContext = slotContext;
 }
 
-function renderIf$1 (cond, _hid, _fid) {
+function renderIf$1 (cond, h_, f_) {
   var cloneVnode = {
     context: this,
     data: {
-      attrs: { _hid: _hid, _fid: _fid }
+      attrs: { h_: h_, f_: f_ }
     }
   };
   updateVnodeToMP(cloneVnode, HOLDER_TYPE_VARS.if, cond);
@@ -5240,14 +5250,14 @@ function updateListToMP (vnodeList, val, forInfo, context) {
       forKeys = firstItem.map(function (e) {
         var ref = e.data || /* istanbul ignore next */ {};
         var attrs = ref.attrs; if ( attrs === void 0 ) attrs = {};
-        var _fk = attrs._fk; if ( _fk === void 0 ) _fk = '';
-        return _fk
+        var k_ = attrs.k_; if ( k_ === void 0 ) k_ = '';
+        return k_
       });
     } else {
       var ref = firstItem.data || {};
       var attrs = ref.attrs; if ( attrs === void 0 ) attrs = {};
-      var _fk = attrs._fk; if ( _fk === void 0 ) _fk = '';
-      forKeys = [_fk];
+      var k_ = attrs.k_; if ( k_ === void 0 ) k_ = '';
+      forKeys = [k_];
     }
 
     forKeys = forKeys.filter(function (e) { return e; });
@@ -5283,7 +5293,7 @@ function updateListToMP (vnodeList, val, forInfo, context) {
   var cloneVnode = {
     context: context,
     data: {
-      attrs: { _hid: forInfo[0], _fid: forInfo[1] }
+      attrs: { h_: forInfo[0], f_: forInfo[1] }
     }
   };
 
@@ -5297,10 +5307,10 @@ function updateListToMP (vnodeList, val, forInfo, context) {
     vnodeList.forEach(function (vnode) {
       if (Array.isArray(vnode)) {
         vnode.forEach(function (c) {
-          if (c.key) { c.key = undefined; }
+          delete c.key;
         });
-      } else if (vnode.key) {
-        vnode.key = undefined;
+      } else {
+        delete vnode.key;
       }
     });
   }
@@ -5914,7 +5924,7 @@ function createPatchFunction (backend) {
       } else if (isDef(oldVnode.text)) {
         nodeOps.setTextContent(elm, '', vnode);
       }
-    } else if (oldVnode.text !== vnode.text || (oldVnode.data && vnode.data && oldVnode.data._hid !== vnode.data._hid)) {
+    } else if (oldVnode.text !== vnode.text || (oldVnode.data && vnode.data && oldVnode.data.h_ !== vnode.data.h_)) {
       nodeOps.setTextContent(elm, vnode.text, vnode);
     }
     if (isDef(data)) {
@@ -6071,9 +6081,9 @@ function createPatchFunction (backend) {
 
 /*  */
 
-function createTextVNode$1 (val, _hid, _fid) {
+function createTextVNode$1 (val, h_, f_) {
   var vnode = new VNode(undefined, {
-    _hid: _hid, _fid: _fid
+    h_: h_, f_: f_
   }, undefined, String(val), undefined, this);
 
   return vnode
@@ -6292,7 +6302,7 @@ var baseModules = [
 
 /*  */
 
-var ignoreKeys = ['_hid', '_fk', '_cid', '_batrs'];
+var ignoreKeys = ['h_', 'f_', 'k_', 'c_', 'b_', 'sc_'];
 
 function isIgnoreKey (key) {
   return ignoreKeys.indexOf(key) > -1 ||
@@ -6310,7 +6320,6 @@ function updateAttrs (oldVnode, vnode) {
   var key, cur, old;
   var oldAttrs = oldVnode.data.attrs || {};
   var attrs = vnode.data.attrs || {};
-  var bindingAttrs = (attrs._batrs || '').split(',');
   // clone observed objects, as the user probably wants to mutate it
   if (isDef(attrs.__ob__)) {
     attrs = vnode.data.attrs = extend({}, attrs);
@@ -6324,7 +6333,7 @@ function updateAttrs (oldVnode, vnode) {
     old = oldAttrs[key];
 
     // only update daynamic attrs in runtime
-    if (old !== cur && (bindingAttrs.indexOf(key) > -1 || key === 'slot')) {
+    if (old !== cur && key !== 'slot') {
       // if using local image file, set path to the root
       if (cur && vnode.tag === 'img' && key === 'src' && !/^\/|https?|data:/.test(cur)) {
         cur = "/" + cur;
