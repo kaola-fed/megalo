@@ -11,12 +11,32 @@ function updateSep (vm) {
 export function getHid (vm, vnode = {}) {
   updateSep(vm)
   const { data = {}} = vnode
-  const _hid = isDef(data._hid) ? data._hid : (data.attrs && data.attrs._hid)
-  const _fid = isDef(data._fid) ? data._fid : (data.attrs && data.attrs._fid)
-  if (isDef(_fid)) {
-    return `${_hid}${sep}${_fid}`
+  const h_ = isDef(data.h_) ? data.h_ : (data.attrs && data.attrs.h_)
+  const f_ = isDef(data.f_) ? data.f_ : (data.attrs && data.attrs.f_)
+  if (isDef(f_)) {
+    return `${h_}${sep}${f_}`
   }
-  return _hid
+  return h_
+}
+
+export function getScopeId (vm) {
+  const vnode = vm._vnode
+  const { data = {}} = vnode
+  const sc_ = isDef(data.sc_) ? data.sc_ : (data.attrs && data.attrs.sc_)
+  return sc_
+}
+
+export function calculateScopeId (vm) {
+  const scopeIds = []
+  let cursor = vm
+  while (cursor) {
+    const scopeId = getScopeId(cursor)
+    if (scopeId) {
+      scopeIds.unshift(scopeId)
+    }
+    cursor = cursor.$parent
+  }
+  return scopeIds.join(' ') || ''
 }
 
 export function getVM (vm = {}, id) {
@@ -36,14 +56,14 @@ export function getVM (vm = {}, id) {
 
 export function getCid (vm) {
   const { $vnode } = vm
-  let cid = $vnode && $vnode.data && $vnode.data.attrs._cid
+  let cid = $vnode && $vnode.data && $vnode.data.attrs.c_
   cid = cid || '0'
   return cid
 }
 
 export function getFid (vm) {
   const { $vnode } = vm
-  const fid = $vnode && $vnode.data && $vnode.data.attrs._fid
+  const fid = $vnode && $vnode.data && $vnode.data.attrs.f_
   return fid
 }
 

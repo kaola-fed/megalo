@@ -39,8 +39,8 @@ export function afterRenderSlot (
 
   firstNode.__slotWalked = true
 
-  const slotFid = props._fid
-  const hostFId = this.$vnode.data.attrs._fid
+  const slotFid = props.f_
+  const hostFId = this.$vnode.data.attrs.f_
   walkVnodes(
     nodes,
     {
@@ -75,17 +75,17 @@ function walkVnodes (nodes = [], { hostFid, slotContext, slotFid }) {
     // update vnode hid in scoped slot with the slot host's actual fid
     if (node.data && node.data.attrs) {
       if (/^vue-component/.test(node.tag)) {
-        node.data.attrs._fid = resolveFid(
-          [slotFid, node.data.attrs._fid]
+        node.data.attrs.f_ = resolveFid(
+          [slotFid, node.data.attrs.f_]
         )
       } else {
-        node.data.attrs._fid = resolveFid(
-          [fidPath, slotFid, node.data.attrs._fid]
+        node.data.attrs.f_ = resolveFid(
+          [fidPath, slotFid, node.data.attrs.f_]
         )
       }
     } else if (node.data) {
-      node.data._fid = resolveFid(
-        [fidPath, slotFid, node.data._fid]
+      node.data.f_ = resolveFid(
+        [fidPath, slotFid, node.data.f_]
       )
     }
 
@@ -95,8 +95,8 @@ function walkVnodes (nodes = [], { hostFid, slotContext, slotFid }) {
 
     if (node.__renderListFn) {
       const renderListVnode = node.__renderListVnode
-      renderListVnode.data.attrs._fid = resolveFid(
-        [fidPath, slotFid, renderListVnode.data.attrs._fid]
+      renderListVnode.data.attrs.f_ = resolveFid(
+        [fidPath, slotFid, renderListVnode.data.attrs.f_]
       )
       renderListVnode.slotContext = slotContext
       node.__renderListFn()
@@ -105,12 +105,12 @@ function walkVnodes (nodes = [], { hostFid, slotContext, slotFid }) {
 }
 
 function renderIf (node, { fidPath, slotFid, slotContext }) {
-  if (node.data && node.data.attrs && node.data.attrs.__if) {
-    const __if = node.data.attrs.__if
-    for (let i = 0, len = __if.length; i < len; i += 3) {
-      const cond = __if[i]
-      const _ifHid = __if[i + 1]
-      const _ifFid = __if[i + 2]
+  if (node.data && node.data.attrs && node.data.attrs.i_) {
+    const i_ = node.data.attrs.i_
+    for (let i = 0, len = i_.length; i < len; i += 3) {
+      const cond = i_[i]
+      const _ifHid = i_[i + 1]
+      const _ifFid = i_[i + 2]
       const realIfFid = resolveFid(
         [fidPath, slotFid, _ifFid]
       )
@@ -118,8 +118,8 @@ function renderIf (node, { fidPath, slotFid, slotContext }) {
         slotContext,
         data: {
           attrs: {
-            _hid: _ifHid,
-            _fid: realIfFid
+            h_: _ifHid,
+            f_: realIfFid
           }
         }
       }

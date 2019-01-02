@@ -35,7 +35,7 @@ function transformNode (el: ASTElement, options: CompilerOptions) {
 
 function genData (el: ASTElement): string {
   let data = ''
-  if (el.staticStyle) {
+  if (el.c_ && el.staticStyle) {
     data += `staticStyle:${el.staticStyle},`
   }
   if (el.styleBinding) {

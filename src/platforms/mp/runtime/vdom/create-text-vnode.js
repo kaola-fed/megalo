@@ -2,9 +2,9 @@
 
 import VNode from 'core/vdom/vnode'
 
-export function createTextVNode (val: string | number, _hid, _fid) {
+export function createTextVNode (val: string | number, h_, f_) {
   const vnode = new VNode(undefined, {
-    _hid, _fid
+    h_, f_
   }, undefined, String(val), undefined, this)
 
   return vnode

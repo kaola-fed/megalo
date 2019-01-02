@@ -7,7 +7,7 @@ import {
 } from 'shared/util'
 import { updateVnodeToMP } from '../instance/index'
 
-const ignoreKeys = ['_hid', '_fk', '_cid', '_batrs']
+const ignoreKeys = ['h_', 'f_', 'k_', 'c_', 'b_', 'sc_']
 
 function isIgnoreKey (key) {
   return ignoreKeys.indexOf(key) > -1 ||
@@ -25,7 +25,6 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   let key, cur, old
   const oldAttrs = oldVnode.data.attrs || {}
   let attrs: any = vnode.data.attrs || {}
-  const bindingAttrs = (attrs._batrs || '').split(',')
   // clone observed objects, as the user probably wants to mutate it
   if (isDef(attrs.__ob__)) {
     attrs = vnode.data.attrs = extend({}, attrs)
@@ -39,7 +38,7 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
     old = oldAttrs[key]
 
     // only update daynamic attrs in runtime
-    if (old !== cur && (bindingAttrs.indexOf(key) > -1 || key === 'slot')) {
+    if (old !== cur && key !== 'slot') {
       // if using local image file, set path to the root
       if (cur && vnode.tag === 'img' && key === 'src' && !/^\/|https?|data:/.test(cur)) {
         cur = `/${cur}`

@@ -152,7 +152,7 @@ function genDefaultModel (
   const needCompositionGuard = !lazy && type !== 'range'
   // input.type=range not supported
   const event = lazy
-    ? 'change'
+    ? 'blur'
     : type === 'range'
     /* istanbul ignore next */ ? RANGE_TOKEN
       : 'input'

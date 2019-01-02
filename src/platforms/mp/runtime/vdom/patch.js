@@ -490,7 +490,7 @@ export function createPatchFunction (backend) {
       } else if (isDef(oldVnode.text)) {
         nodeOps.setTextContent(elm, '', vnode)
       }
-    } else if (oldVnode.text !== vnode.text || (oldVnode.data && vnode.data && oldVnode.data._hid !== vnode.data._hid)) {
+    } else if (oldVnode.text !== vnode.text || (oldVnode.data && vnode.data && oldVnode.data.h_ !== vnode.data.h_)) {
       nodeOps.setTextContent(elm, vnode.text, vnode)
     }
     if (isDef(data)) {
