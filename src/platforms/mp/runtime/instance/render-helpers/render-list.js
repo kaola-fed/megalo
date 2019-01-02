@@ -90,10 +90,10 @@ function updateListToMP (vnodeList = [], val, forInfo, context) {
     vnodeList.forEach(vnode => {
       if (Array.isArray(vnode)) {
         vnode.forEach(c => {
-          if (c.key) c.key = undefined
+          delete c.key
         })
-      } else if (vnode.key) {
-        vnode.key = undefined
+      } else {
+        delete vnode.key
       }
     })
   }
