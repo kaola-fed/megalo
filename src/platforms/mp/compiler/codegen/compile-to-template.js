@@ -16,11 +16,11 @@ import {
   ROOT_DATA_VAR,
   LIST_TAIL_SEPS,
   SLOT_HOLDER_VAR,
-  SCOPE_ID_VAR,
   HOLDER_VAR,
   FOR_TAIL_VAR,
   VM_ID_PREFIX,
-  HOLDER_TYPE_VARS
+  HOLDER_TYPE_VARS,
+  PARENT_SCOPE_ID_VAR
 } from 'mp/util/index'
 
 const vbindReg = /^(v-bind)?:/
@@ -135,7 +135,15 @@ export class TemplateGenerator {
     const slots = this.genSlotSnippets(el)
     const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
     let cid = c_
+    let scope = ''
     let tail = `, ${FOR_TAIL_VAR}: _t || ''`
+
+    // if the component is in slot snippet, the slot scopeid is contained in PARENT_SCOPE_ID_VAR
+    if (this.scopeId && !this.isInSlotSnippet()) {
+      scope = `,${PARENT_SCOPE_ID_VAR}:(${PARENT_SCOPE_ID_VAR}||'')+' ${this.scopeId}'`
+    } else {
+      scope = `,${PARENT_SCOPE_ID_VAR}:${PARENT_SCOPE_ID_VAR}||''`
+    }
 
     // passing parent v-for tail to slot inside v-for
     // TODO: refactor
@@ -155,7 +163,7 @@ export class TemplateGenerator {
 
     const attrs = [
       ` is="${compName}"`,
-      ` data="` + this.wrapTemplateData(`${data}${tail}`) + `"`,
+      ` data="` + this.wrapTemplateData(`${data}${tail}${scope}`) + `"`,
       this.genIf(el),
       this.genFor(el)
     ].filter(notEmpty).join('')
@@ -320,8 +328,15 @@ export class TemplateGenerator {
     if (h_ === '0') {
       klass.push(`{{ ${this.genHolder(el, 'rootClass')} }}`)
     }
-    // scoped id class
-    klass.push(`{{${SCOPE_ID_VAR}}}`)
+
+    // parent scope id class string
+    klass.push(`{{${PARENT_SCOPE_ID_VAR}}}`)
+
+    // scope id class string
+    if (this.scopeId && !this.isInSlotSnippet()) {
+      klass.push(`${this.scopeId}`)
+    }
+
     klass.unshift(`_${tag}`)
     klass = klass.filter(notEmpty).join(' ')
     return ` class="${klass}"`
@@ -495,6 +510,13 @@ export class TemplateGenerator {
       tail = `, ${FOR_TAIL_VAR}: (${FOR_TAIL_VAR} || '') + ${sep} + ${f_}`
     }
 
+    let scope = ''
+    if (this.scopeId) {
+      scope = `,${PARENT_SCOPE_ID_VAR}:(${PARENT_SCOPE_ID_VAR}||'')+' ${this.scopeId}'`
+    } else {
+      scope = `,${PARENT_SCOPE_ID_VAR}:${PARENT_SCOPE_ID_VAR}||''`
+    }
+
     /**
      * use "_c" to passing the actual vdom host component instance id to slot template
      *      because the vdom is actually stored in the component's _vnodes
@@ -526,7 +548,7 @@ export class TemplateGenerator {
       `${fallbackSlot}`,
       `<template is="{{ s_${slotName} || '${fallbackSlotName}' }}" `,
       `data="`,
-      this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}, _c: c`),
+      this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}${scope}, _c: c`),
       `"${this.genFor(el)}/>`
     ].join('')
   }
