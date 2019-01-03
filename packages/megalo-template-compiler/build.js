@@ -1696,7 +1696,8 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 var ROOT_DATA_VAR = '$root';
 var HOLDER_VAR = 'h';
 var SLOT_HOLDER_VAR = 's';
-var SCOPE_ID_VAR = 'd';
+
+var PARENT_SCOPE_ID_VAR = 'p';
 var FOR_TAIL_VAR = '_t';
 
 var VM_ID_PREFIX = 'cp';
@@ -5345,7 +5346,15 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
   var slots = this.genSlotSnippets(el);
   var slotsNames = slots.map(function (sl) { return ("s_" + (sl.name) + ": '" + (sl.slotName) + "'"); });
   var cid = c_;
+  var scope = '';
   var tail = ", " + FOR_TAIL_VAR + ": _t || ''";
+
+  // if the component is in slot snippet, the slot scopeid is contained in PARENT_SCOPE_ID_VAR
+  if (this.scopeId && !this.isInSlotSnippet()) {
+    scope = "," + PARENT_SCOPE_ID_VAR + ":(" + PARENT_SCOPE_ID_VAR + "||'')+' " + (this.scopeId) + "'";
+  } else {
+    scope = "," + PARENT_SCOPE_ID_VAR + ":" + PARENT_SCOPE_ID_VAR + "||''";
+  }
 
   // passing parent v-for tail to slot inside v-for
   // TODO: refactor
@@ -5364,7 +5373,7 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
 
   var attrs = [
     (" is=\"" + compName + "\""),
-    " data=\"" + this.wrapTemplateData(("" + data + tail)) + "\"",
+    " data=\"" + this.wrapTemplateData(("" + data + tail + scope)) + "\"",
     this.genIf(el),
     this.genFor(el)
   ].filter(notEmpty).join('');
@@ -5535,8 +5544,15 @@ TemplateGenerator.prototype.genClass = function genClass (el) {
   if (h_ === '0') {
     klass.push(("{{ " + (this.genHolder(el, 'rootClass')) + " }}"));
   }
-  // scoped id class
-  klass.push(("{{" + SCOPE_ID_VAR + "}}"));
+
+  // parent scope id class string
+  klass.push(("{{" + PARENT_SCOPE_ID_VAR + "}}"));
+
+  // scope id class string
+  if (this.scopeId && !this.isInSlotSnippet()) {
+    klass.push(("" + (this.scopeId)));
+  }
+
   klass.unshift(("_" + tag));
   klass = klass.filter(notEmpty).join(' ');
   return (" class=\"" + klass + "\"")
@@ -5721,6 +5737,13 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
     tail = ", " + FOR_TAIL_VAR + ": (" + FOR_TAIL_VAR + " || '') + " + sep$1 + " + " + f_;
   }
 
+  var scope = '';
+  if (this.scopeId) {
+    scope = "," + PARENT_SCOPE_ID_VAR + ":(" + PARENT_SCOPE_ID_VAR + "||'')+' " + (this.scopeId) + "'";
+  } else {
+    scope = "," + PARENT_SCOPE_ID_VAR + ":" + PARENT_SCOPE_ID_VAR + "||''";
+  }
+
   /**
    * use "_c" to passing the actual vdom host component instance id to slot template
    *    because the vdom is actually stored in the component's _vnodes
@@ -5752,7 +5775,7 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
     ("" + fallbackSlot),
     ("<template is=\"{{ s_" + slotName + " || '" + fallbackSlotName + "' }}\" "),
     "data=\"",
-    this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ c ], " + ROOT_DATA_VAR + tail + ", _c: c")),
+    this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ c ], " + ROOT_DATA_VAR + tail + scope + ", _c: c")),
     ("\"" + (this.genFor(el)) + "/>")
   ].join('')
 };
