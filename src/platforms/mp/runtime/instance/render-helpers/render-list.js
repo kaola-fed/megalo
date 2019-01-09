@@ -3,6 +3,7 @@
 import { isObject } from 'core/util/index'
 import { updateVnodeToMP } from '../update'
 import { HOLDER_TYPE_VARS, getValue } from 'mp/util/index'
+import { createEmptyVNode } from 'core/vdom/vnode'
 
 /**
  * Runtime helper for rendering v-for lists.
@@ -25,9 +26,14 @@ export function afterRenderList (
 // TODO: keys collecting method needs improve for
 // <li v-for="i in 3" :key="i"></li>
 function updateListToMP (vnodeList = [], val, forInfo, context) {
-  const firstItem = vnodeList[0]
+  let firstItem = vnodeList[0]
   let forKeys
   let list = []
+  if (!firstItem) {
+    vnodeList.push(createEmptyVNode())
+    firstItem = vnodeList[0]
+  }
+
   /* istanbul ignore else */
   if (firstItem) {
     // collect v-key
