@@ -333,6 +333,32 @@ describe('Directive v-model text', () => {
     console.warn = warn
   })
 
+  it('should update value with empty string properly', done => {
+    const { page, vm } = createPage({
+      data: {
+        test: 'b'
+      },
+      template: '<input v-model="test">'
+    })
+
+    const pageData = getPageData(page, '0')
+    assertValue(pageData, 'b')
+    vm.test = 'a'
+    waitForUpdate(() => {
+      assertValue(pageData, 'a')
+      triggerInput(page, 'c')
+      expect(vm.test).toBe('c')
+
+      vm.test = ''
+    }).then(() => {
+      assertValue(pageData, '')
+      triggerInput(page, 'd')
+    }).then(() => {
+      assertValue(pageData, 'd')
+      expect(vm.test).toBe('d')
+    }).then(done)
+  })
+
   // TODO: input type has different meaning in mp
   // it('should not warn on input with dynamic type binding', () => {
   //   const warn = console.warn
