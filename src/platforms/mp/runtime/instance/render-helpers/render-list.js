@@ -3,7 +3,7 @@
 import { isObject } from 'core/util/index'
 import { updateVnodeToMP } from '../update'
 import { HOLDER_TYPE_VARS, getValue } from 'mp/util/index'
-import { createEmptyVNode } from 'core/vdom/vnode'
+import VNode from 'core/vdom/vnode'
 
 /**
  * Runtime helper for rendering v-for lists.
@@ -30,7 +30,7 @@ function updateListToMP (vnodeList = [], val, forInfo, context) {
   let forKeys
   let list = []
   if (!firstItem) {
-    vnodeList.push(createEmptyVNode())
+    vnodeList.push(new VNode('div'))
     firstItem = vnodeList[0]
   }
 
