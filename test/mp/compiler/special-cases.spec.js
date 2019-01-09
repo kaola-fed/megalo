@@ -30,7 +30,7 @@ function wrapMP (code, options = {}) {
   const { name = 'defaultName' } = options
   return (
     `<template name="${name}">` +
-      `<view class="_div {{ h[ 0 ].rcl }} {{d}}">${code}</view>` +
+      `<view class="_div {{ h[ 0 ].rcl }} {{p}}">${code}</view>` +
     `</template>`
   )
 }
@@ -65,11 +65,11 @@ describe('special cases', () => {
         `</div>`
       ),
       (
-        `<view class="_div {{d}}">` +
-          `<view wx:for="{{ h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i1" class="_div {{d}}">` +
+        `<view class="_div {{p}}">` +
+          `<view wx:for="{{ h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i1" class="_div {{p}}">` +
             `<template is="${CompA.name}" ` +
               `data="{{ ...$root[ cp + 0 + (_t || '') + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ],` +
-                      ` $root, s_default: '${slot2}', _t: (_t || '') + '-' + (item_i2 !== undefined ? item_i2 : item_i1) }}" />` +
+                      ` $root, s_default: '${slot2}', _t: (_t || '') + '-' + (item_i2 !== undefined ? item_i2 : item_i1),p:p||'' }}" />` +
           `</view>` +
         `</view>`
       ),
@@ -88,9 +88,9 @@ describe('special cases', () => {
           if (i === 1) {
             expect(slot.body).toBe(
               `<template name="${slot2}" parent="App$1234">` +
-                `<view wx:for="{{ s[ 5 + (_t || '') ].li }}" wx:for-item="ele" wx:for-index="ele_i1" class="_div {{d}}">` +
+                `<view wx:for="{{ s[ 5 + (_t || '') ].li }}" wx:for-item="ele" wx:for-index="ele_i1" class="_div {{p}}">` +
                   `<template is="CompB$1234" ` +
-                    `data="{{ ...$root[ cp + 1 + (_t || '') + '-' + (ele_i2 !== undefined ? ele_i2 : ele_i1) ], $root, s_default: '${slot1}', _t: (_t || '') + '-' + (ele_i2 !== undefined ? ele_i2 : ele_i1) }}" ` +
+                    `data="{{ ...$root[ cp + 1 + (_t || '') + '-' + (ele_i2 !== undefined ? ele_i2 : ele_i1) ], $root, s_default: '${slot1}', _t: (_t || '') + '-' + (ele_i2 !== undefined ? ele_i2 : ele_i1),p:p||'' }}" ` +
                   `/>` +
                 `</view>` +
               `</template>`
@@ -98,7 +98,7 @@ describe('special cases', () => {
           } else if (i === 0) {
             expect(slot.body).toBe(
               `<template name="${slot1}" parent="App$1234">` +
-                `<view wx:for="{{ s[ 8 + (_t || '') ].li }}" wx:for-item="e" wx:for-index="e_i1" class="_div {{d}}">` +
+                `<view wx:for="{{ s[ 8 + (_t || '') ].li }}" wx:for-item="e" wx:for-index="e_i1" class="_div {{p}}">` +
                   `{{ s[ 9 + _t + '-' + (e_i2 !== undefined ? e_i2 : e_i1) ].t }}` +
                 `</view>` +
               `</template>`
