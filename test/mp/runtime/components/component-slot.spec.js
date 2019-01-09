@@ -804,5 +804,38 @@ describe('Component slot', () => {
     expect(getPageData(page, '0,0-2,1-2,0-2').h[1].t).toBe('3')
   })
 
+  it('the elements of slot should be updated correctly', done => {
+    const { page, vm } = createPage({
+      data: { list: [1] },
+      template: '<div><test><span v-for="i in list">{{ i }}</span></test></div>',
+      components: {
+        test: {
+          template: '<div><slot></slot></div>'
+        }
+      }
+    })
+
+    const comp1 = getPageData(page, '0,0')
+    waitForUpdate(() => {
+      expect(comp1.s[3].li).toEqual([0])
+      expect(comp1.s['4-0'].t).toBe('1')
+
+      vm.list.push(2)
+    }).then(() => {
+      expect(comp1.s[3].li).toEqual([0, 1])
+      expect(comp1.s['4-0'].t).toBe('1')
+      expect(comp1.s['4-1'].t).toBe('2')
+
+      vm.list = []
+    }).then(() => {
+      expect(comp1.s[3].li).toEqual([])
+
+      vm.list.push(3)
+    }).then(() => {
+      expect(comp1.s[3].li).toEqual([0])
+      expect(comp1.s['4-0'].t).toBe('3')
+    }).then(done)
+  })
+
   // TODO: '<div><test v-for="i in 3" :key="i"><test2><div slot-scope="scope" v-for="ele in scope.list">{{ i }}-{{ ele }}</div></test2></test></div>',
 })
