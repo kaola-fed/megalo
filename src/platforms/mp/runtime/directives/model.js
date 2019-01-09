@@ -25,10 +25,8 @@ import { HOLDER_TYPE_VARS } from 'mp/util/index'
 // }
 
 const directive = {
-  update (el: any, { value, oldValue }: VNodeDirective, vnode: VNodeWithData) {
-    if (oldValue !== value) {
-      updateVnodeToMP(vnode, HOLDER_TYPE_VARS.value, value)
-    }
+  update (el: any, { value }: VNodeDirective, vnode: VNodeWithData) {
+    updateVnodeToMP(vnode, HOLDER_TYPE_VARS.value, value)
   },
 
   inserted (el, binding, vnode, oldVnode) {
