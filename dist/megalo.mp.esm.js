@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.7.1-0';
+Vue.version = '0.7.1';
 
 /*  */
 
@@ -5256,6 +5256,11 @@ function updateListToMP (vnodeList, val, forInfo, context) {
   var firstItem = vnodeList[0];
   var forKeys;
   var list = [];
+  if (!firstItem) {
+    vnodeList.push(new VNode('div'));
+    firstItem = vnodeList[0];
+  }
+
   /* istanbul ignore else */
   if (firstItem) {
     // collect v-key
@@ -7046,11 +7051,8 @@ function initMP (vm, options) {
 var directive = {
   update: function update (el, ref, vnode) {
     var value = ref.value;
-    var oldValue = ref.oldValue;
 
-    if (oldValue !== value) {
-      updateVnodeToMP(vnode, HOLDER_TYPE_VARS.value, value);
-    }
+    updateVnodeToMP(vnode, HOLDER_TYPE_VARS.value, value);
   },
 
   inserted: function inserted (el, binding, vnode, oldVnode) {
