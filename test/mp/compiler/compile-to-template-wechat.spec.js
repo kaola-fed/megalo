@@ -183,23 +183,23 @@ describe('compilteToTemplate: wechat', () => {
   it('generate events', () => {
     assertCodegen(
       `<div @click="onClick"></div>`,
-      `<view class="_div {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bind:tap="_pe"></view>`
+      `<view class="_div {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
     )
     assertCodegen(
       `<scoll-view @scrolltoupper="onScollToUpper"></scoll-view>`,
-      `<scoll-view class="_scoll-view {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bind:scrolltoupper="_pe"></scoll-view>`
+      `<scoll-view class="_scoll-view {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindscrolltoupper="_pe"></scoll-view>`
     )
     assertCodegen(
       `<scoll-view @scroll="onScroll" @scrolltoupper="onScollToUpper"></scoll-view>`,
-      `<scoll-view class="_scoll-view {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bind:scroll="_pe" bind:scrolltoupper="_pe"></scoll-view>`
+      `<scoll-view class="_scoll-view {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindscroll="_pe" bindscrolltoupper="_pe"></scoll-view>`
     )
     assertCodegen(
       `<input @change="onInput">`,
-      `<input class="_input {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bind:blur="_pe"></input>`
+      `<input class="_input {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindblur="_pe"></input>`
     )
     assertCodegen(
       `<textarea @change="onInput"></textarea>`,
-      `<textarea class="_textarea {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bind:blur="_pe"></textarea>`
+      `<textarea class="_textarea {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindblur="_pe"></textarea>`
     )
     // .stop
     assertCodegen(
@@ -219,7 +219,7 @@ describe('compilteToTemplate: wechat', () => {
     // .once
     assertCodegen(
       `<div @click.once="onClick"></div>`,
-      `<view class="_div {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bind:tap="_pe"></view>`
+      `<view class="_div {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindtap="_pe"></view>`
     )
   })
 
@@ -415,19 +415,19 @@ describe('compilteToTemplate: wechat', () => {
   it('generate v-model', () => {
     assertCodegen(
       `<input v-model="input">`,
-      `<input class="_input {{p}}" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bind:input="_pe"></input>`
+      `<input class="_input {{p}}" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
     )
     assertCodegen(
       `<input value="otherInput" v-model="input">`,
-      `<input class="_input {{p}}" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bind:input="_pe"></input>`
+      `<input class="_input {{p}}" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindinput="_pe"></input>`
     )
     assertCodegen(
       `<input v-model.lazy="input">`,
-      `<input class="_input {{p}}" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bind:blur="_pe"></input>`
+      `<input class="_input {{p}}" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindblur="_pe"></input>`
     )
     assertCodegen(
       `<input v-model.number="input">`,
-      `<input class="_input {{p}}" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bind:input="_pe" bind:blur="_pe"></input>`
+      `<input class="_input {{p}}" value="{{ h[ 1 ].value }}" data-cid="{{ _c || c }}" data-hid="{{ 1 }}" bindinput="_pe" bindblur="_pe"></input>`
     )
   })
 
@@ -1145,7 +1145,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label class="_span {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 4 + _t }}" bind:tap="_pe">` +
+              `<label class="_span {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 4 + _t }}" bindtap="_pe">` +
                 `click` +
               `</label>` +
             `</template>`
