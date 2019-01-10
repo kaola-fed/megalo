@@ -47,7 +47,7 @@ export default mergePreset(basePrest, {
     const realType = type.replace(/^[~|!]/, '')
     const { stop } = modifiers
     let mpType = realType
-    let binder = stop ? 'catch' : 'bind'
+    let binder = stop ? 'catch:' : 'bind:'
     binder = isCapture ? `capture-${binder}` : binder
 
     if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
