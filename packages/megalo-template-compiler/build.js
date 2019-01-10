@@ -4446,8 +4446,12 @@ var wechat = mergePreset(basePrest, {
     var realType = type.replace(/^[~|!]/, '');
     var stop = modifiers.stop;
     var mpType = realType;
-    var binder = stop ? 'catch:' : 'bind:';
+    var binder = stop ? 'catch' : 'bind';
     binder = isCapture ? ("capture-" + binder) : binder;
+
+    if (binder !== 'bind') {
+      binder = binder + ":";
+    }
 
     if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
       mpType = 'blur';
@@ -4589,8 +4593,12 @@ var swan$1 = mergePreset(basePrest, {
     var realType = type.replace(/^[~|!]/, '');
     var stop = modifiers.stop;
     var mpType = realType;
-    var binder = stop ? 'catch:' : 'bind:';
+    var binder = stop ? 'catch' : 'bind';
     binder = isCapture ? ("capture-" + binder) : binder;
+
+    if (binder !== 'bind') {
+      binder = binder + ":";
+    }
 
     if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
       mpType = 'blur';
