@@ -4374,20 +4374,28 @@ function alterAttrName (el, oldName, newName) {
   var attrsMap = el.attrsMap; if ( attrsMap === void 0 ) attrsMap = {};
   var attrsList = el.attrsList; if ( attrsList === void 0 ) attrsList = [];
   var attrs = el.attrs; if ( attrs === void 0 ) attrs = [];
-  var index = -1;
+  var indexInAttrs = -1;
+  var indexInAttrsList = -1;
 
   attrs.some(function (attr, i) {
     if (attr.name === oldName) {
-      index = i;
+      indexInAttrs = i;
       return true
     }
   });
 
-  if (index > -1) {
-    var rawOldName = attrsList[index].name;
+  attrsList.some(function (attr, i) {
+    if (attr.name === oldName) {
+      indexInAttrsList = i;
+      return true
+    }
+  });
+
+  if (indexInAttrs > -1) {
+    var rawOldName = attrsList[indexInAttrsList].name;
     var rawNewName = rawOldName.replace(oldName, newName);
-    attrs[index].name = newName;
-    attrsList[index].name = rawNewName;
+    attrs[indexInAttrs].name = newName;
+    attrsList[indexInAttrsList].name = rawNewName;
 
     var mapValue = attrsMap[rawOldName];
     delete attrsMap[rawOldName];

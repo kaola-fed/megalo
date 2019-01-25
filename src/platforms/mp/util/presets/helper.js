@@ -26,20 +26,28 @@ export function mergePreset (presetA, presetB) {
 
 export function alterAttrName (el, oldName, newName) {
   const { attrsMap = {}, attrsList = [], attrs = [] } = el
-  let index = -1
+  let indexInAttrs = -1
+  let indexInAttrsList = -1
 
   attrs.some((attr, i) => {
     if (attr.name === oldName) {
-      index = i
+      indexInAttrs = i
       return true
     }
   })
 
-  if (index > -1) {
-    const rawOldName = attrsList[index].name
+  attrsList.some((attr, i) => {
+    if (attr.name === oldName) {
+      indexInAttrsList = i
+      return true
+    }
+  })
+
+  if (indexInAttrs > -1) {
+    const rawOldName = attrsList[indexInAttrsList].name
     const rawNewName = rawOldName.replace(oldName, newName)
-    attrs[index].name = newName
-    attrsList[index].name = rawNewName
+    attrs[indexInAttrs].name = newName
+    attrsList[indexInAttrsList].name = rawNewName
 
     const mapValue = attrsMap[rawOldName]
     delete attrsMap[rawOldName]
