@@ -31,6 +31,9 @@ describe('Directive v-bind', () => {
       vm.img = 'data:image//123'
     }).then(() => {
       expectAttr('data:image//123')
+      vm.img = 'wxFile://image//123'
+    }).then(() => {
+      expectAttr('wxFile://image//123')
     }).then(done)
   })
 
