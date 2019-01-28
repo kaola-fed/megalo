@@ -30,14 +30,14 @@ export function alterAttrName (el, oldName, newName) {
   let indexInAttrsList = -1
 
   attrs.some((attr, i) => {
-    if (attr.name === oldName) {
+    if (isSameAttrName(attr.name, oldName)) {
       indexInAttrs = i
       return true
     }
   })
 
   attrsList.some((attr, i) => {
-    if (attr.name === oldName) {
+    if (isSameAttrName(attr.name, oldName)) {
       indexInAttrsList = i
       return true
     }
@@ -53,4 +53,11 @@ export function alterAttrName (el, oldName, newName) {
     delete attrsMap[rawOldName]
     attrsMap[rawNewName] = mapValue
   }
+}
+
+function isSameAttrName (oldName = '', newName = '') {
+  return (
+    oldName === newName ||
+    oldName.replace(/:/, '') === newName.replace(/:/, '')
+  )
 }
