@@ -1420,4 +1420,23 @@ describe('slot', () => {
       options
     )
   })
+
+  it('should alter <a> href to url', () => {
+    assertCodegen(
+      `<a href="abc"></a>`,
+      `<navigator class="_a {{p}}" url="abc"></navigator>`
+    )
+    assertCodegen(
+      `<a href="/abc"></a>`,
+      `<navigator class="_a {{p}}" url="/abc"></navigator>`
+    )
+    assertCodegen(
+      `<a :href="'/abc'"></a>`,
+      `<navigator class="_a {{p}}" url="{{ h[ 1 ][ 'url' ] }}"></navigator>`
+    )
+    assertCodegen(
+      `<a :href="url"></a>`,
+      `<navigator class="_a {{p}}" url="{{ h[ 1 ][ 'url' ] }}"></navigator>`
+    )
+  })
 })
