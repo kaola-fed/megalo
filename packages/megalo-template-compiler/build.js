@@ -4378,14 +4378,14 @@ function alterAttrName (el, oldName, newName) {
   var indexInAttrsList = -1;
 
   attrs.some(function (attr, i) {
-    if (attr.name === oldName) {
+    if (isSameAttrName(attr.name, oldName)) {
       indexInAttrs = i;
       return true
     }
   });
 
   attrsList.some(function (attr, i) {
-    if (attr.name === oldName) {
+    if (isSameAttrName(attr.name, oldName)) {
       indexInAttrsList = i;
       return true
     }
@@ -4401,6 +4401,16 @@ function alterAttrName (el, oldName, newName) {
     delete attrsMap[rawOldName];
     attrsMap[rawNewName] = mapValue;
   }
+}
+
+function isSameAttrName (oldName, newName) {
+  if ( oldName === void 0 ) oldName = '';
+  if ( newName === void 0 ) newName = '';
+
+  return (
+    oldName === newName ||
+    oldName.replace(/:/, '') === newName.replace(/:/, '')
+  )
 }
 
 var basePrest = {
