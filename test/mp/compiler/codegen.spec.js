@@ -35,7 +35,7 @@ function assertCodegen (template, generatedCode, options) {
 
 /* eslint-disable quotes */
 describe('codegen', () => {
-  it('generate vnode with h_', () => {
+  it('generate vnode', () => {
     assertCodegen(
       `<div></div>`,
       `with(this){return _c('div',{attrs:{"h_":0}})}`
@@ -44,13 +44,13 @@ describe('codegen', () => {
     assertCodegen(
       (
         `<div>` +
-          `<h1></h1>` +
+          `<h1>{{a}}</h1>` +
           `<p>` +
             `<span></span>` +
           `</p>` +
         `</div>`
       ),
-      `with(this){return _c('div',{attrs:{"h_":0}},[_c('h1',{attrs:{"h_":1}}),_c('p',{attrs:{"h_":2}},[_c('span',{attrs:{"h_":3}})])],1)}`
+      `with(this){return _c('div',{attrs:{"h_":0}},[_c('h1',{attrs:{"h_":1}},[_v(_s(a),2)]),_m(0)])}`
     )
   })
 
@@ -163,52 +163,52 @@ describe('codegen', () => {
   it('generate v-else directive', () => {
     assertCodegen(
       '<div><p v-if="show">hello</p><p v-else>world</p></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},[(_ri(!!(show), 1))?_c('p',{attrs:{"h_":1}},[]):_c('p',{attrs:{"h_":3}},[])],1)}`
+      `with(this){return _c('div',{attrs:{"h_":0}},[(_ri(!!(show), 1))?_c('p',{attrs:{"h_":1}},[]):_c('p',{attrs:{"h_":3}},[])])}`
     )
   })
 
   it('generate v-else-if directive', () => {
     assertCodegen(
       '<div><p v-if="show">hello</p><p v-else-if="hide">world</p></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},[(_ri(!!(show), 1))?_c('p',{attrs:{"h_":1}},[]):(_ri(!!(hide), 3))?_c('p',{attrs:{"h_":3}},[]):_e()],1)}`
+      `with(this){return _c('div',{attrs:{"h_":0}},[(_ri(!!(show), 1))?_c('p',{attrs:{"h_":1}},[]):(_ri(!!(hide), 3))?_c('p',{attrs:{"h_":3}},[]):_e()])}`
     )
   })
 
   it('generate v-else-if with v-else directive', () => {
     assertCodegen(
       '<div><p v-if="show">hello</p><p v-else-if="hide">world</p><p v-else>bye</p></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},[(_ri(!!(show), 1))?_c('p',{attrs:{"h_":1}},[]):(_ri(!!(hide), 3))?_c('p',{attrs:{"h_":3}},[]):_c('p',{attrs:{"h_":5}},[])],1)}`
+      `with(this){return _c('div',{attrs:{"h_":0}},[(_ri(!!(show), 1))?_c('p',{attrs:{"h_":1}},[]):(_ri(!!(hide), 3))?_c('p',{attrs:{"h_":3}},[]):_c('p',{attrs:{"h_":5}},[])])}`
     )
   })
 
   it('generate multi v-else-if with v-else directive', () => {
     assertCodegen(
       '<div><p v-if="show">hello</p><p v-else-if="hide">world</p><p v-else-if="3">elseif</p><p v-else>bye</p></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},[(_ri(!!(show), 1))?_c('p',{attrs:{"h_":1}},[]):(_ri(!!(hide), 3))?_c('p',{attrs:{"h_":3}},[]):(_ri(!!(3), 5))?_c('p',{attrs:{"h_":5}},[]):_c('p',{attrs:{"h_":7}},[])],1)}`
+      `with(this){return _c('div',{attrs:{"h_":0}},[(_ri(!!(show), 1))?_c('p',{attrs:{"h_":1}},[]):(_ri(!!(hide), 3))?_c('p',{attrs:{"h_":3}},[]):(_ri(!!(3), 5))?_c('p',{attrs:{"h_":5}},[]):_c('p',{attrs:{"h_":7}},[])])}`
     )
   })
 
   it('generate multi v-if group', () => {
     assertCodegen(
       '<div><p v-if="show">hello</p><p v-else-if="hide">world</p><p v-if="show">hello</p><p v-else-if="hide">world</p></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},[(_ri(!!(show), 1))?_c('p',{attrs:{"h_":1}},[]):(_ri(!!(hide), 3))?_c('p',{attrs:{"h_":3}},[]):_e(),(_ri(!!(show), 5))?_c('p',{attrs:{"h_":5}},[]):(_ri(!!(hide), 7))?_c('p',{attrs:{"h_":7}},[]):_e()],1)}`
+      `with(this){return _c('div',{attrs:{"h_":0}},[(_ri(!!(show), 1))?_c('p',{attrs:{"h_":1}},[]):(_ri(!!(hide), 3))?_c('p',{attrs:{"h_":3}},[]):_e(),(_ri(!!(show), 5))?_c('p',{attrs:{"h_":5}},[]):(_ri(!!(hide), 7))?_c('p',{attrs:{"h_":7}},[]):_e()])}`
     )
   })
 
   it('generate v-if directive inside components', () => {
     assertCodegen(
       '<test><p v-if="show">hello</p></test>',
-      `with(this){return _c('test',{attrs:{"h_":0,"c_":0}},[(_ri(!!(show), 2))?_c('p',{attrs:{"h_":2,"i_":[ !!(show), 2, null ]}},[]):_c("a", {attrs: {i_:[!!(show), 2, null]}})],1)}`,
+      `with(this){return _c('test',{attrs:{"h_":0,"c_":0}},[(_ri(!!(show), 2))?_c('p',{attrs:{"h_":2,"i_":[ !!(show), 2, null ]}},[]):_c("a", {attrs: {i_:[!!(show), 2, null]}})])}`,
       { imports: { test: { name: 'test' }}}
     )
     assertCodegen(
       '<test><p v-if="show">hello</p><p v-else-if="show2"></p></test>',
-      `with(this){return _c('test',{attrs:{"h_":0,"c_":0}},[(_ri(!!(show), 2))?_c('p',{attrs:{"h_":2,"i_":[ !!(show), 2, null,!!(show2), 4, null ]}},[]):(_ri(!!(show2), 4))?_c('p',{attrs:{"h_":4,"i_":[ !!(show), 2, null,!!(show2), 4, null ]}}):_c("a", {attrs: {i_:[!!(show), 2, null,!!(show2), 4, null]}})],1)}`,
+      `with(this){return _c('test',{attrs:{"h_":0,"c_":0}},[(_ri(!!(show), 2))?_c('p',{attrs:{"h_":2,"i_":[ !!(show), 2, null,!!(show2), 4, null ]}},[]):(_ri(!!(show2), 4))?_c('p',{attrs:{"h_":4,"i_":[ !!(show), 2, null,!!(show2), 4, null ]}}):_c("a", {attrs: {i_:[!!(show), 2, null,!!(show2), 4, null]}})])}`,
       { imports: { test: { name: 'test' }}}
     )
     assertCodegen(
       '<test><p v-if="show">hello</p><p v-else></p></test>',
-      `with(this){return _c('test',{attrs:{"h_":0,"c_":0}},[(_ri(!!(show), 2))?_c('p',{attrs:{"h_":2,"i_":[ !!(show), 2, null ]}},[]):_c('p',{attrs:{"h_":4,"i_":[ !!(show), 2, null ]}})],1)}`,
+      `with(this){return _c('test',{attrs:{"h_":0,"c_":0}},[(_ri(!!(show), 2))?_c('p',{attrs:{"h_":2,"i_":[ !!(show), 2, null ]}},[]):_c('p',{attrs:{"h_":4,"i_":[ !!(show), 2, null ]}})])}`,
       { imports: { test: { name: 'test' }}}
     )
   })
