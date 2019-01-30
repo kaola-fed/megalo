@@ -4406,7 +4406,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
 
-Vue.version = '0.7.6';
+Vue.version = '0.7.7';
 
 /*  */
 
@@ -4663,17 +4663,27 @@ var HOLDER_TYPE_VARS = {
   slot: 'slot'
 };
 
+/*  */
 var notEmpty = function (e) { return !!e; };
 
 
-var isReservedTag = makeMap(
-  'template,script,style,element,content,slot,link,meta,svg,view,' +
-  'a,div,img,image,text,span,richtext,input,switch,textarea,spinner,select,' +
-  'slider,slider-neighbor,indicator,trisition,trisition-group,canvas,' +
-  'list,cell,header,loading,loading-indicator,refresh,scrollable,scroller,' +
-  'video,web,embed,tabbar,tabheader,datepicker,timepicker,marquee,countdown',
-  true
+var isHTMLTag = makeMap(
+  'html,body,base,head,link,meta,style,title,' +
+  'address,article,aside,footer,header,h1,h2,h3,h4,h5,h6,hgroup,nav,section,' +
+  'div,dd,dl,dt,figcaption,figure,picture,hr,img,li,main,ol,p,pre,ul,' +
+  'a,b,abbr,bdi,bdo,br,cite,code,data,dfn,em,i,kbd,mark,q,rp,rt,rtc,ruby,' +
+  's,samp,small,span,strong,sub,sup,time,u,var,wbr,area,audio,map,track,video,' +
+  'embed,object,param,source,canvas,script,noscript,del,ins,' +
+  'caption,col,colgroup,table,thead,tbody,td,th,tr,' +
+  'button,datalist,fieldset,form,input,label,legend,meter,optgroup,option,' +
+  'output,progress,select,textarea,' +
+  'details,dialog,menu,menuitem,summary,' +
+  'content,element,shadow,template,blockquote,iframe,tfoot'
 );
+
+var isReservedTag = function (tag) {
+  return isHTMLTag(tag)
+};
 
 // these are reserved for web because they are directly compiled away
 // during template compilation
@@ -6150,7 +6160,7 @@ function normalizeChildren$1 (children) {
 
 
 
-var isHTMLTag = makeMap(
+var isHTMLTag$1 = makeMap(
   'html,body,base,head,link,meta,style,title,' +
   'address,article,aside,footer,header,h1,h2,h3,h4,h5,h6,hgroup,nav,section,' +
   'div,dd,dl,dt,figcaption,figure,picture,hr,img,li,main,ol,p,pre,ul,' +
@@ -6353,7 +6363,7 @@ function updateAttrs (oldVnode, vnode) {
     // only update daynamic attrs in runtime
     if (old !== cur && key !== 'slot') {
       // if using local image file, set path to the root
-      if (cur && vnode.tag === 'img' && key === 'src' && !/^\/|https?|data:/.test(cur)) {
+      if (cur && vnode.tag === 'img' && key === 'src' && !/^\/|:\/\/|data:/.test(cur)) {
         cur = "/" + cur;
       }
       updateVnodeToMP(vnode, key, cur);
