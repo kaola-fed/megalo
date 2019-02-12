@@ -45,6 +45,6 @@ describe('error handling', () => {
     const args = globalErrorHanlder.calls.allArgs()
     expect(args[0][0]).toBe(testError)
     expect(args[0][1]).toBe(vm)
-    expect(args[0][2]).toBe(`event handler for "tap|click"`)
+    expect(args[0][2]).toBe(`v-on handler`)
   })
 })

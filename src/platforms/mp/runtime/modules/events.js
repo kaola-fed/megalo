@@ -5,34 +5,29 @@ import { updateListeners } from 'core/vdom/helpers/index'
 
 let target: any
 
-function createOnceHandler (handler, event, capture) {
+function createOnceHandler (name, handler, capture) {
   const _target = target // save current target element in closure
   return function onceHandler () {
     const res = handler.apply(null, arguments)
     if (res !== null) {
-      remove(event, onceHandler, capture, _target)
+      remove(name, onceHandler, capture, _target)
     }
   }
 }
 
 function add (
-  event: string,
-  handler: Function,
-  once: boolean,
-  capture: boolean,
-  passive: boolean
+  name: string,
+  handler: Function
 ) {
-  // handler = withMacroTask(handler)
-  if (once) handler = createOnceHandler(handler, event, capture)
   /* istanbul ignore else */
-  if (!target.on[event]) {
-    target.on[event] = []
+  if (!target.on[name]) {
+    target.on[name] = []
   }
-  target.on[event].push(handler)
+  target.on[name].push(handler)
 }
 
 function remove (
-  event: string,
+  name: string,
   handler: Function,
   capture: boolean,
   _target?: HTMLElement
@@ -43,11 +38,11 @@ function remove (
   const realTarget = _target || target
   const realHanlder = handler._withTask || handler
   /* istanbul ignore else */
-  if (realTarget.on[event]) {
-    const index = realTarget.on[event].indexOf(realHanlder)
+  if (realTarget.on[name]) {
+    const index = realTarget.on[name].indexOf(realHanlder)
     /* istanbul ignore else */
     if (index > -1) {
-      realTarget.on[event].splice(index, 1)
+      realTarget.on[name].splice(index, 1)
     }
   }
 }
@@ -59,7 +54,7 @@ function updateDOMListeners (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   const on = vnode.data.on || {}
   const oldOn = oldVnode.data.on || {}
   target = vnode.elm
-  updateListeners(on, oldOn, add, remove, vnode.context)
+  updateListeners(on, oldOn, add, remove, createOnceHandler, vnode.context)
   target = undefined
 }
 

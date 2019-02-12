@@ -1,7 +1,6 @@
 import { getVM } from './helper'
 import { isDef } from 'shared/util'
 import { LIST_TAIL_SEPS, eventTypeMap } from 'mp/util/index'
-import { handleError } from 'core/util/index'
 
 let sep = ''
 
@@ -30,12 +29,7 @@ export function proxyEvent (rootVM, event) {
   })
 
   handlers.forEach(handler => {
-    try {
-      handler($event)
-    } catch (err) {
-      const eventTypes = eventTypeMap[type] || [type]
-      handleError(err, vm, `event handler for "${eventTypes.join('|')}"`)
-    }
+    handler($event)
   })
 }
 
