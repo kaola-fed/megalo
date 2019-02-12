@@ -1,3 +1,5 @@
+import { handleError } from 'core/util/index'
+
 function walkInTree (vm, fn, options = {}) {
   let result
   const { bottomToTop = false } = options
@@ -27,7 +29,11 @@ function doCallHook (vm, hook, options) {
     handlers = [handlers]
   }
   return handlers.reduce((res, handler) => {
-    return handler.call(vm, options)
+    try {
+      return handler.call(vm, options)
+    } catch (err) {
+      handleError(err, vm, `lifecycle hook error "${hook}"`)
+    }
   }, undefined)
 }
 
