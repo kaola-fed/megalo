@@ -28,6 +28,34 @@ describe('data mapping', () => {
     expect(getPageData(page, '0,0').cp).toEqual('0v0v')
   })
 
+  it('setting refreshInterval', () => {
+    const pageOptions = {
+      __refreshInterval: 16,
+      template: `<div><CompA/></div>`,
+      mpType: 'page',
+      components: {
+        CompA: {
+          template: '<div>comp A</div>'
+        }
+      },
+      data () {
+        return {
+          counter: 100
+        }
+      }
+    }
+
+    const { page } = createPage(pageOptions)
+
+    // rootVM id
+    expect(getPageData(page, '0').c).toEqual('0')
+    expect(getPageData(page, '0').cp).toEqual('0v')
+
+    // component id
+    expect(getPageData(page, '0,0').c).toEqual('0v0')
+    expect(getPageData(page, '0,0').cp).toEqual('0v0v')
+  })
+
   it('binding data', () => {
     const pageOptions = {
       mpType: 'page',
