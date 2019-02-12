@@ -7,10 +7,12 @@ import {
   isUndef,
   isTrue,
   isObject,
-  hasSymbol
+  hasSymbol,
+  isPromise
 } from 'core/util/index'
 
 import { createEmptyVNode } from 'core/vdom/vnode'
+import { currentRenderingInstance } from 'core/instance/render'
 
 function ensureCtor (comp: any, base) {
   if (
@@ -39,8 +41,7 @@ export function createAsyncPlaceholder (
 
 export function resolveAsyncComponent (
   factory: Function,
-  baseCtor: Class<Component>,
-  context: Component
+  baseCtor: Class<Component>
 ): Class<Component> | void {
   if (isTrue(factory.error) && isDef(factory.errorComp)) {
     return factory.errorComp
@@ -54,16 +55,21 @@ export function resolveAsyncComponent (
     return factory.loadingComp
   }
 
-  if (isDef(factory.contexts)) {
+  const owner = currentRenderingInstance
+  if (isDef(factory.owners)) {
     // already pending
-    factory.contexts.push(context)
+    factory.owners.push(owner)
   } else {
-    const contexts = factory.contexts = [context]
+    const owners = factory.owners = [owner]
     let sync = true
 
-    const forceRender = () => {
-      for (let i = 0, l = contexts.length; i < l; i++) {
-        contexts[i].$forceUpdate()
+    const forceRender = (renderCompleted: boolean) => {
+      for (let i = 0, l = owners.length; i < l; i++) {
+        (owners[i]: any).$forceUpdate()
+      }
+
+      if (renderCompleted) {
+        owners.length = 0
       }
     }
 
@@ -73,7 +79,9 @@ export function resolveAsyncComponent (
       // invoke callbacks only if this is not a synchronous resolve
       // (async resolves are shimmed as synchronous during SSR)
       if (!sync) {
-        forceRender()
+        forceRender(true)
+      } else {
+        owners.length = 0
       }
     })
 
@@ -84,19 +92,19 @@ export function resolveAsyncComponent (
       )
       if (isDef(factory.errorComp)) {
         factory.error = true
-        forceRender()
+        forceRender(true)
       }
     })
 
     const res = factory(resolve, reject)
 
     if (isObject(res)) {
-      if (typeof res.then === 'function') {
+      if (isPromise(res)) {
         // () => Promise
         if (isUndef(factory.resolved)) {
           res.then(resolve, reject)
         }
-      } else if (isDef(res.component) && typeof res.component.then === 'function') {
+      } else if (isPromise(res.component)) {
         res.component.then(resolve, reject)
 
         if (isDef(res.error)) {
@@ -111,7 +119,7 @@ export function resolveAsyncComponent (
             setTimeout(() => {
               if (isUndef(factory.resolved) && isUndef(factory.error)) {
                 factory.loading = true
-                forceRender()
+                forceRender(false)
               }
             }, res.delay || 200)
           }
