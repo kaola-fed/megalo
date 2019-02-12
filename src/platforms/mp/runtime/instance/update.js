@@ -73,8 +73,9 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
   }
 }
 
-export function createUpdateFn (page) {
+export function createUpdateFn (page, options) {
   const buffer = new Buffer()
+  const __refreshInterval = options.__refreshInterval || 50
 
   function doUpdate () {
     const data = buffer.pop()
@@ -86,7 +87,7 @@ export function createUpdateFn (page) {
 
   const throttleSetData = throttle(function () {
     doUpdate()
-  }, 50, { leadingDelay: 0 })
+  }, __refreshInterval, { leadingDelay: 0 })
 
   return {
     update (data) {
