@@ -430,6 +430,8 @@ describe('Component scoped slot', () => {
   // dynamic slot name
   // skip: render function usage (named, via data)
   // skip: render function usage (default, as children)
+  // skip: render function usage (default, as root)
+  // skip: non-scoped slots should also be available on $scopedSlots 
   // skip: should support dynamic slot target
   // skip: render function usage (JSX)
   // skip: scoped slot with v-for
@@ -470,6 +472,35 @@ describe('Component scoped slot', () => {
     vm.ok = true
     waitForUpdate(() => {
       expect(pageData.h[4].t).toBe('hello')
+    }).then(done)
+  })
+
+  // #9422
+  // the behavior of the new syntax is slightly different.
+  it('scoped slot v-if using slot-scope value', (done) => {
+    const { page } = createPage({
+      template: `
+        <test>
+          <template slot-scope="{value}" v-if="value">foo {{value}}</template>
+        </test>
+      `,
+      components: {
+        test: {
+          template: `<div><slot value="foo"></slot></div>`
+        }
+      },
+      data () {
+        return {
+          title: 'test'
+        }
+      }
+    })
+
+    const comp1 = getPageData(page, '0,0')
+    waitForUpdate(() => {
+      // TODO: make slot snippet with v-if work
+      // expect(comp1.s[3].if).toBeTruthy()
+      expect(comp1.s[3].t).toBe('foo foo')
     }).then(done)
   })
 
@@ -525,3 +556,20 @@ describe('Component scoped slot', () => {
     }).then(done)
   })
 })
+
+
+// describe('v-slot syntax', () => {
+//   const Foo = {
+//     template: `
+//       <div>
+//         <slot></slot>
+//         <slot name="one"></slot>
+//         <slot name="two"></slot>
+//       </div>
+//     `
+//   }
+
+//   it('should', () => {
+
+//   })
+// })
