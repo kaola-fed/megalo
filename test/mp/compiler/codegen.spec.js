@@ -112,12 +112,12 @@ describe('codegen', () => {
   it('generate v-for directive', () => {
     assertCodegen(
       '<div><li v-for="item in items" :key="item.uid"></li></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},_l((items),function(item,item_i1,item_i2){var f_ = (item_i2 !== undefined ? item_i2 : item_i1);return _c('li',{key:item.uid,attrs:{"h_":1,"f_":f_,"k_":"uid"}})},[1],_self))}`
+      `with(this){return _c('div',{attrs:{"h_":0}},_l((items),function(item,item_i1,item_i2){var f_ = (item_i2 !== undefined ? item_i2 : item_i1);return _c('li',{key:item.uid,attrs:{"h_":1,"f_":f_,"k_":"uid"}})},[1],_self),0)}`
     )
     // iterator syntax
     assertCodegen(
       '<div><li v-for="(item, i) in items"></li></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},_l((items),function(item,i,item_i2){var f_ = (item_i2 !== undefined ? item_i2 : i);return _c('li',{attrs:{"h_":1,"f_":f_}})},[1],_self))}`
+      `with(this){return _c('div',{attrs:{"h_":0}},_l((items),function(item,i,item_i2){var f_ = (item_i2 !== undefined ? item_i2 : i);return _c('li',{attrs:{"h_":1,"f_":f_}})},[1],_self),0)}`
     )
     // TODO: support for object
     // assertCodegen(
@@ -143,12 +143,12 @@ describe('codegen', () => {
     // embeded v-for
     assertCodegen(
       '<div><li v-for="i in 3"><span v-for="i in 3"></span></li></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},_l((3),function(i,i_i1,i_i2){var f_ = (i_i2 !== undefined ? i_i2 : i_i1);return _c('li',{attrs:{"h_":1,"f_":f_}},_l((3),function(i,i_i1,i_i2){var f_ = (i_i2 !== undefined ? i_i2 : i_i1) + '-' + (i_i2 !== undefined ? i_i2 : i_i1);return _c('span',{attrs:{"h_":2,"f_":f_}})},[2, (i_i2 !== undefined ? i_i2 : i_i1)],_self))},[1],_self))}`
+      `with(this){return _c('div',{attrs:{"h_":0}},_l((3),function(i,i_i1,i_i2){var f_ = (i_i2 !== undefined ? i_i2 : i_i1);return _c('li',{attrs:{"h_":1,"f_":f_}},_l((3),function(i,i_i1,i_i2){var f_ = (i_i2 !== undefined ? i_i2 : i_i1) + '-' + (i_i2 !== undefined ? i_i2 : i_i1);return _c('span',{attrs:{"h_":2,"f_":f_}})},[2, (i_i2 !== undefined ? i_i2 : i_i1)],_self),0)},[1],_self),0)}`
     )
     // component in v-for, slot element should not have fid
     assertCodegen(
       '<div><li v-for="i in 3"><compa><div></div></compa></li></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},_l((3),function(i,i_i1,i_i2){var f_ = (i_i2 !== undefined ? i_i2 : i_i1);return _c('li',{attrs:{"h_":1,"f_":f_}},[_c('compa',{attrs:{"h_":2,"f_":f_,"c_":0}},[_c('div',{attrs:{"h_":4}})])],1)},[1],_self))}`,
+      `with(this){return _c('div',{attrs:{"h_":0}},_l((3),function(i,i_i1,i_i2){var f_ = (i_i2 !== undefined ? i_i2 : i_i1);return _c('li',{attrs:{"h_":1,"f_":f_}},[_c('compa',{attrs:{"h_":2,"f_":f_,"c_":0}},[_c('div',{attrs:{"h_":4}})])],1)},[1],_self),0)}`,
       { imports: { compa: { name: 'compa' }}}
     )
   })
@@ -258,21 +258,21 @@ describe('codegen', () => {
   it('generate single slot', () => {
     assertCodegen(
       '<div><slot></slot></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},[_t("default",null,{h_:1})],1)}`
+      `with(this){return _c('div',{attrs:{"h_":0}},[_t("default",null,{"h_":1})],1)}`
     )
   })
 
   it('generate named slot', () => {
     assertCodegen(
       '<div><slot name="one"></slot></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},[_t("one",null,{h_:1})],1)}`
+      `with(this){return _c('div',{attrs:{"h_":0}},[_t("one",null,{"h_":1})],1)}`
     )
   })
 
   it('generate slot fallback content', () => {
     assertCodegen(
       '<div><slot><div>hi</div></slot></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},[_t("default",[_c('div',{attrs:{"h_":2}},[])],{h_:1})],1)}`
+      `with(this){return _c('div',{attrs:{"h_":0}},[_t("default",[_c('div',{attrs:{"h_":2}},[])],{"h_":1})],1)}`
     )
   })
 
