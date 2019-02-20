@@ -558,18 +558,85 @@ describe('Component scoped slot', () => {
 })
 
 
-// describe('v-slot syntax', () => {
-//   const Foo = {
-//     template: `
-//       <div>
-//         <slot></slot>
-//         <slot name="one"></slot>
-//         <slot name="two"></slot>
-//       </div>
-//     `
-//   }
+describe('v-slot syntax', () => {
+  const Foo = {
+    template: `
+      <div>
+        <slot :x="x"></slot>
+        <slot name="one" :y="y"></slot>
+        <slot name="two" :z="z"></slot>
+      </div>
+    `,
+    data() {
+      return {
+        x: 100,
+        y: 200,
+        z: 300
+      }
+    }
+  }
 
-//   it('should', () => {
+  const toNamed = (syntax, name) => syntax[0] === '#'
+    ? `#${name}` // shorthand
+    : `${syntax}:${name}` // full syntax
 
-//   })
-// })
+  function runSuite(syntax) {
+    it('should work with v-slot', () => {
+      const { page } = createPage({
+        template: `
+          <foo>
+            <template ${syntax}="scope">{{ scope.x }}</template>
+          </foo>
+        `,
+        components: { Foo }
+      })
+      const comp1 = getPageData(page, '0,0')
+      expect(comp1.s[2].t).toBe('100')
+    })
+  
+    it(`should work with ${syntax} using destructing`, () => {
+      const { page } = createPage({
+        template: `
+          <foo>
+            <template ${syntax}="{ x }">{{ x }}</template>
+          </foo>
+        `,
+        components: { Foo }
+      })
+      const comp1 = getPageData(page, '0,0')
+      expect(comp1.s[2].t).toBe('100')
+    })
+  
+    it(`should work with ${syntax} using destructing`, () => {
+      const { page } = createPage({
+        template: `
+          <foo>
+            <template ${toNamed(syntax, 'default')}="{ x }">{{ x }}</template>
+            <template ${toNamed(syntax, 'one')}="{ y }">{{ y }}</template>
+            <template ${toNamed(syntax, 'two')}="{ z }">{{ z }}</template>
+          </foo>
+        `,
+        components: { Foo }
+      })
+      const comp1 = getPageData(page, '0,0')
+      expect(comp1.s[2].t).toBe('100')
+      expect(comp1.s[4].t).toBe('200')
+      expect(comp1.s[6].t).toBe('300')
+    })
+  
+    it(`should work with ${syntax} using destructing on component`, () => {
+      const { page } = createPage({
+        template: `
+          <foo ${syntax}="{ x }">{{ x }}</foo>
+        `,
+        components: { Foo }
+      })
+      const comp1 = getPageData(page, '0,0')
+      expect(comp1.s[2].t).toBe('100')
+    })
+  }
+
+  runSuite(`v-slot`)
+  runSuite(`#default`)
+
+})
