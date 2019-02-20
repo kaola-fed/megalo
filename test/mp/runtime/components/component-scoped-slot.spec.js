@@ -559,6 +559,18 @@ describe('Component scoped slot', () => {
 
 
 describe('v-slot syntax', () => {
+  let warn
+  beforeEach(() => {
+    warn = console.warn
+    console.warn = jasmine.createSpy()
+    jasmine.clock().install()
+  })
+
+  afterEach(() => {
+    console.warn = warn
+    jasmine.clock().uninstall()
+  })
+
   const Foo = {
     template: `
       <div>
@@ -633,6 +645,29 @@ describe('v-slot syntax', () => {
       })
       const comp1 = getPageData(page, '0,0')
       expect(comp1.s[2].t).toBe('100')
+    })
+
+    it(`should warn ${syntax} usage on non-component elements`, () => {
+      createPage({
+        template: `
+          <div ${syntax}="{ x }">{{ x }}</div>
+        `
+      })
+      expect(console.warn.calls.argsFor(0)[0]).toContain(
+        'v-slot can only be used on components or <template>'
+      )
+    })
+
+    it('should warn mixed usage', () => {
+      createPage({
+        template: `
+          <foo slot="one" slot-scope="bar" ${syntax}="bar"></foo>
+        `,
+        components: { Foo }
+      })
+      expect(console.warn.calls.argsFor(0)[0]).toContain(
+        'Unexpected mixed usage of different slot syntaxes'
+      )
     })
   }
 
