@@ -38,6 +38,7 @@ export default function model (
   //   }
   // }
 
+  /* istanbul ignore else */
   if (el.component) {
     genComponentModel(el, value, modifiers)
     // component v-model doesn't need extra runtime
@@ -54,6 +55,7 @@ export default function model (
     genComponentModel(el, value, modifiers)
     // component v-model doesn't need extra runtime
     return false
+  /* istanbul ignore next */
   } else if (process.env.NODE_ENV !== 'production') {
     warn(
       `<${el.tag} v-model="${value}">: ` +
@@ -137,6 +139,7 @@ function genDefaultModel (
 
   // warn if v-bind:value conflicts with v-model
   // except for inputs with v-bind:type
+  /* istanbul ignore next */
   if (process.env.NODE_ENV !== 'production') {
     const value = el.attrsMap['v-bind:value'] || el.attrsMap[':value']
     const typeBinding = el.attrsMap['v-bind:type'] || el.attrsMap[':type']

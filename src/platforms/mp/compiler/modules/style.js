@@ -9,7 +9,7 @@ import {
 } from 'compiler/helpers'
 
 function transformNode (el: ASTElement, options: CompilerOptions) {
-  const warn = options.warn || baseWarn
+  const warn = options.warn || /* istanbul ignore next  */ baseWarn
   const staticStyle = getAndRemoveAttr(el, 'style')
   if (staticStyle) {
     /* istanbul ignore if */

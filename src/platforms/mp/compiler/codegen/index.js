@@ -115,7 +115,7 @@ function genStatic (el: ASTElement, state: CodegenState): string {
 }
 
 // v-once
-function genOnce (el: ASTElement, state: CodegenState): string {
+function genOnce (el: ASTElement, state: CodegenState): string /* istanbul ignore next */ {
   el.onceProcessed = true
   if (el.if && !el.ifProcessed) {
     return genIf(el, state)
@@ -391,7 +391,10 @@ function genScopedSlots (
   if (!needsForceUpdate) {
     let parent = el.parent
     while (parent) {
-      if (parent.slotScope && parent.slotScope !== emptySlotScopeToken) {
+      if (
+        (parent.slotScope && parent.slotScope !== emptySlotScopeToken) ||
+        parent.for
+      ) {
         needsForceUpdate = true
         break
       }
@@ -528,7 +531,7 @@ export function genText (text: ASTText | ASTExpression): string {
   })`
 }
 
-export function genComment (comment: ASTText): string {
+export function genComment (comment: ASTText): string /* istanbul ignore next */{
   return `_e(${JSON.stringify(comment.text)})`
 }
 

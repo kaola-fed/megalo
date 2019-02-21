@@ -101,12 +101,12 @@ export class TemplateGenerator {
     }
   }
 
-  genImports () {
-    const { imports } = this
-    return Object.keys(imports)
-      .map(name => `<import src="${imports[name].src}"/>`)
-      .join('')
-  }
+  // genImports () {
+  //   const { imports } = this
+  //   return Object.keys(imports)
+  //     .map(name => `<import src="${imports[name].src}"/>`)
+  //     .join('')
+  // }
 
   genElement (el): string {
     if (el.ifConditions && !el.ifConditionsGenerated) {
@@ -715,13 +715,13 @@ export class TemplateGenerator {
     return this.fallbackSlot > 0
   }
 
-  isInScopedSlotSnippet () {
-    return this.slotSnippetBuffer.length > 0 && this.getCurrentSlotSnippet().scoped
-  }
+  // isInScopedSlotSnippet () {
+  //   return this.slotSnippetBuffer.length > 0 && this.getCurrentSlotSnippet().scoped
+  // }
 
-  getCurrentSlotSnippet () {
-    return this.slotSnippetBuffer[this.slotSnippetBuffer.length - 1]
-  }
+  // getCurrentSlotSnippet () {
+  //   return this.slotSnippetBuffer[this.slotSnippetBuffer.length - 1]
+  // }
 
   wrapTemplateData (str) {
     return this.target === 'swan' ? `{{{ ${str} }}}` : `{{ ${str} }}`
@@ -741,11 +741,11 @@ export class TemplateGenerator {
     this.componentsStack.push(newComp)
   }
 
-  leaveComponent (compInfo) {
+  leaveComponent () {
     this.componentsStack.pop()
   }
 
-  getCurrentCompoent (compInfo) {
+  getCurrentCompoent () {
     return this.componentsStack[this.componentsStack.length - 1] || this
   }
 }

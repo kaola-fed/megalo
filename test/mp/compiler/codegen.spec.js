@@ -329,6 +329,39 @@ describe('codegen', () => {
     )
   })
 
+  it('generate static style', () => {
+    // not generate static style on element in js bundle
+    assertCodegen(
+      '<p style="width:10px">hello world</p>',
+      `with(this){return _c('p',{attrs:{"h_":0}},[])}`
+    )
+    assertCodegen(
+      '<p :style="error" style="width:10px">hello world</p>',
+      `with(this){return _c('p',{style:(error),attrs:{"h_":0}},[])}`
+    )
+
+    // generate static style on component in js bundle
+    assertCodegen(
+      '<CompA :style="error" style="width:10px">hello world</CompA>',
+      `with(this){return _c('CompA',{staticStyle:{"width":"10px"},style:(error),attrs:{"h_":0,"c_":0}},[])}`,
+      {
+        imports: {
+          CompA: { name: 'compa' },
+        }
+      }
+    )
+
+    assertCodegen(
+      '<CompA style="width:10px">hello world</CompA>',
+      `with(this){return _c('CompA',{staticStyle:{"width":"10px"},attrs:{"h_":0,"c_":0}},[])}`,
+      {
+        imports: {
+          CompA: { name: 'compa' },
+        }
+      }
+    )
+  })
+
   it('generate v-show directive', () => {
     assertCodegen(
       '<p v-show="shown">hello world</p>',

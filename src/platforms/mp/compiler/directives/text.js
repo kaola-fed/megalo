@@ -3,6 +3,7 @@
 import { addProp } from 'compiler/helpers'
 
 export default function text (el: ASTElement, dir: ASTDirective) {
+  /* istanbul ignore else */
   if (dir.value) {
     addProp(el, 'textContent', `_s(${dir.value})`, dir)
   }
