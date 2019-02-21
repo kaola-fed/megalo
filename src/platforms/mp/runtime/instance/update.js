@@ -65,6 +65,7 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
     }
 
     const isDeepEqual = deepEqual(curValue, data)
+    /* istanbul ignore else */
     if (!isDeepEqual || vm.$mp._shouldUpdateBuffer(dataPathStr, data)) {
       vm.$mp._update({
         [dataPathStr]: data

@@ -34,25 +34,9 @@ export function proxyEvent (rootVM, event) {
 }
 
 function getVnode (vnode = {}, hid) {
-  const { componentInstance } = vnode
   let { children = [] } = vnode
   if (assertHid(vnode, hid)) {
     return vnode
-  }
-
-  // if vnode is component
-  // find vnode in its slots
-  if (componentInstance) {
-    const { $slots = {}} = componentInstance
-    children = Object.keys($slots)
-      .reduce((res, k) => {
-        const nodes = $slots[k]
-        /* istanbul ignore else */
-        if (nodes._rendered) {
-          res = res.concat(nodes)
-        }
-        return res
-      }, [])
   }
 
   for (let i = 0, len = children.length; i < len; ++i) {
@@ -61,7 +45,6 @@ function getVnode (vnode = {}, hid) {
   }
 }
 
-// TODO: unit test for @touchstart and @touchStart
 function getHandlers (vm, rawType, hid) {
   const type = rawType.toLowerCase()
   let res = []
