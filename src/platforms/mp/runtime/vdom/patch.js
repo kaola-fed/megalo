@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 /**
  * Virtual DOM patching algorithm based on Snabbdom by
  * Simon Friis Vindum (@paldepind)
