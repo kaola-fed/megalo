@@ -4,6 +4,7 @@ import { genHandlers } from './events'
 import baseDirectives from 'compiler/directives/index'
 import { camelize, no, extend, isDef } from 'shared/util'
 import { baseWarn, pluckModuleFunction } from 'compiler/helpers'
+import { emptySlotScopeToken } from 'compiler/parser/index'
 
 type TransformFunction = (el: ASTElement, code: string) => string;
 type DataGenFunction = (el: ASTElement) => string;
@@ -18,6 +19,7 @@ export class CodegenState {
   maybeComponent: (el: ASTElement) => boolean;
   onceId: number;
   staticRenderFns: Array<string>;
+  pre: boolean;
 
   constructor (options: CompilerOptions) {
     this.options = options
@@ -26,9 +28,10 @@ export class CodegenState {
     this.dataGenFns = pluckModuleFunction(options.modules, 'genData')
     this.directives = extend(extend({}, baseDirectives), options.directives)
     const isReservedTag = options.isReservedTag || no
-    this.maybeComponent = (el: ASTElement) => !isReservedTag(el.tag)
+    this.maybeComponent = (el: ASTElement) => !!el.component || !isReservedTag(el.tag)
     this.onceId = 0
     this.staticRenderFns = []
+    this.pre = false
   }
 }
 
@@ -50,29 +53,32 @@ export function generate (
 }
 
 export function genElement (el: ASTElement, state: CodegenState): string {
+  if (el.parent) {
+    el.pre = el.pre || el.parent.pre
+  }
+
   if (el.staticRoot && !el.staticProcessed) {
     return genStatic(el, state)
-    /* istanbul ignore if */
   } else if (el.once && !el.onceProcessed) {
-    /* istanbul ignore next */
     return genOnce(el, state)
   } else if (el.for && !el.forProcessed) {
     return genFor(el, state)
   } else if (el.if && !el.ifProcessed) {
     return genIf(el, state)
-  } else if (el.tag === 'template' && !el.slotTarget) {
+  } else if (el.tag === 'template' && !el.slotTarget && !state.pre) {
     return genChildren(el, state) || 'void 0'
   } else if (el.tag === 'slot') {
     return genSlot(el, state)
   } else {
     // component or element
     let code
-    /* istanbul ignore if */
     if (el.component) {
-      /* istanbul ignore next */
       code = genComponent(el.component, el, state)
     } else {
-      const data = el.plain ? undefined : genData(el, state)
+      let data
+      if (!el.plain || (el.pre && state.maybeComponent(el))) {
+        data = genData(el, state)
+      }
 
       const children = el.inlineTemplate ? null : genChildren(el, state, true)
       code = `_c('${el.tag}'${
@@ -82,7 +88,6 @@ export function genElement (el: ASTElement, state: CodegenState): string {
       })`
     }
     // module transforms
-    /* istanbul ignore next */
     for (let i = 0; i < state.transforms.length; i++) {
       code = state.transforms[i](el, code)
     }
@@ -93,7 +98,15 @@ export function genElement (el: ASTElement, state: CodegenState): string {
 // hoist static sub-trees out
 function genStatic (el: ASTElement, state: CodegenState): string {
   el.staticProcessed = true
+  // Some elements (templates) need to behave differently inside of a v-pre
+  // node.  All pre nodes are static roots, so we can use this as a location to
+  // wrap a state change and reset it upon exiting the pre node.
+  const originalPreState = state.pre
+  if (el.pre) {
+    state.pre = el.pre
+  }
   state.staticRenderFns.push(`with(this){return ${genElement(el, state)}}`)
+  state.pre = originalPreState
   return `_m(${
     state.staticRenderFns.length - 1
   }${
@@ -102,8 +115,7 @@ function genStatic (el: ASTElement, state: CodegenState): string {
 }
 
 // v-once
-/* istanbul ignore next */
-function genOnce (el: ASTElement, state: CodegenState): string {
+function genOnce (el: ASTElement, state: CodegenState): string /* istanbul ignore next */ {
   el.onceProcessed = true
   if (el.if && !el.ifProcessed) {
     return genIf(el, state)
@@ -119,7 +131,8 @@ function genOnce (el: ASTElement, state: CodegenState): string {
     }
     if (!key) {
       process.env.NODE_ENV !== 'production' && state.warn(
-        `v-once can only be used inside v-for that is keyed. `
+        `v-once can only be used inside v-for that is keyed. `,
+        el.rawAttrsMap['v-once']
       )
       return genElement(el, state)
     }
@@ -178,7 +191,8 @@ export function genFor (
   el: any,
   state: CodegenState,
   altGen?: Function,
-  altHelper?: string): string {
+  altHelper?: string
+): string {
   const exp = el.for
   const alias = el.alias
   const iterator1 = el.iterator1 ? `,${el.iterator1}` : ''
@@ -194,6 +208,7 @@ export function genFor (
       `<${el.tag} v-for="${alias} in ${exp}">: component lists rendered with ` +
       `v-for should have explicit keys. ` +
       `See https://vuejs.org/guide/list.html#key for more info.`,
+      el.rawAttrsMap['v-for'],
       true /* tip */
     )
   }
@@ -216,7 +231,9 @@ export function genData (el: ASTElement, state: CodegenState): string {
   if (dirs) data += dirs + ','
 
   // key
-  if (el.key) { data += `key:${el.key},` }
+  if (el.key) {
+    data += `key:${el.key},`
+  }
   // ref
   if (el.ref) {
     data += `ref:${el.ref},`
@@ -238,20 +255,20 @@ export function genData (el: ASTElement, state: CodegenState): string {
   }
   // attributes
   if (el.attrs) {
-    data += `attrs:{${genProps(el.attrs, 'attrs')}},`
+    data += `attrs:${genProps(el.attrs, 'attr')},`
   }
   // DOM props
   if (el.props) {
-    data += `domProps:{${genProps(el.props, 'domProps')}},`
+    data += `domProps:${genProps(el.props)},`
   }
   // event handlers
   if (el.events) {
-    data += `${genHandlers(el.events, false, state.warn)},`
+    data += `${genHandlers(el.events, false)},`
   }
   // not supported
   /* istanbul ignore if */
   if (el.nativeEvents) {
-    data += `${genHandlers(el.nativeEvents, true, state.warn)},`
+    data += `${genHandlers(el.nativeEvents, true)},`
   }
   // slot target
   // only for non-scoped slots
@@ -261,7 +278,7 @@ export function genData (el: ASTElement, state: CodegenState): string {
 
   // scoped slots
   if (el.scopedSlots) {
-    data += `${genScopedSlots(el.scopedSlots, state)},`
+    data += `${genScopedSlots(el, el.scopedSlots, state)},`
   }
   // component v-model
   if (el.model) {
@@ -282,6 +299,12 @@ export function genData (el: ASTElement, state: CodegenState): string {
     }
   }
   data = data.replace(/,$/, '') + '}'
+  // v-bind dynamic argument wrap
+  // v-bind with dynamic arguments must be applied using the same v-bind object
+  // merge helper so that class/style/mustUseProp attrs are handled correctly.
+  if (el.dynamicAttrs) {
+    data = `_b(${data},"${el.tag}",${genProps(el.dynamicAttrs)})`
+  }
   // v-bind data wrap
   if (el.wrapData) {
     data = el.wrapData(data)
@@ -313,7 +336,7 @@ function genDirectives (el: ASTElement, state: CodegenState): string | void {
       res += `{name:"${dir.name}",rawName:"${dir.rawName}"${
         dir.value ? `,value:(${dir.value}),expression:${JSON.stringify(dir.value)}` : ''
       }${
-        dir.arg ? `,arg:"${dir.arg}"` : ''
+        dir.arg ? `,arg:${dir.isDynamicArg ? dir.arg : `"${dir.arg}"`}` : ''
       }${
         dir.modifiers ? `,modifiers:${JSON.stringify(dir.modifiers)}` : ''
       }},`
@@ -330,9 +353,12 @@ function genInlineTemplate (el: ASTElement, state: CodegenState): ?string {
   if (process.env.NODE_ENV !== 'production' && (
     el.children.length !== 1 || ast.type !== 1
   )) {
-    state.warn('Inline-template components must have exactly one child element.')
+    state.warn(
+      'Inline-template components must have exactly one child element.',
+      { start: el.start }
+    )
   }
-  if (ast.type === 1) {
+  if (ast && ast.type === 1) {
     const inlineRenderFns = generate(ast, state.options)
     return `inlineTemplate:{render:function(){${
       inlineRenderFns.render
@@ -343,48 +369,80 @@ function genInlineTemplate (el: ASTElement, state: CodegenState): ?string {
 }
 
 function genScopedSlots (
+  el: ASTElement,
   slots: { [key: string]: ASTElement },
   state: CodegenState
 ): string {
+  // by default scoped slots are considered "stable", this allows child
+  // components with only scoped slots to skip forced updates from parent.
+  // but in some cases we have to bail-out of this optimization
+  // for example if the slot contains dynamic names, has v-if or v-for on them...
+  let needsForceUpdate = Object.keys(slots).some(key => {
+    const slot = slots[key]
+    return (
+      slot.slotTargetDynamic ||
+      slot.if ||
+      slot.for ||
+      containsSlotChild(slot) // is passing down slot from parent which may be dynamic
+    )
+  })
+  // OR when it is inside another scoped slot (the reactivity is disconnected)
+  // #9438
+  if (!needsForceUpdate) {
+    let parent = el.parent
+    while (parent) {
+      if (
+        (parent.slotScope && parent.slotScope !== emptySlotScopeToken) ||
+        parent.for
+      ) {
+        needsForceUpdate = true
+        break
+      }
+      parent = parent.parent
+    }
+  }
+
   return `scopedSlots:_u([${
     Object.keys(slots).map(key => {
-      return genScopedSlot(key, slots[key], state)
+      return genScopedSlot(slots[key], state)
     }).join(',')
-  }])`
+  }]${needsForceUpdate ? `,true` : ``})`
+}
+
+function containsSlotChild (el: ASTNode): boolean {
+  if (el.type === 1) {
+    if (el.tag === 'slot') {
+      return true
+    }
+    return el.children.some(containsSlotChild)
+  }
+  return false
 }
 
 function genScopedSlot (
-  key: string,
   el: ASTElement,
   state: CodegenState
 ): string {
-  if (el.for && !el.forProcessed) {
-    return genForScopedSlot(key, el, state)
+  const isLegacySyntax = el.attrsMap['slot-scope']
+  if (el.if && !el.ifProcessed && !isLegacySyntax) {
+    return genIf(el, state, genScopedSlot, `null`)
   }
-  const fn = `function(${String(el.slotScope)}){` +
+  if (el.for && !el.forProcessed) {
+    return genFor(el, state, genScopedSlot)
+  }
+  const slotScope = el.slotScope === emptySlotScopeToken
+    ? ``
+    : String(el.slotScope)
+  const fn = `function(${slotScope}){` +
     `return ${el.tag === 'template'
-      ? el.if
-        ? `${el.if}?${genChildren(el, state) || 'undefined'}:undefined`
+      ? el.if && isLegacySyntax
+        ? `(${el.if})?${genChildren(el, state) || 'undefined'}:undefined`
         : genChildren(el, state) || 'undefined'
       : genElement(el, state)
     }}`
-  return `{key:${key},fn:${fn}}`
-}
-
-function genForScopedSlot (
-  key: string,
-  el: any,
-  state: CodegenState
-): string {
-  const exp = el.for
-  const alias = el.alias
-  const iterator1 = el.iterator1 ? `,${el.iterator1}` : ''
-  const iterator2 = el.iterator2 ? `,${el.iterator2}` : ''
-  el.forProcessed = true // avoid recursion
-  return `_l((${exp}),` +
-    `function(${alias}${iterator1}${iterator2}){` +
-      `return ${genScopedSlot(key, el, state)}` +
-    '})'
+  // reverse proxy v-slot without scope on this.$slots
+  const reverseProxy = slotScope ? `` : `,proxy:true`
+  return `{key:${el.slotTarget || `"default"`},fn:${fn}${reverseProxy}}`
 }
 
 export function genChildren (
@@ -403,7 +461,10 @@ export function genChildren (
       el.tag !== 'template' &&
       el.tag !== 'slot'
     ) {
-      return (altGenElement || genElement)(el, state)
+      const normalizationType = checkSkip
+        ? state.maybeComponent(el) ? `,1` : `,0`
+        : ``
+      return `${(altGenElement || genElement)(el, state)}${normalizationType}`
     }
     const normalizationType = checkSkip
       ? getNormalizationType(children, state.maybeComponent)
@@ -470,8 +531,7 @@ export function genText (text: ASTText | ASTExpression): string {
   })`
 }
 
-export function genComment (comment: ASTText): string {
-  /* istanbul ignore next */
+export function genComment (comment: ASTText): string /* istanbul ignore next */{
   return `_e(${JSON.stringify(comment.text)})`
 }
 
@@ -479,7 +539,14 @@ function genSlot (el: ASTElement, state: CodegenState): string {
   const slotName = el.slotName || '"default"'
   const children = genChildren(el, state)
   let res = `_t(${slotName}${children ? `,${children}` : ''}`
-  const attrs = el.attrs && `{${el.attrs.map(a => `${camelize(a.name)}:${a.value}`).join(',')}}`
+  const attrs = el.attrs || el.dynamicAttrs
+    ? genProps((el.attrs || []).concat(el.dynamicAttrs || []).map(attr => ({
+        // slot props are camelized
+        name: camelize(attr.name),
+        value: attr.value,
+        dynamic: attr.dynamic
+      })))
+    : null
   const bind = el.attrsMap['v-bind']
   if ((attrs || bind) && !children) {
     res += `,null`
@@ -494,7 +561,6 @@ function genSlot (el: ASTElement, state: CodegenState): string {
 }
 
 // componentName is el.component, take it as argument to shun flow's pessimistic refinement
-/* istanbul ignore next */
 function genComponent (
   componentName: string,
   el: ASTElement,
@@ -506,10 +572,11 @@ function genComponent (
   })`
 }
 
-const propKeys = ['h_', 'f_', 'k_', 'c_', 'slot', 'i_', 'sc_']
+const propKeys = ['h_', 'f_', 'k_', 'c_', 'slot', 'i_', 'sc_', 'textContent']
 
-function genProps (props: Array<{ name: string, value: any }>, mode: string): string {
-  let res = ''
+function genProps (props: Array<ASTAttr>, mode?: String): string {
+  let staticProps = ``
+  let dynamicProps = ``
   const bindingProp = props.filter(e => e.name === 'b_')[0] || {}
   const isComponent = !!props.filter(e => e.name === 'c_')[0]
   let bindings = [].concat(propKeys)
@@ -519,23 +586,29 @@ function genProps (props: Array<{ name: string, value: any }>, mode: string): st
 
   for (let i = 0; i < props.length; i++) {
     const prop = props[i]
-    // for non-component static props will be compiled to template
-    // so there it's not nessarry to render in vnode,
-    // only binding props in vnode
+    const value = __WEEX__
+      ? generateValue(prop.value)
+      : transformSpecialNewlines(prop.value)
+
     if (
-      (mode === 'attrs' && !isComponent && bindings.indexOf(prop.name) === -1) ||
-      prop.name === 'b_'
+      (mode === 'attr' && !isComponent && bindings.indexOf(prop.name) === -1)
+      || prop.name === 'b_'
     ) {
       continue
     }
-    /* istanbul ignore if */
-    if (__WEEX__) {
-      res += `"${prop.name}":${generateValue(prop.value)},`
+
+    if (prop.dynamic) {
+      dynamicProps += `${prop.name},${value},`
     } else {
-      res += `"${prop.name}":${transformSpecialNewlines(prop.value)},`
+      staticProps += `"${prop.name}":${value},`
     }
   }
-  return res.slice(0, -1)
+  staticProps = `{${staticProps.slice(0, -1)}}`
+  if (dynamicProps) {
+    return `_d(${staticProps},[${dynamicProps.slice(0, -1)}])`
+  } else {
+    return staticProps
+  }
 }
 
 /* istanbul ignore next */

@@ -430,6 +430,8 @@ describe('Component scoped slot', () => {
   // dynamic slot name
   // skip: render function usage (named, via data)
   // skip: render function usage (default, as children)
+  // skip: render function usage (default, as root)
+  // skip: non-scoped slots should also be available on $scopedSlots 
   // skip: should support dynamic slot target
   // skip: render function usage (JSX)
   // skip: scoped slot with v-for
@@ -470,6 +472,35 @@ describe('Component scoped slot', () => {
     vm.ok = true
     waitForUpdate(() => {
       expect(pageData.h[4].t).toBe('hello')
+    }).then(done)
+  })
+
+  // #9422
+  // the behavior of the new syntax is slightly different.
+  it('scoped slot v-if using slot-scope value', (done) => {
+    const { page } = createPage({
+      template: `
+        <test>
+          <template slot-scope="{value}" v-if="value">foo {{value}}</template>
+        </test>
+      `,
+      components: {
+        test: {
+          template: `<div><slot value="foo"></slot></div>`
+        }
+      },
+      data () {
+        return {
+          title: 'test'
+        }
+      }
+    })
+
+    const comp1 = getPageData(page, '0,0')
+    waitForUpdate(() => {
+      // TODO: make slot snippet with v-if work
+      // expect(comp1.s[3].if).toBeTruthy()
+      expect(comp1.s[3].t).toBe('foo foo')
     }).then(done)
   })
 
@@ -524,4 +555,123 @@ describe('Component scoped slot', () => {
       assertOutput()
     }).then(done)
   })
+})
+
+
+describe('v-slot syntax', () => {
+  let warn
+  beforeEach(() => {
+    warn = console.warn
+    console.warn = jasmine.createSpy()
+    jasmine.clock().install()
+  })
+
+  afterEach(() => {
+    console.warn = warn
+    jasmine.clock().uninstall()
+  })
+
+  const Foo = {
+    template: `
+      <div>
+        <slot :x="x"></slot>
+        <slot name="one" :y="y"></slot>
+        <slot name="two" :z="z"></slot>
+      </div>
+    `,
+    data() {
+      return {
+        x: 100,
+        y: 200,
+        z: 300
+      }
+    }
+  }
+
+  const toNamed = (syntax, name) => syntax[0] === '#'
+    ? `#${name}` // shorthand
+    : `${syntax}:${name}` // full syntax
+
+  function runSuite(syntax) {
+    it('should work with v-slot', () => {
+      const { page } = createPage({
+        template: `
+          <foo>
+            <template ${syntax}="scope">{{ scope.x }}</template>
+          </foo>
+        `,
+        components: { Foo }
+      })
+      const comp1 = getPageData(page, '0,0')
+      expect(comp1.s[2].t).toBe('100')
+    })
+  
+    it(`should work with ${syntax} using destructing`, () => {
+      const { page } = createPage({
+        template: `
+          <foo>
+            <template ${syntax}="{ x }">{{ x }}</template>
+          </foo>
+        `,
+        components: { Foo }
+      })
+      const comp1 = getPageData(page, '0,0')
+      expect(comp1.s[2].t).toBe('100')
+    })
+  
+    it(`should work with ${syntax} using destructing`, () => {
+      const { page } = createPage({
+        template: `
+          <foo>
+            <template ${toNamed(syntax, 'default')}="{ x }">{{ x }}</template>
+            <template ${toNamed(syntax, 'one')}="{ y }">{{ y }}</template>
+            <template ${toNamed(syntax, 'two')}="{ z }">{{ z }}</template>
+          </foo>
+        `,
+        components: { Foo }
+      })
+      const comp1 = getPageData(page, '0,0')
+      expect(comp1.s[2].t).toBe('100')
+      expect(comp1.s[4].t).toBe('200')
+      expect(comp1.s[6].t).toBe('300')
+    })
+  
+    it(`should work with ${syntax} using destructing on component`, () => {
+      const { page } = createPage({
+        template: `
+          <foo ${syntax}="{ x }">{{ x }}</foo>
+        `,
+        components: { Foo }
+      })
+      const comp1 = getPageData(page, '0,0')
+      expect(comp1.s[2].t).toBe('100')
+    })
+
+    it(`should warn ${syntax} usage on non-component elements`, () => {
+      createPage({
+        template: `
+          <div ${syntax}="{ x }">{{ x }}</div>
+        `
+      })
+      expect(console.warn.calls.argsFor(0)[0]).toContain(
+        'v-slot can only be used on components or <template>'
+      )
+    })
+
+    it('should warn mixed usage', () => {
+      createPage({
+        template: `
+          <foo slot="one" slot-scope="bar" ${syntax}="bar"></foo>
+        `,
+        components: { Foo }
+      })
+      expect(console.warn.calls.argsFor(0)[0]).toContain(
+        'Unexpected mixed usage of different slot syntaxes'
+      )
+    })
+  }
+
+  runSuite(`v-slot`)
+  runSuite(`#default`)
+
 })

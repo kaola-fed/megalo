@@ -13,7 +13,7 @@ export function initRootVM (mpVM, opt = {}, query = {}) {
   const { options, Component, platform } = opt
   const { mpType } = options
   const mpVMOptions = query
-  const { update, instantUpdate, isEqualToBuffer } = createUpdateFn(mpVM, options)
+  const { update, instantUpdate, shouldUpdateBuffer } = createUpdateFn(mpVM, options)
   const $mp = {
     platform,
     status: 'load',
@@ -21,7 +21,7 @@ export function initRootVM (mpVM, opt = {}, query = {}) {
     options: mpVMOptions,
     _update: update,
     _instantUpdate: instantUpdate,
-    _isEqualToBuffer: isEqualToBuffer
+    _shouldUpdateBuffer: shouldUpdateBuffer
   }
 
   if (mpType === 'app') {

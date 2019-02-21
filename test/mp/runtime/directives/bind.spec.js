@@ -401,8 +401,6 @@ describe('Directive v-bind', () => {
       expect(getPageData(page, '0').h['0'].key).toEqual(expected)
     }
 
-    console.log(page.data.$root)
-
     expectAttr('ok')
     vm.foo = 'again'
     waitForUpdate(() => {

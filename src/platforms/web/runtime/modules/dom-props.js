@@ -1,6 +1,9 @@
 /* @flow */
 
 import { isDef, isUndef, extend, toNumber } from 'shared/util'
+import { isSVG } from 'web/util/index'
+
+let svgContainer
 
 function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   if (isUndef(oldVnode.data.domProps) && isUndef(vnode.data.domProps)) {
@@ -35,6 +38,14 @@ function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
       }
     }
 
+    // skip the update if old and new VDOM state is the same.
+    // the only exception is `value` where the DOM value may be temporarily
+    // out of sync with VDOM state due to focus, composition and modifiers.
+    // This also covers #4521 by skipping the unnecesarry `checked` update.
+    if (key !== 'value' && cur === oldProps[key]) {
+      continue
+    }
+
     if (key === 'value') {
       // store value as _value as well since
       // non-string values will be stringified
@@ -43,6 +54,17 @@ function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
       const strCur = isUndef(cur) ? '' : String(cur)
       if (shouldUpdateValue(elm, strCur)) {
         elm.value = strCur
+      }
+    } else if (key === 'innerHTML' && isSVG(elm.tagName) && isUndef(elm.innerHTML)) {
+      // IE doesn't support innerHTML for SVG elements
+      svgContainer = svgContainer || document.createElement('div')
+      svgContainer.innerHTML = `<svg>${cur}</svg>`
+      const svg = svgContainer.firstChild
+      while (elm.firstChild) {
+        elm.removeChild(elm.firstChild)
+      }
+      while (svg.firstChild) {
+        elm.appendChild(svg.firstChild)
       }
     } else {
       elm[key] = cur
@@ -75,10 +97,6 @@ function isDirtyWithModifiers (elm: any, newVal: string): boolean {
   const value = elm.value
   const modifiers = elm._vModifiers // injected by v-model runtime
   if (isDef(modifiers)) {
-    if (modifiers.lazy) {
-      // inputs with lazy should only be updated when not in focus
-      return false
-    }
     if (modifiers.number) {
       return toNumber(value) !== toNumber(newVal)
     }

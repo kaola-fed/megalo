@@ -57,7 +57,6 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
   let dataPathStr = dataPaths.join('.')
 
   const curValue = getValue(vm.$mp.page.data, dataPaths)
-  const isDeepEqual = deepEqual(curValue, data)
 
   /* istanbul ignore else */
   if (isDef(hid)) {
@@ -65,7 +64,9 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
       dataPathStr = dataPathStr.replace(/\.[^\.]*$/, `['${type}']`)
     }
 
-    if (!isDeepEqual || !vm.$mp._isEqualToBuffer(dataPathStr, data)) {
+    const isDeepEqual = deepEqual(curValue, data)
+    /* istanbul ignore else */
+    if (!isDeepEqual || vm.$mp._shouldUpdateBuffer(dataPathStr, data)) {
       vm.$mp._update({
         [dataPathStr]: data
       })
@@ -94,11 +95,11 @@ export function createUpdateFn (page, options) {
       buffer.push(data)
       throttleSetData()
     },
-    instantUpdate (data) {
+    instantUpdate () {
       doUpdate()
     },
-    isEqualToBuffer (key, value) {
-      return buffer.isEqual(key, value)
+    shouldUpdateBuffer (key, value) {
+      return buffer.shouldUpdateBuffer(key, value)
     }
   }
 }

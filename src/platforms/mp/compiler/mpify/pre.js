@@ -25,7 +25,7 @@ export function mpify (node, options) {
     transformAssetUrls = {},
     scopeId = ''
   } = options
-  sep = LIST_TAIL_SEPS[target] ? `'${LIST_TAIL_SEPS[target]}'` : sep
+  sep = `'${LIST_TAIL_SEPS[target]}'`
   const preset = presets[target]
   const state = new State({
     rootNode: node,
@@ -134,7 +134,7 @@ function walkComponent (node, state) {
   state.popComp()
 }
 
-function walkText (node, state) {
+function walkText (node) {
   const { expression, type, h_, f_ } = node
   if (type === TYPE.STATIC_TEXT) {
     node.mpNotGenRenderFn = true
@@ -205,7 +205,7 @@ function processAttrs (node, state) {
   const { attrsList = [], attrs = [], attrsMap = {}} = node
   const bindingAttrs = []
 
-  attrsList.forEach((attr, i) => {
+  attrsList.forEach((attr) => {
     let { name } = attr
     if (/^:?mp:/.test(name)) {
       const realName = attr.name.replace(/mp:/, '')
@@ -307,21 +307,21 @@ class State {
   getCurrentElemIndex () {
     return this.elemCount
   }
-  getCurrentListNode () {
-    const top = this.getCurrentListState() || []
-    return (top[top.length - 1] || {}).node
-  }
-  getHId (node) {
+  // getCurrentListNode () {
+  //   const top = this.getCurrentListState() || []
+  //   return (top[top.length - 1] || {}).node
+  // }
+  getHId () {
     this.pushElem()
     const h_ = `${this.getCurrentElemIndex()}`
     return `${h_}`
   }
-  getCId (node) {
+  getCId () {
     this.pushElem()
     const c_ = `${this.getCurrentCompIndex()}`
     return `${c_}`
   }
-  getFid (node) {
+  getFid () {
     const currentListState = this.getCurrentListState() || []
     const f_ = currentListState.map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
     return f_
@@ -341,6 +341,8 @@ class State {
     // remove last index, like '0-1-2', we only need '0-1'
     // store v-for list in this holder
     node._forInfo = { h_ }
+
+    /* istanbul ignore else */
     if (f_) {
       tail = currentListState.slice(0, -1).map(s => `(${s.iterator2} !== undefined ? ${s.iterator2} : ${s.iterator1})`).join(` + ${sep} + `)
       node._forInfo.f_ = `${tail}` || undefined
@@ -377,9 +379,11 @@ function findFirstNoneTemplateNode (node) {
     return node
   }
 
+  /* istanbul ignore else */
   if (node.children) {
     node.children.some(c => {
       const found = findFirstNoneTemplateNode(c)
+      /* istanbul ignore else */
       if (found) {
         res = found
         return true
@@ -391,6 +395,7 @@ function findFirstNoneTemplateNode (node) {
 }
 
 function renameObjectPropName (obj, from, to) {
+  /* istanbul ignore else */
   if (obj.hasOwnProperty(from)) {
     obj[to] = obj[from]
     delete obj[from]
@@ -399,6 +404,7 @@ function renameObjectPropName (obj, from, to) {
 
 function modifyAttr (attrs, name, value) {
   attrs.some(attr => {
+    /* istanbul ignore else */
     if (attr.name === name) {
       attr.value = value
       return true
@@ -410,6 +416,7 @@ function modifyAttrName (attrs, name, newName) {
   const realName = name.replace(/^:/, '')
   const realNewName = newName.replace(/^:/, '')
   attrs.some(attr => {
+    /* istanbul ignore else */
     if (attr.name === realName) {
       attr.name = realNewName
       return true

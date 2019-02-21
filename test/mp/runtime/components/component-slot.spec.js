@@ -411,11 +411,11 @@ describe('Component slot', () => {
 
   it('warn if user directly returns array', () => {
     createPage({
-      template: '<test><div></div></test>',
+      template: '<test><div slot="foo"></div><div slot="foo"></div></test>',
       components: {
         test: {
           render () {
-            return this.$slots.default
+            return this.$slots.foo
           }
         }
       }
@@ -530,29 +530,44 @@ describe('Component slot', () => {
     }).then(done)
   })
 
-  it('warn duplicate slots', () => {
-    createPage({
-      template: `<div>
-        <test>
-          <div>foo</div>
-          <div slot="a">bar</div>
-        </test>
-      </div>`,
+  it('should support duplicate slots', (done) => {
+    const { page, vm } = createPage({
+      template: `
+        <foo ref="foo">
+          <div slot="a">{{ n }}</div>
+        </foo>
+      `,
+      data: {
+        n: 1
+      },
       components: {
-        test: {
-          template: `<div>
-            <slot></slot><slot></slot>
-            <div v-for="i in 3"><slot name="a"></slot></div>
-          </div>`
+        foo: {
+          data() {
+            return { ok: true }
+          },
+          template: `
+            <div>
+              <slot name="a" />
+              <slot v-if="ok" name="a" />
+              <pre><slot name="a" /></pre>
+            </div>
+          `
         }
       }
     })
-    expect(console.warn.calls.argsFor(0)[0]).toContain(
-      'Duplicate presence of slot "default"'
-    )
-    expect(console.warn.calls.argsFor(1)[0]).toContain(
-      'Duplicate presence of slot "a"'
-    )
+
+    const comp1 = getPageData(page, '0,0')
+    expect(comp1.s[2].t).toBe('1')
+    expect(comp1.h[3]._if).toBeTruthy()
+
+    vm.n++
+    waitForUpdate(() => {
+      expect(comp1.h[3]._if).toBeTruthy()
+      expect(comp1.s[2].t).toBe('2')
+      vm.$refs.foo.ok = false
+    }).then(() => {
+      expect(comp1.h[3]._if).toBeFalsy()
+    }).then(done)
   })
 
   it('should not warn valid conditional slots', () => {
@@ -600,7 +615,7 @@ describe('Component slot', () => {
     waitForUpdate(() => {
       vm.$children[0].toggle = true
     }).then(() => {
-      page._triggerEvent({ dataset: { cid: '0', hid: '2' }}, 'tap')
+      page._triggerEvent({ dataset: { cid: '0,0', hid: '2' }}, 'tap')
       expect(spy).toHaveBeenCalled()
     }).then(done)
   })

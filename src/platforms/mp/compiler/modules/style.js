@@ -9,7 +9,7 @@ import {
 } from 'compiler/helpers'
 
 function transformNode (el: ASTElement, options: CompilerOptions) {
-  const warn = options.warn || baseWarn
+  const warn = options.warn || /* istanbul ignore next  */ baseWarn
   const staticStyle = getAndRemoveAttr(el, 'style')
   if (staticStyle) {
     /* istanbul ignore if */
@@ -20,7 +20,8 @@ function transformNode (el: ASTElement, options: CompilerOptions) {
           `style="${staticStyle}": ` +
           'Interpolation inside attributes has been removed. ' +
           'Use v-bind or the colon shorthand instead. For example, ' +
-          'instead of <div style="{{ val }}">, use <div :style="val">.'
+          'instead of <div style="{{ val }}">, use <div :style="val">.',
+          el.rawAttrsMap['style']
         )
       }
     }

@@ -1,7 +1,8 @@
-var alias = require('../../scripts/alias')
-var webpack = require('webpack')
+const alias = require('../../scripts/alias')
+const featureFlags = require('../../scripts/feature-flags')
+const webpack = require('webpack')
 
-var webpackConfig = {
+const webpackConfig = {
   resolve: {
     alias: alias
   },
@@ -20,7 +21,8 @@ var webpackConfig = {
       'process.env': {
         NODE_ENV: '"development"',
         TRANSITION_DURATION: process.env.CI ? 100 : 50,
-        TRANSITION_BUFFER: 10
+        TRANSITION_BUFFER: 10,
+        ...featureFlags
       }
     })
   ],
@@ -31,8 +33,6 @@ var webpackConfig = {
 module.exports = {
   frameworks: ['jasmine'],
   files: [
-    '../../node_modules/phantomjs-polyfill-object-assign/object-assign-polyfill.js',
-    '../../node_modules/phantomjs-polyfill-find/find-polyfill.js',
     './index.js'
   ],
   preprocessors: {
