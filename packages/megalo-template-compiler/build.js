@@ -6131,7 +6131,8 @@ TemplateGenerator.prototype.genAttrs = function genAttrs (el) {
       vtextReg.test(name) ||
       vonReg.test(name) ||
       (name === 'value' && hasVModel) ||
-      name === 'v-show'
+      name === 'v-show' ||
+      name === 'v-html'
     ) {
       return ''
     } else if (vmodelReg.test(name)) {
@@ -6368,10 +6369,30 @@ TemplateGenerator.prototype.collectDependencies = function collectDependencies (
 TemplateGenerator.prototype.genVHtml = function genVHtml (el) {
   var ref = this;
     var htmlParse = ref.htmlParse;
-  return ("<template is=\"" + (htmlParse.templateName) + "\"" + ([
+  var children = "<template is=\"" + (htmlParse.templateName) + "\" data=\"" + (this.wrapTemplateData(("nodes: " + (this.genHolder(el, 'vhtml'))))) + "\"/>";
+
+  if (this.isPlainTemplate(el)) {
+    return children
+  }
+
+  var tag = el.tag;
+  var mpTag = TAG_MAP[tag] || tag;
+  var attrs = this.isTemplate(el) ? [] : [
+    this.genVShow(el),
+    this.genClass(el),
+    this.genStyle(el),
+    this.genAttrs(el),
+    this.genEvents(el),
+    this.genNativeSlotName(el)
+  ];
+  var startTag = "<" + ([
+    mpTag,
     this.genIf(el),
-    this.genFor(el)
-  ].join('')) + " data=\"" + (this.wrapTemplateData(("nodes: " + (this.genHolder(el, 'vhtml'))))) + "\"/>")
+    this.genFor(el) ].concat( attrs
+  ).join('')) + ">";
+  var endTag = "</" + mpTag + ">";
+
+  return [startTag, children, endTag].join('')
 };
 
 TemplateGenerator.prototype.genNativeSlotName = function genNativeSlotName (el) {
