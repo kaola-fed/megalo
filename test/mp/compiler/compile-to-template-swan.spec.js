@@ -448,7 +448,9 @@ describe('compilteToTemplate: swan', () => {
         `<div v-html="input"></div>`
       ),
       (
-        `<template is="octoParse" data="{{{ nodes: h[ 1 ].html }}}"/>`
+        `<view class="_div {{p}}">` +
+          `<template is="octoParse" data="{{{ nodes: h[ 1 ].html }}}"/>` +
+        `</view>`
       ),
       options,
       function (output) {
