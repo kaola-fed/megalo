@@ -446,6 +446,18 @@ describe('compilteToTemplate: wechat', () => {
         expect(output.needHtmlParse).toBeTruthy()
       }
     )
+    assertCodegen(
+      (
+        `<template v-html="input"></template>`
+      ),
+      (
+        `<template is="octoParse" data="{{ nodes: h[ 1 ].html }}"/>`
+      ),
+      options,
+      function (output) {
+        expect(output.needHtmlParse).toBeTruthy()
+      }
+    )
   })
 
   it('deal with mp:key', () => {
