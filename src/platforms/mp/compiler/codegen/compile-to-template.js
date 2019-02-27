@@ -133,7 +133,14 @@ export class TemplateGenerator {
 
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
-    const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
+    const slotsNames = slots.map(sl => {
+      const { name, slotName, ifHolder } = sl
+      if (ifHolder) {
+        return `s_${name}:${ifHolder}?'${slotName}':''`
+      } else {
+        return `s_${name}: '${slotName}'`
+      }
+    })
     let cid = c_
     let scope = ''
     let tail = `, ${FOR_TAIL_VAR}: _t || ''`
@@ -196,6 +203,9 @@ export class TemplateGenerator {
           const slotName = removeQuotes(k)
           addSlotAst(slotName, ...slotAst)
           slots[slotName].scoped = true
+          if (slot.if) {
+            slots[slotName].ifHolder = this.genHolder(slot, 'if')
+          }
         })
     }
 
@@ -205,8 +215,13 @@ export class TemplateGenerator {
       .map(name => {
         const slot = slots[name]
         const { ast } = slot
+        let ifHolder = slot.ifHolder
         if (ast.length <= 0) {
           return null
+        }
+
+        if (!ifHolder && ast[0].if) {
+          ifHolder = this.genHolder(ast[0], 'if')
         }
 
         this.enterSlotSnippet(slot)
@@ -226,7 +241,8 @@ export class TemplateGenerator {
           slotName,
           dependencies,
           body,
-          ast
+          ast,
+          ifHolder
         }
       })
       .filter(notEmpty)
