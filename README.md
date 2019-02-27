@@ -4,7 +4,7 @@
   </a>
 
   <a href="https://travis-ci.org/kaola-fed/megalo">
-    <img src="https://img.shields.io/travis-ci/kaola-fed/megalo.svg?branch=feature_megalo&style=for-the-badge">
+    <img src="https://img.shields.io/travis/kaola-fed/megalo.svg?branch=feature_megalo&style=for-the-badge">
   </a>
 
   <a href="https://codecov.io/gh/kaola-fed/megalo">
