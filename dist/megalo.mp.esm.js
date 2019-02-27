@@ -4635,7 +4635,7 @@ try {
     value: FunctionalRenderContext
   });
 
-  Vue.version = '0.8.0';
+  Vue.version = '0.8.1-0';
 
   /*  */
 

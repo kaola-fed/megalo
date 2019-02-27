@@ -375,7 +375,8 @@ export class TemplateGenerator {
         vtextReg.test(name) ||
         vonReg.test(name) ||
         (name === 'value' && hasVModel) ||
-        name === 'v-show'
+        name === 'v-show' ||
+        name === 'v-html'
       ) {
         return ''
       } else if (vmodelReg.test(name)) {
@@ -598,10 +599,31 @@ export class TemplateGenerator {
 
   genVHtml (el): string {
     const { htmlParse } = this
-    return `<template is="${htmlParse.templateName}"${[
+    const children = `<template is="${htmlParse.templateName}" data="${this.wrapTemplateData(`nodes: ${this.genHolder(el, 'vhtml')}`)}"/>`
+
+    if (this.isPlainTemplate(el)) {
+      return children
+    }
+
+    const { tag } = el
+    const mpTag = TAG_MAP[tag] || tag
+    const attrs = this.isTemplate(el) ? [] : [
+      this.genVShow(el),
+      this.genClass(el),
+      this.genStyle(el),
+      this.genAttrs(el),
+      this.genEvents(el),
+      this.genNativeSlotName(el)
+    ]
+    const startTag = `<${[
+      mpTag,
       this.genIf(el),
-      this.genFor(el)
-    ].join('')} data="${this.wrapTemplateData(`nodes: ${this.genHolder(el, 'vhtml')}`)}"/>`
+      this.genFor(el),
+      ...attrs
+    ].join('')}>`
+    const endTag = `</${mpTag}>`
+
+    return [startTag, children, endTag].join('')
   }
 
   genNativeSlotName (el): string {

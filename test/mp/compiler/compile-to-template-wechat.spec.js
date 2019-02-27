@@ -437,6 +437,20 @@ describe('compilteToTemplate: wechat', () => {
         `<div v-html="input"></div>`
       ),
       (
+        `<view class="_div {{p}}">` +
+          `<template is="octoParse" data="{{ nodes: h[ 1 ].html }}"/>` +
+        `</view>`
+      ),
+      options,
+      function (output) {
+        expect(output.needHtmlParse).toBeTruthy()
+      }
+    )
+    assertCodegen(
+      (
+        `<template v-html="input"></template>`
+      ),
+      (
         `<template is="octoParse" data="{{ nodes: h[ 1 ].html }}"/>`
       ),
       options,
@@ -522,7 +536,7 @@ describe('slot', () => {
       ),
       options,
       function aasertRes (res) {
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -557,7 +571,7 @@ describe('slot', () => {
       options,
       function aasertRes (res) {
         expect(res.slots.length).toEqual(2)
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           if (slot.name === 'head') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -598,7 +612,7 @@ describe('slot', () => {
       options,
       function aasertRes (res) {
         expect(res.slots.length).toEqual(2)
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           if (slot.name === 'first') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -686,7 +700,7 @@ describe('slot', () => {
       options,
       function aasertRes (res) {
         expect(res.slots.length).toEqual(1)
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -720,7 +734,7 @@ describe('slot', () => {
       options,
       function aasertRes (res) {
         expect(res.slots.length).toEqual(2)
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -763,7 +777,7 @@ describe('slot', () => {
       options,
       function aasertRes (res) {
         expect(res.slots.length).toEqual(2)
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           if (slot.name === 'head') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -802,7 +816,7 @@ describe('slot', () => {
       options,
       function aasertRes (res) {
         expect(res.slots.length).toEqual(2)
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           if (slot.name === 'foo') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -837,7 +851,7 @@ describe('slot', () => {
       options,
       function aasertRes (res) {
         expect(res.slots.length).toEqual(1)
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -966,7 +980,7 @@ describe('slot', () => {
       ),
       options,
       function aasertRes (res) {
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -998,7 +1012,7 @@ describe('slot', () => {
       ),
       options,
       function aasertRes (res) {
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -1035,7 +1049,7 @@ describe('slot', () => {
       ),
       options,
       function aasertRes (res) {
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -1072,7 +1086,7 @@ describe('slot', () => {
       ),
       options,
       function aasertRes (res) {
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -1109,7 +1123,7 @@ describe('slot', () => {
       ),
       options,
       function aasertRes (res) {
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
@@ -1141,7 +1155,7 @@ describe('slot', () => {
       ),
       options,
       function aasertRes (res) {
-        res.slots.forEach((slot, index) => {
+        res.slots.forEach((slot) => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
