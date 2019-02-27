@@ -518,6 +518,11 @@ export class TemplateGenerator {
       scope = `,${PARENT_SCOPE_ID_VAR}:${PARENT_SCOPE_ID_VAR}||''`
     }
 
+    const directives = [
+      `${this.genIf(el)}`,
+      `${this.genFor(el)}`
+    ].filter(notEmpty).join(' ')
+
     /**
      * use "_c" to passing the actual vdom host component instance id to slot template
      *      because the vdom is actually stored in the component's _vnodes
@@ -529,28 +534,31 @@ export class TemplateGenerator {
         // if
         `${fallbackSlot}`,
         `<block s-if="s_${slotName}">`,
-        `<template is="{{ s_${slotName} }}" `,
-        `data="`,
-        this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}, _c: c`),
-        `"${this.genFor(el)}/>`,
+          `<template `,
+            `is="{{ s_${slotName} }}" `,
+            `data="`,
+            this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}, _c: c`),
+          `"${directives}/>`,
         `</block>`,
 
         // else use default slot snippet
         `<block s-else>`,
-        `<template is="{{ '${fallbackSlotName}' }}" `,
-        `data="`,
-        this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}, _c: c`),
-        `"${this.genFor(el)}/>`,
+          `<template `,
+            `is="{{ '${fallbackSlotName}' }}" `,
+            `data="`,
+              this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}, _c: c`),
+          `"${this.genFor(el)}/>`,
         `</block>`
       ].join('')
     }
 
     return [
       `${fallbackSlot}`,
-      `<template is="{{ s_${slotName} || '${fallbackSlotName}' }}" `,
-      `data="`,
-      this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}${scope}, _c: c`),
-      `"${this.genFor(el)}/>`
+      `<template `,
+        `is="{{ s_${slotName} || '${fallbackSlotName}' }}" `,
+        `data="`,
+          this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}${scope}, _c: c`),
+        `"${directives}/>`
     ].join('')
   }
 
