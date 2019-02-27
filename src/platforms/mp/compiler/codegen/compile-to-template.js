@@ -133,7 +133,14 @@ export class TemplateGenerator {
 
     const { name: compName } = compInfo
     const slots = this.genSlotSnippets(el)
-    const slotsNames = slots.map(sl => `s_${sl.name}: '${sl.slotName}'`)
+    const slotsNames = slots.map(sl => {
+      const { name, slotName, ifHolder } = sl
+      if (ifHolder) {
+        return `s_${name}:${ifHolder}?'${slotName}':''`
+      } else {
+        return `s_${name}: '${slotName}'`
+      }
+    })
     let cid = c_
     let scope = ''
     let tail = `, ${FOR_TAIL_VAR}: _t || ''`
@@ -196,6 +203,9 @@ export class TemplateGenerator {
           const slotName = removeQuotes(k)
           addSlotAst(slotName, ...slotAst)
           slots[slotName].scoped = true
+          if (slot.if) {
+            slots[slotName].ifHolder = this.genHolder(slot, 'if')
+          }
         })
     }
 
@@ -205,8 +215,13 @@ export class TemplateGenerator {
       .map(name => {
         const slot = slots[name]
         const { ast } = slot
+        let ifHolder = slot.ifHolder
         if (ast.length <= 0) {
           return null
+        }
+
+        if (!ifHolder && ast[0].if) {
+          ifHolder = this.genHolder(ast[0], 'if')
         }
 
         this.enterSlotSnippet(slot)
@@ -226,7 +241,8 @@ export class TemplateGenerator {
           slotName,
           dependencies,
           body,
-          ast
+          ast,
+          ifHolder
         }
       })
       .filter(notEmpty)
@@ -518,6 +534,11 @@ export class TemplateGenerator {
       scope = `,${PARENT_SCOPE_ID_VAR}:${PARENT_SCOPE_ID_VAR}||''`
     }
 
+    const directives = [
+      `${this.genIf(el)}`,
+      `${this.genFor(el)}`
+    ].filter(notEmpty).join(' ')
+
     /**
      * use "_c" to passing the actual vdom host component instance id to slot template
      *      because the vdom is actually stored in the component's _vnodes
@@ -529,28 +550,31 @@ export class TemplateGenerator {
         // if
         `${fallbackSlot}`,
         `<block s-if="s_${slotName}">`,
-        `<template is="{{ s_${slotName} }}" `,
-        `data="`,
-        this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}, _c: c`),
-        `"${this.genFor(el)}/>`,
+          `<template `,
+            `is="{{ s_${slotName} }}" `,
+            `data="`,
+            this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}, _c: c`),
+          `"${directives}/>`,
         `</block>`,
 
         // else use default slot snippet
         `<block s-else>`,
-        `<template is="{{ '${fallbackSlotName}' }}" `,
-        `data="`,
-        this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}, _c: c`),
-        `"${this.genFor(el)}/>`,
+          `<template `,
+            `is="{{ '${fallbackSlotName}' }}" `,
+            `data="`,
+              this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}, _c: c`),
+          `"${this.genFor(el)}/>`,
         `</block>`
       ].join('')
     }
 
     return [
       `${fallbackSlot}`,
-      `<template is="{{ s_${slotName} || '${fallbackSlotName}' }}" `,
-      `data="`,
-      this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}${scope}, _c: c`),
-      `"${this.genFor(el)}/>`
+      `<template `,
+        `is="{{ s_${slotName} || '${fallbackSlotName}' }}" `,
+        `data="`,
+          this.wrapTemplateData(`...${ROOT_DATA_VAR}[ c ], ${ROOT_DATA_VAR}${tail}${scope}, _c: c`),
+        `"${directives}/>`
     ].join('')
   }
 

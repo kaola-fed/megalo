@@ -517,6 +517,28 @@ describe('slot', () => {
     )
   })
 
+  it('claim slots with v-if', () => {
+    const slot1 = slotName('head')
+    const slot2 = slotName('default')
+    assertCodegen(
+      (
+        `<div>` +
+          `<slot v-if="!ok" name="head">head slot</slot>` +
+          `<slot v-if="ok">default slot</slot>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div {{p}}">` +
+          `<template name="${slot1}">head slot</template>` +
+          `<template is="{{ s_head || '${slot1}' }}" data="{{ ...$root[ c ], $root, _t: _t || '',p:p||'', _c: c }}" wx:if="{{ h[ 2 ]._if }}"/>` +
+          `<template name="${slot2}">default slot</template>` +
+          `<template is="{{ s_default || '${slot2}' }}" data="{{ ...$root[ c ], $root, _t: _t || '',p:p||'', _c: c }}" wx:if="{{ h[ 4 ]._if }}"/>` +
+        `</view>`
+      ),
+      options
+    )
+  })
+
   it('define slot snippet', () => {
     const slot1 = slotName('default').replace('$', '_')
     assertCodegen(
@@ -1335,6 +1357,70 @@ describe('slot', () => {
               `</template>`
             )
           }
+        })
+      }
+    )
+  })
+
+  it('define slot snippet wtich v-if', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<template v-if="ok">` +
+              `<div>{{ title }}</div>` +
+            `</template>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div {{p}}">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default:h[ 4 ]._if?'${slot1}':'', _t: _t || '',p:p||'' }}" />` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        res.slots.forEach((slot) => {
+          expect(slot.name).toEqual('default')
+          expect(slot.body).toEqual(
+            `<template name="${slot.slotName}" parent="${options.name}">` +
+              `<block wx:if="{{ s[ 4 + _t ]._if }}">` +
+                `<view class="_div {{p}}">{{ s[ 6 + _t ].t }}</view>` +
+              `</block>` +
+            `</template>`
+          )
+        })
+      }
+    )
+  })
+
+  it('define socped slot snippet wtich v-if', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<template v-slot="scope" v-if="ok">` +
+              `<div>{{ title }}</div>` +
+            `</template>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div {{p}}">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default:h[ 4 ]._if?'${slot1}':'', _t: _t || '',p:p||'' }}" />` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        res.slots.forEach((slot) => {
+          expect(slot.name).toEqual('default')
+          expect(slot.body).toEqual(
+            `<template name="${slot.slotName}" parent="${options.name}">` +
+              `<view class="_div {{p}}">{{ s[ 6 + _t ].t }}</view>` +
+            `</template>`
+          )
         })
       }
     )
