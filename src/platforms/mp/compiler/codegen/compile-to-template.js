@@ -10,7 +10,7 @@ import {
 } from '../util'
 import presets from '../../util/presets/index'
 import { baseWarn } from 'compiler/helpers'
-import { isDef } from 'shared/util'
+import { camelize, isDef } from 'shared/util'
 import {
   notEmpty,
   ROOT_DATA_VAR,
@@ -400,7 +400,8 @@ export class TemplateGenerator {
       // <img :data-a="a" :src="img">
       } else if (vbindReg.test(name)) {
         const realName = name.replace(vbindReg, '')
-        return `${realName}="{{ ${this.genHolderVar()}[ ${this.genHid(el)} ][ '${realName}' ] }}"`
+        const camelizedName = camelize(realName)
+        return `${realName}="{{ ${this.genHolderVar()}[ ${this.genHid(el)} ].${camelizedName} }}"`
       // <img src="../assets/img.jpg">
       } else if (!/^https?|data:/.test(value) && this.isTransformAssetUrl(el, name)) {
         return `${name}="{{ ${this.genHolderVar()}[ ${this.genHid(el)} ][ '${name}' ] }}"`
