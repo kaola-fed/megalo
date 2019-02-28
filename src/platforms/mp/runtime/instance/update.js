@@ -1,3 +1,4 @@
+import { camelize } from 'shared/util'
 import { isDef } from 'core/util/index'
 import { getVMId, getHid, calculateScopeId } from './helper'
 import {
@@ -47,12 +48,13 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
   const vm = this
   const vmId = getVMId(vm)
   const hid = getHid(vm, vnode)
+  const camelizedType = camelize(type)
   const dataPaths = [
     ROOT_DATA_VAR,
     vmId,
     vnode.slotContext ? SLOT_HOLDER_VAR : HOLDER_VAR,
     hid,
-    type
+    camelizedType
   ]
   let dataPathStr = dataPaths.join('.')
 
@@ -60,10 +62,6 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
 
   /* istanbul ignore else */
   if (isDef(hid)) {
-    if (vm.$mp.platform === 'swan' && /[^A-Za-z0-9_]/.test(type)) {
-      dataPathStr = dataPathStr.replace(/\.[^\.]*$/, `['${type}']`)
-    }
-
     const isDeepEqual = deepEqual(curValue, data)
     /* istanbul ignore else */
     if (!isDeepEqual || vm.$mp._shouldUpdateBuffer(dataPathStr, data)) {
