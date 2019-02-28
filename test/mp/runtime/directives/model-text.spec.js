@@ -364,6 +364,30 @@ describe('Directive v-model text', () => {
     }).then(done)
   })
 
+
+  it('should works with v-model and input event handler', done => {
+    const spy = jasmine.createSpy()
+    const { page, vm } = createPage({
+      data: {
+        test: 'b'
+      },
+      template: '<input v-model="test" @input="onChange">',
+      methods: {
+        onChange: spy
+      }
+    })
+
+    const pageData = getPageData(page, '0')
+    assertValue(pageData, 'b')
+    vm.test = 'a'
+    waitForUpdate(() => {
+      assertValue(pageData, 'a')
+      triggerInput(page, 'c')
+      expect(spy.calls.count()).toBe(1)
+      expect(vm.test).toBe('c')
+    }).then(done)
+  })
+
   // TODO: input type has different meaning in mp
   // it('should not warn on input with dynamic type binding', () => {
   //   const warn = console.warn
