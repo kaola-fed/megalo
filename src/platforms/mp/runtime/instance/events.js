@@ -78,8 +78,6 @@ function getHandlers (vm, rawType, hid) {
 
     if (Array.isArray(handler)) {
       buf = buf.concat(handler)
-    } else if (typeof handler === 'function') {
-      buf.push(handler)
     }
 
     // try to find registered undefined handler
