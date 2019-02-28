@@ -421,4 +421,27 @@ describe('Directive v-bind', () => {
       expectAttr(0)
     }).then(done)
   })
+
+  // #188
+  it('should work well same attribute value but different element', done => {
+    const { page, vm } = createPage({
+      template: `
+        <div>
+          <img v-if="foo" :src="img1">
+          <img v-else :src="img2">
+        </div>
+      `,
+      data: { foo: true, img1: 'https://a/1.jpg', img2: 'https://a/1.jpg' }
+    })
+
+    const pageData = getPageData(page, '0')
+    expect(pageData.h[1]._if).toBeTruthy()
+    expect(pageData.h[1].src).toBe('https://a/1.jpg')
+    expect(pageData.h[2]).toBeUndefined()
+    vm.foo = false
+    waitForUpdate(() => {
+      expect(pageData.h[1]._if).toBeFalsy()
+      expect(pageData.h[2].src).toBe('https://a/1.jpg')
+    }).then(done)
+  })
 })
