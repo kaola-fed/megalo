@@ -1,4 +1,3 @@
-debugger
 let megaloVersion
 try {
   megaloVersion = require('megalo/package.json').version
