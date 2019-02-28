@@ -26,6 +26,20 @@ describe('Directive v-on', () => {
     expect(event.type).toBe('tap')
   })
 
+  it('should bind event to duplicate method', () => {
+    const { page } = createPage({
+      template: '<div @click="foo" v-on:click="bar" ></div>',
+      methods: { foo: spy, bar: spy }
+    })
+
+    page._triggerEvent(undefined, 'tap')
+    expect(spy.calls.count()).toBe(2)
+
+    const args = spy.calls.allArgs()
+    const event = args[0] && args[0][0] || {}
+    expect(event.type).toBe('tap')
+  })
+
   it('should bind event to a inline statement', () => {
     const { page } = createPage({
       template: '<div v-on:click="foo(1,2,3,$event)"></div>',
