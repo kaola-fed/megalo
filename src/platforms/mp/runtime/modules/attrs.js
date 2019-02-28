@@ -38,7 +38,7 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
     old = oldAttrs[key]
 
     // only update daynamic attrs in runtime
-    if (old !== cur && key !== 'slot') {
+    if ((old !== cur || attrs.h_ !== oldAttrs.h_) && key !== 'slot') {
       // if using local image file, set path to the root
       if (cur && vnode.tag === 'img' && key === 'src' && !/^\/|:\/\/|data:/.test(cur)) {
         cur = `/${cur}`
