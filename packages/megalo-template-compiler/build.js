@@ -5881,7 +5881,16 @@ TemplateGenerator.prototype.genComponent = function genComponent (el) {
 
   var compName = compInfo.name;
   var slots = this.genSlotSnippets(el);
-  var slotsNames = slots.map(function (sl) { return ("s_" + (sl.name) + ": '" + (sl.slotName) + "'"); });
+  var slotsNames = slots.map(function (sl) {
+    var name = sl.name;
+      var slotName = sl.slotName;
+      var ifHolder = sl.ifHolder;
+    if (ifHolder) {
+      return ("s_" + name + ":" + ifHolder + "?'" + slotName + "':''")
+    } else {
+      return ("s_" + name + ": '" + slotName + "'")
+    }
+  });
   var cid = c_;
   var scope = '';
   var tail = ", " + FOR_TAIL_VAR + ": _t || ''";
@@ -5945,6 +5954,9 @@ TemplateGenerator.prototype.genSlotSnippets = function genSlotSnippets (el) {
         var slotName = removeQuotes(k);
         addSlotAst.apply(void 0, [ slotName ].concat( slotAst ));
         slots[slotName].scoped = true;
+        if (slot.if) {
+          slots[slotName].ifHolder = this$1.genHolder(slot, 'if');
+        }
       });
   }
 
@@ -5954,8 +5966,13 @@ TemplateGenerator.prototype.genSlotSnippets = function genSlotSnippets (el) {
     .map(function (name) {
       var slot = slots[name];
       var ast = slot.ast;
+      var ifHolder = slot.ifHolder;
       if (ast.length <= 0) {
         return null
+      }
+
+      if (!ifHolder && ast[0].if) {
+        ifHolder = this$1.genHolder(ast[0], 'if');
       }
 
       this$1.enterSlotSnippet(slot);
@@ -5974,7 +5991,8 @@ TemplateGenerator.prototype.genSlotSnippets = function genSlotSnippets (el) {
         slotName: slotName,
         dependencies: dependencies,
         body: body,
-        ast: ast
+        ast: ast,
+        ifHolder: ifHolder
       }
     })
     .filter(notEmpty);
@@ -6282,6 +6300,11 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
     scope = "," + PARENT_SCOPE_ID_VAR + ":" + PARENT_SCOPE_ID_VAR + "||''";
   }
 
+  var directives = [
+    ("" + (this.genIf(el))),
+    ("" + (this.genFor(el)))
+  ].filter(notEmpty).join(' ');
+
   /**
    * use "_c" to passing the actual vdom host component instance id to slot template
    *    because the vdom is actually stored in the component's _vnodes
@@ -6293,28 +6316,31 @@ TemplateGenerator.prototype.genSlot = function genSlot (el) {
       // if
       ("" + fallbackSlot),
       ("<block s-if=\"s_" + slotName + "\">"),
-      ("<template is=\"{{ s_" + slotName + " }}\" "),
-      "data=\"",
-      this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ c ], " + ROOT_DATA_VAR + tail + ", _c: c")),
-      ("\"" + (this.genFor(el)) + "/>"),
+        "<template ",
+          ("is=\"{{ s_" + slotName + " }}\" "),
+          "data=\"",
+          this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ c ], " + ROOT_DATA_VAR + tail + ", _c: c")),
+        ("\"" + directives + "/>"),
       "</block>",
 
       // else use default slot snippet
       "<block s-else>",
-      ("<template is=\"{{ '" + fallbackSlotName + "' }}\" "),
-      "data=\"",
-      this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ c ], " + ROOT_DATA_VAR + tail + ", _c: c")),
-      ("\"" + (this.genFor(el)) + "/>"),
+        "<template ",
+          ("is=\"{{ '" + fallbackSlotName + "' }}\" "),
+          "data=\"",
+            this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ c ], " + ROOT_DATA_VAR + tail + ", _c: c")),
+        ("\"" + (this.genFor(el)) + "/>"),
       "</block>"
     ].join('')
   }
 
   return [
     ("" + fallbackSlot),
-    ("<template is=\"{{ s_" + slotName + " || '" + fallbackSlotName + "' }}\" "),
-    "data=\"",
-    this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ c ], " + ROOT_DATA_VAR + tail + scope + ", _c: c")),
-    ("\"" + (this.genFor(el)) + "/>")
+    "<template ",
+      ("is=\"{{ s_" + slotName + " || '" + fallbackSlotName + "' }}\" "),
+      "data=\"",
+        this.wrapTemplateData(("..." + ROOT_DATA_VAR + "[ c ], " + ROOT_DATA_VAR + tail + scope + ", _c: c")),
+      ("\"" + directives + "/>")
   ].join('')
 };
 
