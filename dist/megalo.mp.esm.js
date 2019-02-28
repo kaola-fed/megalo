@@ -4635,7 +4635,7 @@ try {
     value: FunctionalRenderContext
   });
 
-  Vue.version = '0.8.1-0';
+  Vue.version = '2.6.6';
 
   /*  */
 
@@ -5255,6 +5255,8 @@ try {
     }
   }
 
+  var eventPrefixes = ['', '!', '~'];
+
   function getHandlers (vm, rawType, hid) {
     var type = rawType.toLowerCase();
     var res = [];
@@ -5272,7 +5274,10 @@ try {
     if (!vnode) { return res }
 
     var elm = vnode.elm;
+    var data = vnode.data; if ( data === void 0 ) data = {};
+    var dataOn = data.on || {};
     var on = elm.on; if ( on === void 0 ) on = {};
+    var handlerIsUndefined = true;
 
     /* istanbul ignore if */
     if (!assertHid(vnode, hid)) { return res }
@@ -5280,13 +5285,33 @@ try {
     res = eventTypes.reduce(function (buf, event) {
       var handler = on[event];
       /* istanbul ignore if */
-      if (typeof handler === 'function') {
-        buf.push(handler);
-      } else if (Array.isArray(handler)) {
+
+      if (Array.isArray(handler)) {
         buf = buf.concat(handler);
       }
+
+      // try to find registered undefined handler
+      // if the handler is defined, set handlerIsUndefined to be true
+      // otherwise, throw an error
+      eventPrefixes.forEach(function (prefix) {
+        var dataEventName = prefix + event;
+        if (
+          dataOn.hasOwnProperty(dataEventName) &&
+          dataOn[dataEventName] !== undefined
+        ) {
+          handlerIsUndefined = false;
+        }
+      });
+
       return buf
     }, []);
+
+    // throws error if an undefined handler is registered
+    if (handlerIsUndefined) {
+      var msg = "event: handler for \"" + rawType + "\" is undefined";
+      var error = new Error(msg);
+      handleError(error, vm, msg);
+    }
 
     return res
   }
@@ -6635,7 +6660,7 @@ try {
       old = oldAttrs[key];
 
       // only update daynamic attrs in runtime
-      if (old !== cur && key !== 'slot') {
+      if ((old !== cur || attrs.h_ !== oldAttrs.h_) && key !== 'slot') {
         // if using local image file, set path to the root
         if (cur && vnode.tag === 'img' && key === 'src' && !/^\/|:\/\/|data:/.test(cur)) {
           cur = "/" + cur;
@@ -7513,6 +7538,8 @@ try {
   }
 
   /*  */
+
+  Vue.megaloVersion = '0.9.0-0';
 
   return Vue;
 
