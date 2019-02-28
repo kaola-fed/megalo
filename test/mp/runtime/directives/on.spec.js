@@ -104,7 +104,7 @@ describe('Directive v-on', () => {
         <input type="checkbox" ref="input" @click.prevent="foo">
       `,
       methods: {
-        foo ($event) {
+        foo () {
           spy('preventDefault not supported')
         }
       }
@@ -271,7 +271,7 @@ describe('Directive v-on', () => {
         ok: true
       },
       template: `
-        <input v-if="ok" @click.once="foo">
+        <input v-if="ok" @click="foo">
         <input v-else @input="bar">
       `
     })
@@ -283,7 +283,7 @@ describe('Directive v-on', () => {
     expect(spy2.calls.count()).toBe(0)
     vm.ok = false
     waitForUpdate(() => {
-      page._triggerEvent(input2, 'click')
+      page._triggerEvent(input1, 'click')
       expect(spy.calls.count()).toBe(1) // should no longer trigger
       page._triggerEvent(input2, 'input')
       expect(spy2.calls.count()).toBe(1)
@@ -311,7 +311,7 @@ describe('Directive v-on', () => {
     expect(spy2.calls.count()).toBe(0)
     vm.ok = false
     waitForUpdate(() => {
-      page._triggerEvent(input2, 'click')
+      page._triggerEvent(input1, 'click')
       expect(spy.calls.count()).toBe(1) // should no longer trigger
       page._triggerEvent(input2, 'input')
       expect(spy2.calls.count()).toBe(1)
