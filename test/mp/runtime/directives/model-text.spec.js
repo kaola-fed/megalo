@@ -1,11 +1,16 @@
-import { createPage, getPageData } from '../../helpers'
+import { createPage, getPageData, Vue } from '../../helpers'
 
 describe('Directive v-model text', () => {
+  let globalErrorHandler
+
   beforeEach(() => {
+    globalErrorHandler = jasmine.createSpy()
+    Vue.config.errorHandler = globalErrorHandler
     jasmine.clock().install()
   })
 
   afterEach(() => {
+    Vue.config.errorHandler = null
     jasmine.clock().uninstall()
   })
 
