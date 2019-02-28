@@ -183,11 +183,11 @@ describe('compilteToTemplate: swan', () => {
     )
     assertCodegen(
       `<div :data-store="store"></div>`,
-      `<view class="_div {{p}}" data-store="{{ h[ 1 ][ 'data-store' ] }}"></view>`
+      `<view class="_div {{p}}" data-store="{{ h[ 1 ].dataStore }}"></view>`
     )
     assertCodegen(
       `<div :data-store="true"></div>`,
-      `<view class="_div {{p}}" data-store="{{ h[ 1 ][ 'data-store' ] }}"></view>`
+      `<view class="_div {{p}}" data-store="{{ h[ 1 ].dataStore }}"></view>`
     )
   })
 
