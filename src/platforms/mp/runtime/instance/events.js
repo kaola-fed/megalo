@@ -1,3 +1,4 @@
+import { handleError } from 'core/util/index'
 import { getVM } from './helper'
 import { isDef } from 'shared/util'
 import { LIST_TAIL_SEPS, eventTypeMap } from 'mp/util/index'
@@ -45,6 +46,8 @@ function getVnode (vnode = {}, hid) {
   }
 }
 
+const eventPrefixes = ['', '!', '~']
+
 function getHandlers (vm, rawType, hid) {
   const type = rawType.toLowerCase()
   let res = []
@@ -61,8 +64,10 @@ function getHandlers (vm, rawType, hid) {
 
   if (!vnode) return res
 
-  const { elm } = vnode
-  const { on = {}} = elm
+  const { elm, data = {} } = vnode
+  const dataOn = data.on || {}
+  const { on = {} } = elm
+  let handlerIsUndefined = true
 
   /* istanbul ignore if */
   if (!assertHid(vnode, hid)) return res
@@ -70,13 +75,35 @@ function getHandlers (vm, rawType, hid) {
   res = eventTypes.reduce((buf, event) => {
     const handler = on[event]
     /* istanbul ignore if */
-    if (typeof handler === 'function') {
-      buf.push(handler)
-    } else if (Array.isArray(handler)) {
+
+    if (Array.isArray(handler)) {
       buf = buf.concat(handler)
+    } else if (typeof handler === 'function') {
+      buf.push(handler)
     }
+
+    // try to find registered undefined handler
+    // if the handler is defined, set handlerIsUndefined to be true
+    // otherwise, throw an error
+    eventPrefixes.forEach((prefix) => {
+      const dataEventName = prefix + event
+      if (
+        dataOn.hasOwnProperty(dataEventName) &&
+        dataOn[dataEventName] !== undefined
+      ) {
+        handlerIsUndefined = false
+      }
+    })
+
     return buf
   }, [])
+
+  // throws error if an undefined handler is registered
+  if (handlerIsUndefined) {
+    const msg = `event: handler for "${rawType}" is undefined`
+    const error = new Error(msg)
+    handleError(error, vm, msg)
+  }
 
   return res
 }
