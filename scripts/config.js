@@ -8,6 +8,7 @@ const flow = require('rollup-plugin-flow-no-whitespace')
 const version = process.env.VERSION || require('../package.json').version
 const weexVersion = process.env.WEEX_VERSION || require('../packages/weex-vue-framework/package.json').version
 const featureFlags = require('./feature-flags')
+const vueCoreVersion = '2.6.6'
 
 // const banner =
 //   '/*!\n' +
@@ -260,7 +261,8 @@ function genConfig (name) {
   const vars = {
     __WEEX__: !!opts.weex,
     __WEEX_VERSION__: weexVersion,
-    __VERSION__: version
+    __VERSION__: vueCoreVersion,
+    __MEGALO_VERSION__: version
   }
   // feature flags
   Object.keys(featureFlags).forEach(key => {
