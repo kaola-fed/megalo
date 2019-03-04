@@ -330,7 +330,12 @@ class State {
     return this.getCurrentComp().id !== 0
   }
   assignHId (node) {
-    const h_ = this.getHId(node)
+    let h_ = this.getHId(node)
+
+    if (this.isInSlot()) {
+      h_ = "'s" + h_ + "'";
+    }
+
     Object.assign(node, { h_ })
   }
   resolveForHolder (node) {
