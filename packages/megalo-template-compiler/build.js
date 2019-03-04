@@ -5481,6 +5481,11 @@ State.prototype.isInSlot = function isInSlot () {
 };
 State.prototype.assignHId = function assignHId (node) {
   var h_ = this.getHId(node);
+
+  if (this.isInSlot()) {
+    h_ = "'s" + h_ + "'";
+  }
+
   Object.assign(node, { h_: h_ });
 };
 State.prototype.resolveForHolder = function resolveForHolder (node) {
@@ -6158,7 +6163,8 @@ TemplateGenerator.prototype.genAttrs = function genAttrs (el) {
     // <img :data-a="a" :src="img">
     } else if (vbindReg$1.test(name)) {
       var realName = name.replace(vbindReg$1, '');
-      return (realName + "=\"{{ " + (this$1.genHolderVar()) + "[ " + (this$1.genHid(el)) + " ][ '" + realName + "' ] }}\"")
+      var camelizedName = camelize(realName);
+      return (realName + "=\"{{ " + (this$1.genHolderVar()) + "[ " + (this$1.genHid(el)) + " ]." + camelizedName + " }}\"")
     // <img src="../assets/img.jpg">
     } else if (!/^https?|data:/.test(value) && this$1.isTransformAssetUrl(el, name)) {
       return (name + "=\"{{ " + (this$1.genHolderVar()) + "[ " + (this$1.genHid(el)) + " ][ '" + name + "' ] }}\"")
