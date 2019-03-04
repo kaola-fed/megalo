@@ -5138,12 +5138,13 @@ try {
     var vm = this;
     var vmId = getVMId(vm);
     var hid = getHid(vm, vnode);
+    var camelizedType = camelize(type);
     var dataPaths = [
       ROOT_DATA_VAR,
       vmId,
       vnode.slotContext ? SLOT_HOLDER_VAR : HOLDER_VAR,
       hid,
-      type
+      camelizedType
     ];
     var dataPathStr = dataPaths.join('.');
 
@@ -5151,10 +5152,6 @@ try {
 
     /* istanbul ignore else */
     if (isDef(hid)) {
-      if (vm.$mp.platform === 'swan' && /[^A-Za-z0-9_]/.test(type)) {
-        dataPathStr = dataPathStr.replace(/\.[^\.]*$/, ("['" + type + "']"));
-      }
-
       var isDeepEqual = deepEqual(curValue, data);
       /* istanbul ignore else */
       if (!isDeepEqual || vm.$mp._shouldUpdateBuffer(dataPathStr, data)) {
@@ -7539,7 +7536,7 @@ try {
 
   /*  */
 
-  Vue.megaloVersion = '0.9.0-0';
+  Vue.megaloVersion = '0.9.0-1';
 
   return Vue;
 
