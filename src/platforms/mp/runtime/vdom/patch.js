@@ -48,6 +48,11 @@ function sameVnode (a, b) {
         isUndef(b.asyncFactory.error)
       )
     )
+  ) && (
+    (a.data && b.data) &&
+    (a.data.attrs && b.data.attrs) &&
+    a.data.attrs.h_ === b.data.attrs.h_ &&
+    a.data.attrs.f_ === b.data.attrs.f_
   )
 }
 
