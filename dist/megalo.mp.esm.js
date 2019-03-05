@@ -5781,6 +5781,11 @@ try {
           isUndef(b.asyncFactory.error)
         )
       )
+    ) && (
+      (a.data && b.data) &&
+      (a.data.attrs && b.data.attrs) &&
+      a.data.attrs.h_ === b.data.attrs.h_ &&
+      a.data.attrs.f_ === b.data.attrs.f_
     )
   }
 
@@ -7536,7 +7541,7 @@ try {
 
   /*  */
 
-  Vue.megaloVersion = '0.9.0-1';
+  Vue.megaloVersion = '0.9.0-2';
 
   return Vue;
 
