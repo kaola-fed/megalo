@@ -10,7 +10,7 @@ import {
 } from '../util'
 import presets from '../../util/presets/index'
 import { baseWarn } from 'compiler/helpers'
-import { camelize, isDef } from 'shared/util'
+import { camelize, isDef, isUndef } from 'shared/util'
 import {
   notEmpty,
   ROOT_DATA_VAR,
@@ -588,7 +588,7 @@ export class TemplateGenerator {
 
   genHolderVar (holder) {
     if (
-      isDef(holder) &&
+      isUndef(holder) &&
       ( this.isInSlotSnippet() || this.isInFallbackSlot() )
     ) {
       return SLOT_HOLDER_VAR
