@@ -514,26 +514,26 @@ describe('Directive v-for', () => {
     const compData3 = getPageData(page, '0,0-2')
     expect(pageData.h['1'].li).toEqual([{ a: 1 }, { a: 2 }, { a: 3 }])
     // slot
-    expect(compData1.s['4-0'].t).toEqual('1')
-    expect(compData2.s['4-1'].t).toEqual('2')
-    expect(compData3.s['4-2'].t).toEqual('3')
+    expect(compData1.s['s4-0'].t).toEqual('1')
+    expect(compData2.s['s4-1'].t).toEqual('2')
+    expect(compData3.s['s4-2'].t).toEqual('3')
     vm.list.reverse()
     waitForUpdate(() => {
       expect(pageData.h['1'].li).toEqual([{ a: 3 }, { a: 2 }, { a: 1 }])
-      expect(compData1.s['4-0'].t).toEqual('3')
-      expect(compData2.s['4-1'].t).toEqual('2')
-      expect(compData3.s['4-2'].t).toEqual('1')
+      expect(compData1.s['s4-0'].t).toEqual('3')
+      expect(compData2.s['s4-1'].t).toEqual('2')
+      expect(compData3.s['s4-2'].t).toEqual('1')
       vm.list.splice(1, 1)
     }).then(() => {
       expect(pageData.h['1'].li).toEqual([{ a: 3 }, { a: 1 }])
-      expect(compData1.s['4-0'].t).toEqual('3')
-      expect(compData2.s['4-1'].t).toEqual('1')
+      expect(compData1.s['s4-0'].t).toEqual('3')
+      expect(compData2.s['s4-1'].t).toEqual('1')
       // slot
       vm.list.splice(1, 0, { a: 2 })
     }).then(() => {
-      expect(compData1.s['4-0'].t).toEqual('3')
-      expect(compData2.s['4-1'].t).toEqual('2')
-      expect(compData3.s['4-2'].t).toEqual('1')
+      expect(compData1.s['s4-0'].t).toEqual('3')
+      expect(compData2.s['s4-1'].t).toEqual('2')
+      expect(compData3.s['s4-2'].t).toEqual('1')
     }).then(done)
   })
 

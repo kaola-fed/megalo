@@ -591,7 +591,7 @@ describe('Directive v-on', () => {
     // button1 vnode is stored in the root instance's _vnode tree
     const button1 = { dataset: { cid: '0', hid: '1' }}
     // button2 vnode is stored in the <test> instance's _vnode tree
-    const button2 = { dataset: { cid: '0,0', hid: '5' }}
+    const button2 = { dataset: { cid: '0,0', hid: 's5' }}
 
     page._triggerEvent(button1, 'tap')
     expect(spy.calls.count()).toBe(1)

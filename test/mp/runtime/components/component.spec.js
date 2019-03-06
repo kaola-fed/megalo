@@ -111,13 +111,13 @@ describe('Component', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     expect(pageData.h['0'].vs).toBe(!false)
-    expect(comp1.s['2'].t).toBe('hello')
+    expect(comp1.s['s2'].t).toBe('hello')
     expect(comp1.h['3'].t).toBe(' world')
     vm.ok = true
     vm.message = 'bye'
     waitForUpdate(() => {
       expect(pageData.h['0'].vs).toBe(!true)
-      expect(comp1.s['2'].t).toBe('bye')
+      expect(comp1.s['s2'].t).toBe('bye')
       expect(comp1.h['3'].t).toBe(' world')
     }).then(done)
   })
@@ -149,7 +149,7 @@ describe('Component', () => {
     waitForUpdate(() => {
       expect(pageData.h['0']._if).toBeTruthy()
       comp1 = getPageData(page, '0,0')
-      expect(comp1.s['2'].t).toBe('hello')
+      expect(comp1.s['s2'].t).toBe('hello')
       expect(comp1.h['2'].t).toBe(' world')
     }).then(done)
   })
