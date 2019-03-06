@@ -220,8 +220,8 @@ export class TemplateGenerator {
           return null
         }
 
-        if (!ifHolder && ast[0].if) {
-          ifHolder = this.genHolder(ast[0], 'if')
+        if (!ifHolder && ast[0].ifConditions) {
+          ifHolder = this.genIfHolderForSlotSnippets(ast[0].ifConditions)
         }
 
         this.enterSlotSnippet(slot)
@@ -586,21 +586,24 @@ export class TemplateGenerator {
     return el.children.map(child => this.genElement(child)).join('')
   }
 
-  genHolderVar () {
-    if (this.isInSlotSnippet() || this.isInFallbackSlot()) {
+  genHolderVar (holder) {
+    if (
+      isDef(holder) &&
+      ( this.isInSlotSnippet() || this.isInFallbackSlot() )
+    ) {
       return SLOT_HOLDER_VAR
     }
-    return HOLDER_VAR
+    return holder || HOLDER_VAR
   }
 
-  genHolder (el, type): string {
+  genHolder (el, type, holder): string {
     const varName = HOLDER_TYPE_VARS[type]
     const hid = typeof el === 'string' ? el : this.genHid(el)
     /* istanbul ignore next */
     if (!varName) {
       throw new Error(`${type} holder HOLDER_TYPE_VARS not found`)
     }
-    return `${this.genHolderVar()}[ ${hid} ].${varName}`
+    return `${this.genHolderVar(holder)}[ ${hid} ].${varName}`
   }
 
   /* istanbul ignore next */
@@ -794,5 +797,23 @@ export class TemplateGenerator {
 
   getCurrentCompoent () {
     return this.componentsStack[this.componentsStack.length - 1] || this
+  }
+
+
+  genIfHolderForSlotSnippets(ifConditions) {
+    const lastCond = ifConditions[ifConditions.length - 1]
+    // if there is else condition, there will always be a slot snippet and never fallback
+    if (lastCond.block.else) {
+      return ''
+    } else {
+      const res = ifConditions.map(cond => {
+        return this.genHolder(cond.block, 'if', HOLDER_VAR)
+      })
+      if (res.length > 1) {
+        return `(${res.join('||')})`
+      } else {
+        return res 
+      }
+    }
   }
 }
