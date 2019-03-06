@@ -521,7 +521,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<view class="_div {{p}}">{{ s[ 6 + _t ].t }}</view>` +
+              `<view class="_div {{p}}">{{ s[ 's6' + _t ].t }}</view>` +
             `</template>`
           )
         })
@@ -557,7 +557,7 @@ describe('slot', () => {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
                 `<view class="_p {{p}}">` +
-                  `<label class="_span {{p}}">{{ s[ 7 + _t ].t }}</label>` +
+                  `<label class="_span {{p}}">{{ s[ 's7' + _t ].t }}</label>` +
                 `</view>` +
               `</template>`
             )
@@ -644,7 +644,7 @@ describe('slot', () => {
         expect(slot1.dependencies.length).toEqual(0)
         expect(slot1.body).toEqual(
           `<template name="${slot1.slotName}" parent="${options.name}">` +
-            `<view class="_div {{p}}">{{ s[ 8 + _t ].t }}</view>` +
+            `<view class="_div {{p}}">{{ s[ 's8' + _t ].t }}</view>` +
           `</template>`
         )
 
@@ -685,7 +685,7 @@ describe('slot', () => {
           if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<view class="_div {{p}}">{{ s[ 6 + _t ].t }}</view>` +
+                `<view class="_div {{p}}">{{ s[ 's6' + _t ].t }}</view>` +
               `</template>`
             )
           }
@@ -763,7 +763,7 @@ describe('slot', () => {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
                 `<view class="_p {{p}}">` +
-                  `<label class="_span {{p}}">{{ s[ 7 + _t ].t }}</label>` +
+                  `<label class="_span {{p}}">{{ s[ 's7' + _t ].t }}</label>` +
                 `</view>` +
               `</template>`
             )
@@ -965,8 +965,8 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label a:for="{{ s[ 4 + (_t || '') ].li }}" a:for-item="item" a:for-index="item_i1" class="_span {{p}}">` +
-                `{{ s[ 5 + _t + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}` +
+              `<label a:for="{{ s[ 's4' + (_t || '') ].li }}" a:for-item="item" a:for-index="item_i1" class="_span {{p}}">` +
+                `{{ s[ 's5' + _t + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}` +
               `</label>` +
             `</template>`
           )
@@ -997,8 +997,8 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label a:for="{{ s[ 4 + (_t || '') ].li }}" a:for-item="item" a:for-index="item_i1" class="_span {{p}}">` +
-                `{{ s[ 5 + _t + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}` +
+              `<label a:for="{{ s[ 's4' + (_t || '') ].li }}" a:for-item="item" a:for-index="item_i1" class="_span {{p}}">` +
+                `{{ s[ 's5' + _t + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}` +
               `</label>` +
             `</template>`
           )
@@ -1035,7 +1035,7 @@ describe('slot', () => {
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
               `<label class="_span {{p}}">` +
-                `{{ s[ 6 + _t ].t }}` +
+                `{{ s[ 's6' + _t ].t }}` +
               `</label>` +
             `</template>`
           )
@@ -1072,7 +1072,7 @@ describe('slot', () => {
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
               `<label class="_span {{p}}">` +
-                `{{ s[ 6 + _t ].t }}` +
+                `{{ s[ 's6' + _t ].t }}` +
               `</label>` +
             `</template>`
           )
@@ -1108,8 +1108,8 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label a:for="{{ s[ 5 + (_t || '') ].li }}" a:for-item="item" a:for-index="item_i1" class="_span {{p}}">` +
-                `{{ s[ 6 + _t + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}` +
+              `<label a:for="{{ s[ 's5' + (_t || '') ].li }}" a:for-item="item" a:for-index="item_i1" class="_span {{p}}">` +
+                `{{ s[ 's6' + _t + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}` +
               `</label>` +
             `</template>`
           )
@@ -1140,7 +1140,7 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label class="_span {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 4 + _t }}" onTap="_pe">` +
+              `<label class="_span {{p}}" data-cid="{{ _c || c }}" data-hid="{{ 's4' + _t }}" onTap="_pe">` +
                 `click` +
               `</label>` +
             `</template>`

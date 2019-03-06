@@ -37,10 +37,10 @@ describe('Component scoped slot', () => {
     })
 
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s[4].t).toBe('hello')
+    expect(comp1.s['s4'].t).toBe('hello')
     vm.$refs.test.msg = 'world'
     waitForUpdate(() => {
-      expect(comp1.s[4].t).toBe('world')
+      expect(comp1.s['s4'].t).toBe('world')
     }).then(done)
   })
 
@@ -66,10 +66,10 @@ describe('Component scoped slot', () => {
     })
 
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s[3].t).toBe('hello')
+    expect(comp1.s['s3'].t).toBe('hello')
     vm.$refs.test.msg = 'world'
     waitForUpdate(() => {
-      expect(comp1.s[3].t).toBe('world')
+      expect(comp1.s['s3'].t).toBe('world')
     }).then(done)
   })
 
@@ -100,11 +100,11 @@ describe('Component scoped slot', () => {
     })
 
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s[4].t).toBe('hello world !')
+    expect(comp1.s['s4'].t).toBe('hello world !')
     vm.$refs.test.msg = 'bye'
     vm.$refs.test.obj.msg2 = 'bye'
     waitForUpdate(() => {
-      expect(comp1.s[4].t).toBe('bye bye !')
+      expect(comp1.s['s4'].t).toBe('bye bye !')
     }).then(done)
   })
 
@@ -191,13 +191,13 @@ describe('Component scoped slot', () => {
     })
 
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s[4].t).toBe('FOO')
-    expect(comp1.s[6].t).toBe('BAR')
+    expect(comp1.s['s4'].t).toBe('FOO')
+    expect(comp1.s['s6'].t).toBe('BAR')
     // expect(vm.$el.innerHTML).toBe('<span>FOO</span><span>BAR</span>')
     vm.$refs.test.foo = 'BAZ'
     waitForUpdate(() => {
-      expect(comp1.s[4].t).toBe('BAZ')
-      expect(comp1.s[6].t).toBe('BAR')
+      expect(comp1.s['s4'].t).toBe('BAZ')
+      expect(comp1.s['s6'].t).toBe('BAR')
       // expect(vm.$el.innerHTML).toBe('<span>BAZ</span><span>BAR</span>')
     }).then(done)
   })
@@ -223,10 +223,10 @@ describe('Component scoped slot', () => {
       }
     })
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s[3].t).toBe('FOO BAR')
+    expect(comp1.s['s3'].t).toBe('FOO BAR')
     vm.$refs.test.foo = 'BAZ'
     waitForUpdate(() => {
-      expect(comp1.s[3].t).toBe('BAZ BAR')
+      expect(comp1.s['s3'].t).toBe('BAZ BAR')
     }).then(done)
   })
 
@@ -251,7 +251,8 @@ describe('Component scoped slot', () => {
     const pageData = getPageData(page, '0')
     const comp1 = getPageData(page, '0,0')
     expect(pageData._h).toBeUndefined()
-    expect(comp1.s[3].t).toBe('hello fallback')
+    console.log(comp1)
+    expect(comp1.s['3'].t).toBe('hello fallback')
   })
 
   it('slot with v-for', done => {
@@ -283,7 +284,7 @@ describe('Component scoped slot', () => {
 
     function assertOutput () {
       vm.$refs.test.items.map((item, i) => {
-        expect(comp1.s[`4-${i}`].t).toBe(item)
+        expect(comp1.s[`s4-${i}`].t).toBe(item)
       })
     }
 
@@ -329,7 +330,7 @@ describe('Component scoped slot', () => {
 
     function assertOutput () {
       vm.$refs.test.items.map((item, i) => {
-        expect(comp1.s[`4-${i}`].t).toBe(item)
+        expect(comp1.s[`s4-${i}`].t).toBe(item)
       })
     }
 
@@ -368,7 +369,7 @@ describe('Component scoped slot', () => {
       }
     })
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s[3].t).toBe('helloI am static')
+    expect(comp1.s['s3'].t).toBe('helloI am static')
   })
 
   it('non-scoped slot with scope alias', () => {
@@ -395,7 +396,7 @@ describe('Component scoped slot', () => {
     })
 
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s[4].t).toBe('meh')
+    expect(comp1.s['s4'].t).toBe('meh')
   })
 
   it('warn key on slot', () => {
@@ -500,7 +501,7 @@ describe('Component scoped slot', () => {
     waitForUpdate(() => {
       // TODO: make slot snippet with v-if work
       // expect(comp1.s[3].if).toBeTruthy()
-      expect(comp1.s[3].t).toBe('foo foo')
+      expect(comp1.s['s3'].t).toBe('foo foo')
     }).then(done)
   })
 
@@ -541,7 +542,7 @@ describe('Component scoped slot', () => {
     function assertOutput () {
       vm.items.map((item, i) => {
         const name = vm.$refs.test.info.name
-        expect(comp1.s[`4-${i}`].t).toBe(`${name} + ${item}`)
+        expect(comp1.s[`s4-${i}`].t).toBe(`${name} + ${item}`)
       })
     }
 
@@ -603,7 +604,7 @@ describe('v-slot syntax', () => {
         components: { Foo }
       })
       const comp1 = getPageData(page, '0,0')
-      expect(comp1.s[2].t).toBe('100')
+      expect(comp1.s['s3'].t).toBe('100')
     })
   
     it(`should work with ${syntax} using destructing`, () => {
@@ -616,7 +617,7 @@ describe('v-slot syntax', () => {
         components: { Foo }
       })
       const comp1 = getPageData(page, '0,0')
-      expect(comp1.s[2].t).toBe('100')
+      expect(comp1.s['s3'].t).toBe('100')
     })
   
     it(`should work with ${syntax} using destructing`, () => {
@@ -631,9 +632,9 @@ describe('v-slot syntax', () => {
         components: { Foo }
       })
       const comp1 = getPageData(page, '0,0')
-      expect(comp1.s[2].t).toBe('100')
-      expect(comp1.s[4].t).toBe('200')
-      expect(comp1.s[6].t).toBe('300')
+      expect(comp1.s['s3'].t).toBe('100')
+      expect(comp1.s['s5'].t).toBe('200')
+      expect(comp1.s['s7'].t).toBe('300')
     })
   
     it(`should work with ${syntax} using destructing on component`, () => {
@@ -644,7 +645,7 @@ describe('v-slot syntax', () => {
         components: { Foo }
       })
       const comp1 = getPageData(page, '0,0')
-      expect(comp1.s[2].t).toBe('100')
+      expect(comp1.s['s3'].t).toBe('100')
     })
 
     it(`should warn ${syntax} usage on non-component elements`, () => {

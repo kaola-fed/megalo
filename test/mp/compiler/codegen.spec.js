@@ -85,7 +85,7 @@ describe('codegen', () => {
           `</CompA>` +
         `</div>`
       ),
-      `with(this){return _c('div',{attrs:{"h_":0}},[_c('CompA',{attrs:{"h_":1,"c_":0}},[_c('CompB',{attrs:{"h_":3,"c_":1}})],1)],1)}`,
+      `with(this){return _c('div',{attrs:{"h_":0}},[_c('CompA',{attrs:{"h_":1,"c_":0}},[_c('CompB',{attrs:{"h_":'s3',"c_":1}})],1)],1)}`,
       {
         imports: {
           CompA: { name: 'compa' },
@@ -148,7 +148,7 @@ describe('codegen', () => {
     // component in v-for, slot element should not have fid
     assertCodegen(
       '<div><li v-for="i in 3"><compa><div></div></compa></li></div>',
-      `with(this){return _c('div',{attrs:{"h_":0}},_l((3),function(i,i_i1,i_i2){var f_ = (i_i2 !== undefined ? i_i2 : i_i1);return _c('li',{attrs:{"h_":1,"f_":f_}},[_c('compa',{attrs:{"h_":2,"f_":f_,"c_":0}},[_c('div',{attrs:{"h_":4}})])],1)},[1],_self),0)}`,
+      `with(this){return _c('div',{attrs:{"h_":0}},_l((3),function(i,i_i1,i_i2){var f_ = (i_i2 !== undefined ? i_i2 : i_i1);return _c('li',{attrs:{"h_":1,"f_":f_}},[_c('compa',{attrs:{"h_":2,"f_":f_,"c_":0}},[_c('div',{attrs:{"h_":'s4'}})])],1)},[1],_self),0)}`,
       { imports: { compa: { name: 'compa' }}}
     )
   })
@@ -198,17 +198,17 @@ describe('codegen', () => {
   it('generate v-if directive inside components', () => {
     assertCodegen(
       '<test><p v-if="show">hello</p></test>',
-      `with(this){return _c('test',{attrs:{"h_":0,"c_":0}},[(_ri(!!(show), 2))?_c('p',{attrs:{"h_":2,"i_":[ !!(show), 2, null ]}},[]):_c("a", {attrs: {i_:[!!(show), 2, null]}})])}`,
+      `with(this){return _c('test',{attrs:{"h_":0,"c_":0}},[(_ri(!!(show), 's2'))?_c('p',{attrs:{"h_":'s2',"i_":[ !!(show), 's2', null ]}},[]):_c("a", {attrs: {i_:[!!(show), 's2', null]}})])}`,
       { imports: { test: { name: 'test' }}}
     )
     assertCodegen(
       '<test><p v-if="show">hello</p><p v-else-if="show2"></p></test>',
-      `with(this){return _c('test',{attrs:{"h_":0,"c_":0}},[(_ri(!!(show), 2))?_c('p',{attrs:{"h_":2,"i_":[ !!(show), 2, null,!!(show2), 4, null ]}},[]):(_ri(!!(show2), 4))?_c('p',{attrs:{"h_":4,"i_":[ !!(show), 2, null,!!(show2), 4, null ]}}):_c("a", {attrs: {i_:[!!(show), 2, null,!!(show2), 4, null]}})])}`,
+      `with(this){return _c('test',{attrs:{"h_":0,"c_":0}},[(_ri(!!(show), 's2'))?_c('p',{attrs:{"h_":'s2',"i_":[ !!(show), 's2', null,!!(show2), 's4', null ]}},[]):(_ri(!!(show2), 's4'))?_c('p',{attrs:{"h_":'s4',"i_":[ !!(show), 's2', null,!!(show2), 's4', null ]}}):_c("a", {attrs: {i_:[!!(show), 's2', null,!!(show2), 's4', null]}})])}`,
       { imports: { test: { name: 'test' }}}
     )
     assertCodegen(
       '<test><p v-if="show">hello</p><p v-else></p></test>',
-      `with(this){return _c('test',{attrs:{"h_":0,"c_":0}},[(_ri(!!(show), 2))?_c('p',{attrs:{"h_":2,"i_":[ !!(show), 2, null ]}},[]):_c('p',{attrs:{"h_":4,"i_":[ !!(show), 2, null ]}})])}`,
+      `with(this){return _c('test',{attrs:{"h_":0,"c_":0}},[(_ri(!!(show), 's2'))?_c('p',{attrs:{"h_":'s2',"i_":[ !!(show), 's2', null ]}},[]):_c('p',{attrs:{"h_":'s4',"i_":[ !!(show), 's2', null ]}})])}`,
       { imports: { test: { name: 'test' }}}
     )
   })
@@ -286,12 +286,12 @@ describe('codegen', () => {
   it('generate scoped slot', () => {
     assertCodegen(
       '<foo><template slot-scope="bar">{{ bar }}</template></foo>',
-      `with(this){return _c('foo',{attrs:{"h_":0,"c_":0},scopedSlots:_u([{key:"default",fn:function(bar){return [_v(_s(bar),3)]}}])})}`,
+      `with(this){return _c('foo',{attrs:{"h_":0,"c_":0},scopedSlots:_u([{key:"default",fn:function(bar){return [_v(_s(bar),'s3')]}}])})}`,
       { imports: { foo: { name: 'foo' }}}
     )
     assertCodegen(
       '<foo><div slot-scope="bar">{{ bar }}</div></foo>',
-      `with(this){return _c('foo',{attrs:{"h_":0,"c_":0},scopedSlots:_u([{key:"default",fn:function(bar){return _c('div',{attrs:{"h_":2}},[_v(_s(bar),3)])}}])})}`,
+      `with(this){return _c('foo',{attrs:{"h_":0,"c_":0},scopedSlots:_u([{key:"default",fn:function(bar){return _c('div',{attrs:{"h_":'s2'}},[_v(_s(bar),'s3')])}}])})}`,
       { imports: { foo: { name: 'foo' }}}
     )
   })
@@ -299,12 +299,12 @@ describe('codegen', () => {
   it('generate named scoped slot', () => {
     assertCodegen(
       '<foo><template slot="foo" slot-scope="bar">{{ bar }}</template></foo>',
-      `with(this){return _c('foo',{attrs:{"h_":0,"c_":0},scopedSlots:_u([{key:"foo",fn:function(bar){return [_v(_s(bar),3)]}}])})}`,
+      `with(this){return _c('foo',{attrs:{"h_":0,"c_":0},scopedSlots:_u([{key:"foo",fn:function(bar){return [_v(_s(bar),'s3')]}}])})}`,
       { imports: { foo: { name: 'foo' }, bar: { name: 'bar' }}}
     )
     assertCodegen(
       '<foo><div slot="foo" slot-scope="bar">{{ bar }}</div></foo>',
-      `with(this){return _c('foo',{attrs:{"h_":0,"c_":0},scopedSlots:_u([{key:"foo",fn:function(bar){return _c('div',{attrs:{"h_":2}},[_v(_s(bar),3)])}}])})}`,
+      `with(this){return _c('foo',{attrs:{"h_":0,"c_":0},scopedSlots:_u([{key:"foo",fn:function(bar){return _c('div',{attrs:{"h_":'s2'}},[_v(_s(bar),'s3')])}}])})}`,
       { imports: { foo: { name: 'foo' }, bar: { name: 'bar' }}}
     )
   })
@@ -650,7 +650,7 @@ describe('codegen', () => {
   it('generate component', () => {
     assertCodegen(
       '<my-component name="mycomponent1" :msg="msg" @notify="onNotify"><div>hi</div></my-component>',
-      `with(this){return _c('my-component',{attrs:{"name":"mycomponent1","msg":msg,"h_":0,"c_":0},on:{"notify":onNotify}},[_c('div',{attrs:{"h_":2}},[])])}`,
+      `with(this){return _c('my-component',{attrs:{"name":"mycomponent1","msg":msg,"h_":0,"c_":0},on:{"notify":onNotify}},[_c('div',{attrs:{"h_":'s2'}},[])])}`,
       {
         imports: {
           myComponent: { name: 'myComponent' }

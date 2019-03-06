@@ -32,7 +32,10 @@ Vue.prototype.$mount = function (
           test: { name: 'test' },
           test2: { name: 'test2' },
           test3: { name: 'test3' },
-          child: { name: 'child' }
+          child: { name: 'child' },
+          foo: { name: 'foo' },
+          bar: { name: 'bar' },
+          comp: { name: 'comp' }
         },
         transformAssetUrls: {
           img: 'src'
