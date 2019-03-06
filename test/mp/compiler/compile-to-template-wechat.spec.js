@@ -1409,7 +1409,69 @@ describe('slot', () => {
       ),
       (
         `<view class="_div {{p}}">` +
-          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default:h[ 4 ]._if?'${slot1}':'', _t: _t || '',p:p||'' }}" />` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default:h[ 's4' ]._if?'${slot1}':'', _t: _t || '',p:p||'' }}" />` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        res.slots.forEach((slot) => {
+          expect(slot.name).toEqual('default')
+          expect(slot.body).toEqual(
+            `<template name="${slot.slotName}" parent="${options.name}">` +
+              `<view class="_div {{p}}">{{ s[ 's6' + _t ].t }}</view>` +
+            `</template>`
+          )
+        })
+      }
+    )
+  })
+
+  it('define slot snippet wtich v-else-if', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<div v-if="n === 1">1</div>` +
+            `<div v-else-if="n === 2">2</div>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div {{p}}">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default:(h[ 's4' ]._if||h[ 's6' ]._if)?'${slot1}':'', _t: _t || '',p:p||'' }}" />` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        res.slots.forEach((slot) => {
+          expect(slot.name).toEqual('default')
+          expect(slot.body).toEqual(
+            `<template name="${slot.slotName}" parent="${options.name}">` +
+              `<view wx:if="{{ s[ 's4' + _t ]._if }}" class="_div {{p}}">1</view>` +
+              `<view wx:elif="{{ s[ 's6' + _t ]._if }}" class="_div {{p}}">2</view>` +
+            `</template>`
+          )
+        })
+      }
+    )
+  })
+
+  it('define slot snippet wtich v-else', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<div v-if="n === 1">1</div>` +
+            `<div v-else-if="n === 2">2</div>` +
+            `<div v-else>other</div>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div {{p}}">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', _t: _t || '',p:p||'' }}" />` +
         `</view>`
       ),
       options,
