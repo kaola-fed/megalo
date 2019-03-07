@@ -6658,7 +6658,7 @@ try {
       if (isIgnoreKey(key)) {
         continue
       }
-      cur = attrs[key];
+      cur = attrs[key] !== undefined ? attrs[key] : '';
       old = oldAttrs[key];
 
       // only update daynamic attrs in runtime
@@ -7541,7 +7541,7 @@ try {
 
   /*  */
 
-  Vue.megaloVersion = '0.9.0-2';
+  Vue.megaloVersion = '0.9.0-3';
 
   return Vue;
 
