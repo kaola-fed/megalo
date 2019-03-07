@@ -444,4 +444,32 @@ describe('Directive v-bind', () => {
       expect(pageData.h[2].src).toBe('https://a/1.jpg')
     }).then(done)
   })
+
+  it('attr with undefined/0/null/\'\'', done => {
+    const options = {
+      template: '<div><span :test="foo">hello</span></div>',
+      data: { foo: 'ok' }
+    }
+
+    const { page, vm } = createPage(options)
+
+    function expectAttr (expected) {
+      expect(getPageData(page, '0').h['1'].test).toEqual(expected)
+    }
+
+    expectAttr('ok')
+    vm.foo = undefined
+    waitForUpdate(() => {
+      expectAttr('')
+      vm.foo = null
+    }).then(() => {
+      expectAttr(null)
+      vm.foo = 0
+    }).then(() => {
+      expectAttr(0)
+      vm.foo = ''
+    }).then(() => {
+      expectAttr('')
+    }).then(done)
+  })
 })
