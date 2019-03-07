@@ -34,7 +34,7 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
     if (isIgnoreKey(key)) {
       continue
     }
-    cur = attrs[key]
+    cur = attrs[key] !== undefined ? attrs[key] : ''
     old = oldAttrs[key]
 
     // only update daynamic attrs in runtime
