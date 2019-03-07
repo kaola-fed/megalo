@@ -5976,8 +5976,8 @@ TemplateGenerator.prototype.genSlotSnippets = function genSlotSnippets (el) {
         return null
       }
 
-      if (!ifHolder && ast[0].if) {
-        ifHolder = this$1.genHolder(ast[0], 'if');
+      if (!ifHolder && ast[0].ifConditions) {
+        ifHolder = this$1.genIfHolderForSlotSnippets(ast[0].ifConditions);
       }
 
       this$1.enterSlotSnippet(slot);
@@ -6359,21 +6359,24 @@ TemplateGenerator.prototype.genChildren = function genChildren (el) {
   return el.children.map(function (child) { return this$1.genElement(child); }).join('')
 };
 
-TemplateGenerator.prototype.genHolderVar = function genHolderVar () {
-  if (this.isInSlotSnippet() || this.isInFallbackSlot()) {
+TemplateGenerator.prototype.genHolderVar = function genHolderVar (holder) {
+  if (
+    isUndef(holder) &&
+    ( this.isInSlotSnippet() || this.isInFallbackSlot() )
+  ) {
     return SLOT_HOLDER_VAR
   }
-  return HOLDER_VAR
+  return holder || HOLDER_VAR
 };
 
-TemplateGenerator.prototype.genHolder = function genHolder (el, type) {
+TemplateGenerator.prototype.genHolder = function genHolder (el, type, holder) {
   var varName = HOLDER_TYPE_VARS[type];
   var hid = typeof el === 'string' ? el : this.genHid(el);
   /* istanbul ignore next */
   if (!varName) {
     throw new Error((type + " holder HOLDER_TYPE_VARS not found"))
   }
-  return ((this.genHolderVar()) + "[ " + hid + " ]." + varName)
+  return ((this.genHolderVar(holder)) + "[ " + hid + " ]." + varName)
 };
 
 /* istanbul ignore next */
@@ -6580,6 +6583,26 @@ TemplateGenerator.prototype.leaveComponent = function leaveComponent () {
 
 TemplateGenerator.prototype.getCurrentCompoent = function getCurrentCompoent () {
   return this.componentsStack[this.componentsStack.length - 1] || this
+};
+
+
+TemplateGenerator.prototype.genIfHolderForSlotSnippets = function genIfHolderForSlotSnippets (ifConditions) {
+    var this$1 = this;
+
+  var lastCond = ifConditions[ifConditions.length - 1];
+  // if there is else condition, there will always be a slot snippet and never fallback
+  if (lastCond.block.else) {
+    return ''
+  } else {
+    var res = ifConditions.map(function (cond) {
+      return this$1.genHolder(cond.block, 'if', HOLDER_VAR)
+    });
+    if (res.length > 1) {
+      return ("(" + (res.join('||')) + ")")
+    } else {
+      return res 
+    }
+  }
 };
 
 /*  */
