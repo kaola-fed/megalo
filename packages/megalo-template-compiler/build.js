@@ -5976,7 +5976,7 @@ TemplateGenerator.prototype.genSlotSnippets = function genSlotSnippets (el) {
         return null
       }
 
-      if (!ifHolder && ast[0].ifConditions) {
+      if (ast.length === 1 && !ifHolder && ast[0].ifConditions) {
         ifHolder = this$1.genIfHolderForSlotSnippets(ast[0].ifConditions);
       }
 
