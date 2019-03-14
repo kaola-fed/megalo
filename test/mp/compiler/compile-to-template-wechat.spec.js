@@ -1362,7 +1362,7 @@ describe('slot', () => {
     )
   })
 
-  it('define slot snippet wtich v-if', () => {
+  it('define slot snippet with v-if', () => {
     const slot1 = slotName('default').replace('$', '_')
     assertCodegen(
       (
@@ -1395,7 +1395,7 @@ describe('slot', () => {
     )
   })
 
-  it('define socped slot snippet wtich v-if', () => {
+  it('define socped slot snippet with v-if', () => {
     const slot1 = slotName('default').replace('$', '_')
     assertCodegen(
       (
@@ -1426,7 +1426,7 @@ describe('slot', () => {
     )
   })
 
-  it('define slot snippet wtich v-else-if', () => {
+  it('define slot snippet with v-else-if', () => {
     const slot1 = slotName('default').replace('$', '_')
     assertCodegen(
       (
@@ -1457,7 +1457,7 @@ describe('slot', () => {
     )
   })
 
-  it('define slot snippet wtich v-else', () => {
+  it('define slot snippet with v-else', () => {
     const slot1 = slotName('default').replace('$', '_')
     assertCodegen(
       (
@@ -1483,6 +1483,39 @@ describe('slot', () => {
               `<view wx:if="{{ s[ 's4' + _t ]._if }}" class="_div {{p}}">1</view>` +
               `<view wx:elif="{{ s[ 's6' + _t ]._if }}" class="_div {{p}}">2</view>` +
               `<view wx:else class="_div {{p}}">other</view>` +
+            `</template>`
+          )
+        })
+      }
+    )
+  })
+
+  it('define slot snippet with v-if in multi snippet', () => {
+    const slot1 = slotName('default').replace('$', '_')
+    assertCodegen(
+      (
+        `<div>` +
+          `<CompA>` +
+            `<div v-if="ok">{{ title }}</div>` +
+            `<div>static</div>` +
+          `</CompA>` +
+        `</div>`
+      ),
+      (
+        `<view class="_div {{p}}">` +
+          `<template is="${CompA.name}" data="{{ ...$root[ cp + 0 + (_t || '') ], $root, s_default: '${slot1}', _t: _t || '',p:p||'' }}" />` +
+        `</view>`
+      ),
+      options,
+      function aasertRes (res) {
+        res.slots.forEach((slot) => {
+          expect(slot.name).toEqual('default')
+          expect(slot.body).toEqual(
+            `<template name="${slot.slotName}" parent="${options.name}">` +
+              `<view wx:if="{{ s[ 's4' + _t ]._if }}" class="_div {{p}}">` +
+                `{{ s[ 's5' + _t ].t }}` +
+              `</view>` +
+              `<view class="_div {{p}}">static</view>` +
             `</template>`
           )
         })
