@@ -220,7 +220,7 @@ export class TemplateGenerator {
           return null
         }
 
-        if (!ifHolder && ast[0].ifConditions) {
+        if (ast.length === 1 && !ifHolder && ast[0].ifConditions) {
           ifHolder = this.genIfHolderForSlotSnippets(ast[0].ifConditions)
         }
 
