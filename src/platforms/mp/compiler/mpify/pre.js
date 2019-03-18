@@ -313,12 +313,18 @@ class State {
   // }
   getHId () {
     this.pushElem()
-    const h_ = `${this.getCurrentElemIndex()}`
+    let h_ = `${this.getCurrentElemIndex()}`
+    if (this.isInSlot()) {
+      h_ = `'s${h_}'`;
+    }
     return `${h_}`
   }
   getCId () {
     this.pushElem()
-    const c_ = `${this.getCurrentCompIndex()}`
+    let c_ = `${this.getCurrentCompIndex()}`
+    if (this.isInSlot()) {
+      c_ = `'s${c_}'`;
+    }
     return `${c_}`
   }
   getFid () {
@@ -330,11 +336,7 @@ class State {
     return this.getCurrentComp().id !== 0
   }
   assignHId (node) {
-    let h_ = this.getHId(node)
-
-    if (this.isInSlot()) {
-      h_ = "'s" + h_ + "'";
-    }
+    const h_ = this.getHId(node)
 
     Object.assign(node, { h_ })
   }
