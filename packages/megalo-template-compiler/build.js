@@ -5525,11 +5525,17 @@ State.prototype.getCurrentElemIndex = function getCurrentElemIndex () {
 State.prototype.getHId = function getHId () {
   this.pushElem();
   var h_ = "" + (this.getCurrentElemIndex());
+  if (this.isInSlot()) {
+    h_ = "'s" + h_ + "'";
+  }
   return ("" + h_)
 };
 State.prototype.getCId = function getCId () {
   this.pushElem();
   var c_ = "" + (this.getCurrentCompIndex());
+  if (this.isInSlot()) {
+    c_ = "'s" + c_ + "'";
+  }
   return ("" + c_)
 };
 State.prototype.getFid = function getFid () {
@@ -5542,10 +5548,6 @@ State.prototype.isInSlot = function isInSlot () {
 };
 State.prototype.assignHId = function assignHId (node) {
   var h_ = this.getHId(node);
-
-  if (this.isInSlot()) {
-    h_ = "'s" + h_ + "'";
-  }
 
   Object.assign(node, { h_: h_ });
 };
