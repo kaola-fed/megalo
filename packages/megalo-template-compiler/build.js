@@ -1682,6 +1682,7 @@ var VM_ID_PREFIX = 'cp';
 var LIST_TAIL_SEPS = {
   swan: '_',
   wechat: '-',
+  toutiao: '-',
   alipay: '-'
 };
 
@@ -5139,10 +5140,70 @@ var swan$1 = mergePreset(basePrest, {
   }
 });
 
+var prefix$3 = "tt:";
+
+var eventTypeMap$4 = {
+  tap: ['tap', 'click'],
+  touchstart: ['touchstart'],
+  touchmove: ['touchmove'],
+  touchcancel: ['touchcancel'],
+  touchend: ['touchend'],
+  longtap: ['longtap'],
+  input: ['input'],
+  blur: ['change', 'blur'],
+  submit: ['submit'],
+  focus: ['focus'],
+  scrolltoupper: ['scrolltoupper'],
+  scrolltolower: ['scrolltolower'],
+  scroll: ['scroll']
+};
+
+var findEventType$3 = createFindEventTypeFn(eventTypeMap$4);
+
+var toutiao = mergePreset(basePrest, {
+  prefix: prefix$3,
+  ext: "ttml",
+  directives: {
+    if: (prefix$3 + "if"),
+    elseif: (prefix$3 + "elif"),
+    else: (prefix$3 + "else"),
+    for: (prefix$3 + "for"),
+    forItem: (prefix$3 + "for-item"),
+    forIndex: (prefix$3 + "for-index"),
+    forKey: (prefix$3 + "key"),
+    on: "bind",
+    onStop: "catch",
+    capture: "capture"
+  },
+  eventTypeMap: eventTypeMap$4,
+  findEventType: findEventType$3,
+  genBind: function genBind (event, type, tag) {
+    var modifiers = event.modifiers; if ( modifiers === void 0 ) modifiers = {};
+    var isCapture = /!/.test(type);
+    var realType = type.replace(/^[~|!]/, '');
+    var stop = modifiers.stop;
+    var mpType = realType;
+    var binder = stop ? 'catch' : 'bind';
+    binder = isCapture ? ("capture-" + binder) : binder;
+
+    if (binder !== 'bind') {
+      binder = binder + ":";
+    }
+
+    if (type === 'change' && (tag === 'input' || tag === 'textarea')) {
+      mpType = 'blur';
+    } else {
+      mpType = mpType === 'click' ? 'tap' : mpType;
+    }
+    return ("" + binder + mpType)
+  }
+});
+
 var presets = {
   wechat: wechat,
   alipay: alipay,
-  swan: swan$1
+  swan: swan$1,
+  toutiao: toutiao
 };
 
 var vbindReg = /^(v-bind:?|:)/;
