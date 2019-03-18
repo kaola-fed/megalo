@@ -13,6 +13,7 @@ export const VM_ID_SEP_REG = /v/
 export const LIST_TAIL_SEPS = {
   swan: '_',
   wechat: '-',
+  toutiao: '-',
   alipay: '-'
 }
 export const LIST_TAIL_SEP_REG = /(\-|_)/
