@@ -1,6 +1,6 @@
 {
   "name": "@megalo/template-compiler",
-  "version": "0.9.0",
+  "version": "0.9.1-0",
   "description": "megalo template compiler for Vue",
   "main": "index.js",
   "repository": {
