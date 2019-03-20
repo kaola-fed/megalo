@@ -500,10 +500,17 @@ export class TemplateGenerator {
     if (!el.key) {
       return ''
     }
-    const FOR_KEY = this.directive('forKey')
-
+    const forKey = this.directive('forKey')
     const keyName = el.key.replace(/^\w*\./, '').replace(/\./g, '_')
-    return keyName ? ` ${FOR_KEY}="${keyName}"` : /* istanbul ignore next */ ''
+    if (keyName) {
+      if (typeof forKey === 'function') {
+        return ` ${forKey(el)}`
+      } else {
+        return ` ${forKey}="${keyName}"`
+      }
+    } else {
+      return ''
+    }
   }
 
   genText (el): string {
