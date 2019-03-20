@@ -67,7 +67,9 @@ export default mergePreset(basePrest, {
     for: `${prefix}for`,
     forItem: `${prefix}for-item`,
     forIndex: `${prefix}for-index`,
-    forKey: `${prefix}key`,
+    forKey(el) {
+      return `key="{{${el.key}}}"`
+    },
     on: `bind`,
     onStop: `catch`,
     capture: `capture`
