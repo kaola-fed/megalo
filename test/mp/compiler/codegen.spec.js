@@ -85,7 +85,7 @@ describe('codegen', () => {
           `</CompA>` +
         `</div>`
       ),
-      `with(this){return _c('div',{attrs:{"h_":0}},[_c('CompA',{attrs:{"h_":1,"c_":0}},[_c('CompB',{attrs:{"h_":'s3',"c_":1}})],1)],1)}`,
+      `with(this){return _c('div',{attrs:{"h_":0}},[_c('CompA',{attrs:{"h_":1,"c_":0}},[_c('CompB',{attrs:{"h_":'s3',"c_":'s1'}})],1)],1)}`,
       {
         imports: {
           CompA: { name: 'compa' },
