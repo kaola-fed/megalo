@@ -10,7 +10,7 @@ branches:
     - develop
 
 install:
-- npm install --only=dev
+- yarn 
 
 script:
 - npm run test:megalo:ci
