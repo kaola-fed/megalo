@@ -6,6 +6,7 @@ import {
   isUndef
 } from 'shared/util'
 import { updateVnodeToMP } from '../instance/index'
+import { isHTMLTag } from 'mp/util/index'
 
 const ignoreKeys = ['h_', 'f_', 'k_', 'c_', 'b_', 'sc_']
 
@@ -38,7 +39,17 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
     old = oldAttrs[key]
 
     // only update daynamic attrs in runtime
-    if ((old !== cur || attrs.h_ !== oldAttrs.h_) && key !== 'slot') {
+    if (
+      key !== 'slot' &&
+      (
+        old !== cur ||
+        attrs.h_ !== oldAttrs.h_ ||
+        // if it's not html tag, attribute can be object
+        // just update it if is changes
+        // TODO: optimize performance, diff the Array or Object first
+        !isHTMLTag(vnode.tag) && typeof cur === 'object'
+      )
+    ) {
       // if using local image file, set path to the root
       if (cur && vnode.tag === 'img' && key === 'src' && !/^\/|:\/\/|data:/.test(cur)) {
         cur = `/${cur}`
