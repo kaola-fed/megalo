@@ -508,8 +508,6 @@ export class TemplateGenerator {
       } else {
         return ` ${forKey}="${keyName}"`
       }
-    } else {
-      return ''
     }
   }
 
