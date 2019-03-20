@@ -299,7 +299,7 @@ describe('compilteToTemplate: alipay', () => {
         `</div>`
       ),
       (
-        `<view a:for="{{ h[ 1 ].li }}" a:key="id" a:for-item="item" a:for-index="index" class="_div {{p}}">` +
+        `<view a:for="{{ h[ 1 ].li }}" key="{{item.id}}" a:for-item="item" a:for-index="index" class="_div {{p}}">` +
           `<view class="_div {{p}}">{{ h[ 3 + '-' + (item_i2 !== undefined ? item_i2 : index) ].t }}</view>` +
         `</view>`
       )
@@ -313,8 +313,8 @@ describe('compilteToTemplate: alipay', () => {
         `</div>`
       ),
       (
-        `<view a:for="{{ h[ 1 ].li }}" a:key="id" a:for-item="item" a:for-index="index" class="_div {{p}}">` +
-          `<view a:for="{{ h[ 2 + '-' + (item_i2 !== undefined ? item_i2 : index) ].li }}" a:key="id" a:for-item="e" a:for-index="i" class="_div {{p}}">` +
+        `<view a:for="{{ h[ 1 ].li }}" key="{{item.id}}" a:for-item="item" a:for-index="index" class="_div {{p}}">` +
+          `<view a:for="{{ h[ 2 + '-' + (item_i2 !== undefined ? item_i2 : index) ].li }}" key="{{e.id}}" a:for-item="e" a:for-index="i" class="_div {{p}}">` +
             `{{ h[ 3 + '-' + (item_i2 !== undefined ? item_i2 : index) + '-' + (e_i2 !== undefined ? e_i2 : i) ].t }}` +
           `</view>` +
         `</view>`
@@ -329,8 +329,8 @@ describe('compilteToTemplate: alipay', () => {
         `</div>`
       ),
       (
-        `<view a:for="{{ h[ 1 ].li }}" a:key="id" a:for-item="item" a:for-index="item_i1" class="_div {{p}}">` +
-          `<view a:for="{{ h[ 2 + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].li }}" a:key="id" a:for-item="e" a:for-index="e_i1" class="_div {{p}}">` +
+        `<view a:for="{{ h[ 1 ].li }}" key="{{item.id}}" a:for-item="item" a:for-index="item_i1" class="_div {{p}}">` +
+          `<view a:for="{{ h[ 2 + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].li }}" key="{{e.id}}" a:for-item="e" a:for-index="e_i1" class="_div {{p}}">` +
             `{{ h[ 3 + '-' + (item_i2 !== undefined ? item_i2 : item_i1) + '-' + (e_i2 !== undefined ? e_i2 : e_i1) ].t }}` +
           `</view>` +
         `</view>`
@@ -344,7 +344,7 @@ describe('compilteToTemplate: alipay', () => {
       ),
       (
         `<block a:for="{{ h[ 1 ].li }}" a:for-item="item" a:for-index="item_i1">` +
-          `<view a:key="id" class="_div {{p}}">{{ h[ 3 + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}</view>` +
+          `<view key="{{item.id}}" class="_div {{p}}">{{ h[ 3 + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}</view>` +
         `</block>`
       )
     )
