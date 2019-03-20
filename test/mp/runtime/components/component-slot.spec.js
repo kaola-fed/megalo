@@ -263,7 +263,7 @@ describe('Component slot', () => {
       }
     })
 
-    const comp2 = getPageData(page, '0,0,1')
+    const comp2 = getPageData(page, '0,0,s1')
 
     expect(comp2.s['s5'].t).toBe('foo')
     // expect(comp1.s).toBe('0')
@@ -753,9 +753,9 @@ describe('Component slot', () => {
       }
     })
     const pageData = getPageData(page, '0')
-    const comp1 = getPageData(page, '0,0-0,1-0')
-    const comp2 = getPageData(page, '0,0-1,1-1')
-    const comp3 = getPageData(page, '0,0-2,1-2')
+    const comp1 = getPageData(page, '0,0-0,s1-0')
+    const comp2 = getPageData(page, '0,0-1,s1-1')
+    const comp3 = getPageData(page, '0,0-2,s1-2')
     expect(pageData.h[1].li.length).toBe(3)
     expect(comp1.s['s5-0'].li.length).toBe(3)
     expect(comp1.s['s6-0-0'].t).toBe('1-1')
@@ -794,30 +794,30 @@ describe('Component slot', () => {
     // test1.0
     expect(getPageData(page, '0,0-0')).toBeDefined()
     // test2.0
-    expect(getPageData(page, '0,0-0,1-0')).toBeDefined()
+    expect(getPageData(page, '0,0-0,s1-0')).toBeDefined()
     // test3.0
-    expect(getPageData(page, '0,0-0,1-0,0-0')).toBeDefined()
+    expect(getPageData(page, '0,0-0,s1-0,0-0')).toBeDefined()
 
     // test1.1
     expect(getPageData(page, '0,0-1')).toBeDefined()
     // test2.1
-    expect(getPageData(page, '0,0-1,1-1')).toBeDefined()
+    expect(getPageData(page, '0,0-1,s1-1')).toBeDefined()
     // test3.1
-    expect(getPageData(page, '0,0-1,1-1,0-1')).toBeDefined()
+    expect(getPageData(page, '0,0-1,s1-1,0-1')).toBeDefined()
 
     // test1.2
     expect(getPageData(page, '0,0-2')).toBeDefined()
     // test2.2
-    expect(getPageData(page, '0,0-2,1-2')).toBeDefined()
+    expect(getPageData(page, '0,0-2,s1-2')).toBeDefined()
     // test3.2
-    expect(getPageData(page, '0,0-2,1-2,0-2')).toBeDefined()
+    expect(getPageData(page, '0,0-2,s1-2,0-2')).toBeDefined()
 
     // test.3.0
-    expect(getPageData(page, '0,0-0,1-0,0-0').h[1].t).toBe('1')
+    expect(getPageData(page, '0,0-0,s1-0,0-0').h[1].t).toBe('1')
     // test.3.1
-    expect(getPageData(page, '0,0-1,1-1,0-1').h[1].t).toBe('2')
+    expect(getPageData(page, '0,0-1,s1-1,0-1').h[1].t).toBe('2')
     // test.3.2
-    expect(getPageData(page, '0,0-2,1-2,0-2').h[1].t).toBe('3')
+    expect(getPageData(page, '0,0-2,s1-2,0-2').h[1].t).toBe('3')
   })
 
   it('the elements of slot should be updated correctly', done => {

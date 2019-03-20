@@ -90,7 +90,7 @@ describe('special cases', () => {
               `<template name="${slot2}" parent="App$1234">` +
                 `<view wx:for="{{ s[ 's5' + (_t || '') ].li }}" wx:for-item="ele" wx:for-index="ele_i1" class="_div {{p}}">` +
                   `<template is="CompB$1234" ` +
-                    `data="{{ ...$root[ cp + 1 + (_t || '') + '-' + (ele_i2 !== undefined ? ele_i2 : ele_i1) ], $root, s_default: '${slot1}', _t: (_t || '') + '-' + (ele_i2 !== undefined ? ele_i2 : ele_i1),p:p||'' }}" ` +
+                    `data="{{ ...$root[ cp + 's1' + (_t || '') + '-' + (ele_i2 !== undefined ? ele_i2 : ele_i1) ], $root, s_default: '${slot1}', _t: (_t || '') + '-' + (ele_i2 !== undefined ? ele_i2 : ele_i1),p:p||'' }}" ` +
                   `/>` +
                 `</view>` +
               `</template>`

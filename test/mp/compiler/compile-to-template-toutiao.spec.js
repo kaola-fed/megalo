@@ -698,7 +698,7 @@ describe('slot', () => {
         expect(slot2.body).toEqual(
           `<template name="${slot2.slotName}" parent="${options.name}">` +
             `<view class="_div {{p}}">` +
-              `<template is="${CompB.name}" data="{{ ...$root[ cp + 1 + (_t || '') ], $root, s_default: '${slot1.slotName}', _t: _t || '',p:p||'' }}" />` +
+              `<template is="${CompB.name}" data="{{ ...$root[ cp + 's1' + (_t || '') ], $root, s_default: '${slot1.slotName}', _t: _t || '',p:p||'' }}" />` +
             `</view>` +
           `</template>`
         )
@@ -852,7 +852,7 @@ describe('slot', () => {
           } else if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<template is="CompB$1234" data="{{ ...$root[ cp + 1 + (_t || '') ], $root, s_foo: '${slot2}', _t: _t || '',p:p||'' }}" />` +
+                `<template is="CompB$1234" data="{{ ...$root[ cp + 's1' + (_t || '') ], $root, s_foo: '${slot2}', _t: _t || '',p:p||'' }}" />` +
               `</template>`
             )
           }
@@ -1281,7 +1281,7 @@ describe('slot', () => {
         res.slots.forEach(slot => {
           if (slot.name === 'default') {
             expect(slot.dependencies[0]).toBe('CompB$1234')
-            expect(slot.body).toContain(`<template is="CompB$1234" data="{{ ...$root[ cp + 1 + (_t || '') ], $root, _t: _t || '',p:p||'' }}" />`)
+            expect(slot.body).toContain(`<template is="CompB$1234" data="{{ ...$root[ cp + 's1' + (_t || '') ], $root, _t: _t || '',p:p||'' }}" />`)
           }
         })
       }
@@ -1316,7 +1316,7 @@ describe('slot', () => {
         res.slots.forEach(slot => {
           if (slot.name === 'default') {
             expect(slot.dependencies[0]).toBe('CompB$1234')
-            expect(slot.body).toContain(`<template is="CompB$1234" data="{{ ...$root[ cp + 1 + (_t || '') ], $root, _t: _t || '',p:p||'' }}" />`)
+            expect(slot.body).toContain(`<template is="CompB$1234" data="{{ ...$root[ cp + 's1' + (_t || '') ], $root, _t: _t || '',p:p||'' }}" />`)
           }
         })
       }
