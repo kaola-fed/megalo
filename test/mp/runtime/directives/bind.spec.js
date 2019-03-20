@@ -472,4 +472,37 @@ describe('Directive v-bind', () => {
       expectAttr('')
     }).then(done)
   })
+
+  it('update non html tag attr', done => {
+    const range = [
+      [{ id: 0, name: 'a' }, { id: 1, name: 'b' }],
+    ]
+    const options = {
+      template: '<picker :range="range"></picker>',
+      data: { range }
+    }
+
+    const { page, vm } = createPage(options)
+    const spy = spyOn(vm, '$updateMPData')
+
+    function expectAttr (expected) {
+      expect(getPageData(page, '0').h['0'].range).toEqual(expected)
+    }
+
+    waitForUpdate(() => {
+      expectAttr(range)
+      vm.range.push(
+        [{ id: 1, name: 'a' }, { id: 2, name: 'b' }]
+      )
+    }).then(() => {
+      expect(spy.calls.count()).toBe(1)
+      expectAttr(range)
+      vm.range[0].push(
+        { id: 3, name: 'a' }
+      )
+    }).then(() => {
+      expect(spy.calls.count()).toBe(2)
+      expectAttr(range)
+    }).then(done)
+  })
 })
