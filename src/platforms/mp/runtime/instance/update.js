@@ -49,10 +49,11 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
   const vmId = getVMId(vm)
   const hid = getHid(vm, vnode)
   const camelizedType = camelize(type)
+  const holderVar = (vnode.slotContext && vnode.context !== vnode.slotContext) ? SLOT_HOLDER_VAR : HOLDER_VAR
   const dataPaths = [
     ROOT_DATA_VAR,
     vmId,
-    vnode.slotContext ? SLOT_HOLDER_VAR : HOLDER_VAR,
+    holderVar,
     hid,
     camelizedType
   ]
