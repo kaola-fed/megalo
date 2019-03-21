@@ -598,7 +598,7 @@ export class TemplateGenerator {
   genHolderVar (holder) {
     if (
       isUndef(holder) &&
-      ( this.isInSlotSnippet() || this.isInFallbackSlot() )
+      this.isInSlotSnippet()
     ) {
       return SLOT_HOLDER_VAR
     }
