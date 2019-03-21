@@ -523,13 +523,13 @@ describe('slot', () => {
     assertCodegen(
       (
         `<div>` +
-          `<slot v-if="!ok" name="head">head slot</slot>` +
+          `<slot v-if="!ok" name="head">{{a}}</slot>` +
           `<slot v-if="ok">default slot</slot>` +
         `</div>`
       ),
       (
         `<view class="_div">` +
-          `<template name="${slot1}">head slot</template>` +
+          `<template name="${slot1}">{{ h[ 3 ].t }}</template>` +
           `<template is="{{ s_head || '${slot1}' }}" data="{{ ...$root[ c ], $root, _t: _t || '',p:p||'', _c: c }}" wx:if="{{ h[ 2 ]._if }}"/>` +
           `<template name="${slot2}">default slot</template>` +
           `<template is="{{ s_default || '${slot2}' }}" data="{{ ...$root[ c ], $root, _t: _t || '',p:p||'', _c: c }}" wx:if="{{ h[ 4 ]._if }}"/>` +

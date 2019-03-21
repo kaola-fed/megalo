@@ -98,7 +98,7 @@ describe('Component slot', () => {
       childTemplate: '<div><slot><p>{{msg}}</p></slot></div>'
     })
     const comp1 = getPageData(page, '0,0')
-    expect(comp1.s['3'].t).toBe('child message')
+    expect(comp1.h['3'].t).toBe('child message')
     // expect(child.$el.children[0].tagName).toBe('P')
     // expect(child.$el.textContent).toBe('child message')
   })
