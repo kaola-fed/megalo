@@ -19,7 +19,9 @@ module.exports = {
   ],
   globals: {
     "__WEEX__": true,
-    "WXEnvironment": true
+    "WXEnvironment": true,
+    "App": true,
+    "Page": true
   },
   rules: {
     // 'no-console': process.env.NODE_ENV !== 'production' ? 0 : 2,
