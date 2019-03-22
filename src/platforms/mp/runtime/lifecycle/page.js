@@ -1,17 +1,26 @@
 import { initRootVM, proxyEvent } from 'mp/runtime/instance/index'
 import { callHook } from './call-hook'
+import { installHooks } from './install-hooks'
 import { ROOT_DATA_VAR } from 'mp/util/index'
 
 const page = {}
+const hooks = [
+  'onPullDownRefresh',
+  'onReachBottom',
+  'onShareAppMessage',
+  'onPageScroll',
+  'onTabItemTap',
+  'onTitleClick'
+]
 
-page.init = function init (opt) {
-  Page({
+page.init = function init (vueOptions) {
+  const pageOptions = {
     // 生命周期函数--监听页面加载
     data: {
       [ROOT_DATA_VAR]: {}
     },
     onLoad (options) {
-      const rootVM = this.rootVM = initRootVM(this, opt, options)
+      const rootVM = this.rootVM = initRootVM(this, vueOptions, options)
 
       callHook(rootVM, 'onLoad', options)
 
@@ -19,7 +28,6 @@ page.init = function init (opt) {
 
       rootVM.$mp._instantUpdate()
     },
-    // 生命周期函数--监听页面初次渲染完成
     onReady (options) {
       const rootVM = this.rootVM
       const mp = rootVM.$mp
@@ -28,7 +36,6 @@ page.init = function init (opt) {
 
       callHook(rootVM, 'onReady', options)
     },
-    // 生命周期函数--监听页面显示
     onShow (options) {
       const rootVM = this.rootVM
       const mp = rootVM.$mp
@@ -36,7 +43,6 @@ page.init = function init (opt) {
       mp.status = 'show'
       callHook(rootVM, 'onShow', options)
     },
-    // 生命周期函数--监听页面隐藏
     onHide (options) {
       const rootVM = this.rootVM
       const mp = rootVM.$mp
@@ -44,7 +50,6 @@ page.init = function init (opt) {
       mp.status = 'hide'
       callHook(rootVM, 'onHide', options)
     },
-    // 生命周期函数--监听页面卸载
     onUnload (options) {
       const rootVM = this.rootVM
       const mp = rootVM.$mp
@@ -52,42 +57,7 @@ page.init = function init (opt) {
       mp.status = 'unload'
       callHook(rootVM, 'onUnload', options)
     },
-    // 页面相关事件处理函数--监听用户下拉动作
-    onPullDownRefresh (options) {
-      const rootVM = this.rootVM
 
-      callHook(rootVM, 'onPullDownRefresh', options)
-    },
-    // 页面上拉触底事件的处理函数
-    onReachBottom (options) {
-      const rootVM = this.rootVM
-
-      callHook(rootVM, 'onReachBottom', options)
-    },
-    // 用户点击右上角转发
-    onShareAppMessage (options) {
-      const rootVM = this.rootVM
-
-      return callHook(rootVM, 'onShareAppMessage', options)
-    },
-    // 页面滚动触发事件的处理函数
-    onPageScroll (options) {
-      const rootVM = this.rootVM
-
-      callHook(rootVM, 'onPageScroll', options)
-    },
-    // 当前是 tab 页时，点击 tab 时触发
-    onTabItemTap (options) {
-      const rootVM = this.rootVM
-
-      callHook(rootVM, 'onTabItemTap', options)
-    },
-    // 支付宝小程序: 标题被点击
-    onTitleClick () {
-      const rootVM = this.rootVM
-
-      callHook(rootVM, 'onTitleClick')
-    },
     _pe (e) {
       this.proxyEvent(e)
     },
@@ -95,7 +65,10 @@ page.init = function init (opt) {
       const rootVM = this.rootVM
       proxyEvent(rootVM, e)
     }
-  })
+  }
+
+  installHooks(pageOptions, vueOptions.options, hooks)
+  Page(pageOptions)
 }
 
 export default page
