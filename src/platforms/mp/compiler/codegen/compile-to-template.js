@@ -770,9 +770,9 @@ export class TemplateGenerator {
     return this.slotSnippetBuffer.length > 0
   }
 
-  isInFallbackSlot () {
-    return this.fallbackSlot > 0
-  }
+  // isInFallbackSlot () {
+  //   return this.fallbackSlot > 0
+  // }
 
   // isInScopedSlotSnippet () {
   //   return this.slotSnippetBuffer.length > 0 && this.getCurrentSlotSnippet().scoped
