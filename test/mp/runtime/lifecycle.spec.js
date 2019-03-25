@@ -75,6 +75,31 @@ describe('lifecycle', () => {
     expect(pageOptions.onPageNotFound).toHaveBeenCalledTimes(1)
   })
 
+  it('App lifecycle without globalData', () => {
+    new Vue({
+      mpType: 'app'
+    }).$mount()
+    const mpApp = App.createInstance()
+    mpApp._callHook('onLaunch')
+    expect(mpApp.globalData).toEqual({})
+  })
+
+  it('App lifecycle with object as globalData', () => {
+    const globalData = {
+      x: 100
+    }
+    const appOptions = {
+      mpType: 'app',
+      globalData
+    }
+
+    new Vue(appOptions).$mount()
+    const mpApp = App.createInstance()
+    mpApp._callHook('onLaunch')
+
+    expect(mpApp.globalData).toEqual(globalData)
+  })
+
   it('Page lifecycle', () => {
     resetVue()
     setMPPlatform('wechat')
