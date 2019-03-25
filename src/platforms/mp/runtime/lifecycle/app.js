@@ -14,6 +14,7 @@ const hooks = [
 app.init = function (vueOptions) {
   let mpApp
 
+  /* istanbul ignore else */ 
   if (typeof my === 'undefined') {
     mpApp = App
   } else {
@@ -25,10 +26,15 @@ app.init = function (vueOptions) {
     globalData: {},
     onLaunch (options = {}) {
       const rootVM = this.rootVM = initRootVM(this, vueOptions, options.query)
-      const { globalData = () => {} } = rootVM.$options
-      this.globalData = globalData && (typeof globalData === 'function'
-        ? globalData.call(rootVM, options)
-        : globalData) || {}
+      const { globalData } = rootVM.$options
+      this.globalData = (
+        globalData && (
+          typeof globalData === 'function'
+            ? globalData.call(rootVM, options)
+            : globalData
+          )
+        || {}
+      )
       rootVM.globalData = this.globalData
       rootVM.$mount()
       callHook(rootVM, 'onLaunch', options)
