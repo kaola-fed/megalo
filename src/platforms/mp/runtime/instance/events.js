@@ -18,16 +18,25 @@ export function proxyEvent (rootVM, event) {
     sep = LIST_TAIL_SEPS[rootVM.$mp.platform] || LIST_TAIL_SEPS.wechat
   }
   const { type, detail = {}} = event
-  const target = event.currentTarget || event.target
-  const { dataset = {}} = target
-  const { cid, hid } = dataset
+  let handlers = []
 
-  const vm = getVM(rootVM, cid)
-  const handlers = getHandlers(vm, type, hid)
+  if (isAlipayMapEvent(event)) {
+    handlers = getAlipayMapEventHanlders(rootVM, event)
+  } else {
+    const target = event.currentTarget || event.target
+    const { dataset = {}} = target
+    const { cid, hid } = dataset
+
+    const vm = getVM(rootVM, cid)
+    handlers = getHandlers(vm, type, hid)
+  }
+
   const $event = Object.assign({}, event)
-  Object.assign(event.target, {
-    value: detail.value
-  })
+  if (event.target) {
+    Object.assign(event.target, {
+      value: detail.value
+    })
+  }
 
   handlers.forEach(handler => {
     handler($event)
@@ -46,16 +55,9 @@ function getVnode (vnode = {}, hid) {
   }
 }
 
-const eventPrefixes = ['', '!', '~']
 
 function getHandlers (vm, rawType, hid) {
-  const type = rawType.toLowerCase()
   let res = []
-
-  const eventTypes = eventTypeMap[type] || [type]
-  if (type !== rawType) {
-    eventTypes.push(rawType)
-  }
 
   /* istanbul ignore if */
   if (!vm) return res
@@ -64,15 +66,28 @@ function getHandlers (vm, rawType, hid) {
 
   if (!vnode) return res
 
-  const { elm, data = {} } = vnode
-  const dataOn = data.on || {}
-  const { on = {} } = elm
-  let handlerIsUndefined = true
 
   /* istanbul ignore if */
   if (!assertHid(vnode, hid)) return res
 
-  res = eventTypes.reduce((buf, event) => {
+  res = getHandlersOnVnode(vm, rawType, vnode)
+
+  return res
+}
+
+function getHandlersOnVnode(vm, rawType, vnode) {
+  const type = rawType.toLowerCase()
+  const eventTypes = eventTypeMap[type] || [type]
+  if (type !== rawType) {
+    eventTypes.push(rawType)
+  }
+
+  const { elm, data = {} } = vnode
+  const dataOn = data.on || {}
+  const { on = {} } = elm
+  let handlerIsUndefined = true
+  const eventPrefixes = ['', '!', '~']
+  const res = eventTypes.reduce((buf, event) => {
     const handler = on[event]
     /* istanbul ignore if */
 
@@ -104,4 +119,45 @@ function getHandlers (vm, rawType, hid) {
   }
 
   return res
+}
+
+function isAlipayMapEvent(e) {
+  if (
+    !e.target &&
+    (e.type === 'begin' || e.type === 'end')
+  ) {
+    return true
+  }
+  return false
+}
+
+function getAlipayMapEventHanlders(vm, event) {
+  const mapVNode = getAlipayMapVNode(vm, event)
+  return getHandlersOnVnode(vm, 'regionChange', mapVNode)
+}
+
+function getAlipayMapVNode(vm) {
+  let mapVNode = findVnode(vm._vnode, vnode => vnode.tag === 'map' && vnode )
+  if (!mapVNode) {
+    for(let i = 0; i < vm.$children.length; i++) {
+      mapVNode = getAlipayMapVNode(vm.$children[i])
+      if (mapVNode) {
+        break
+      }
+    }
+  }
+  return mapVNode
+}
+
+function findVnode(vnode, callback) {
+  let res = callback(vnode)
+  if (!res && vnode.children) {
+    for(let i = 0; i < vnode.children.length; i++) {
+      res = findVnode(vnode.children[i], callback)
+      if (res) {
+        break;
+      }
+    }
+  }
+  return res;
 }
