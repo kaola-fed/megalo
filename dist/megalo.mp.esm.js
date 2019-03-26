@@ -5211,17 +5211,26 @@ try {
     }
     var type = event.type;
     var detail = event.detail; if ( detail === void 0 ) detail = {};
-    var target = event.currentTarget || event.target;
-    var dataset = target.dataset; if ( dataset === void 0 ) dataset = {};
-    var cid = dataset.cid;
-    var hid = dataset.hid;
+    var handlers = [];
 
-    var vm = getVM(rootVM, cid);
-    var handlers = getHandlers(vm, type, hid);
+    if (isAlipayMapEvent(event)) {
+      handlers = getAlipayMapEventHanlders(rootVM, event);
+    } else {
+      var target = event.currentTarget || event.target;
+      var dataset = target.dataset; if ( dataset === void 0 ) dataset = {};
+      var cid = dataset.cid;
+      var hid = dataset.hid;
+
+      var vm = getVM(rootVM, cid);
+      handlers = getHandlers(vm, type, hid);
+    }
+
     var $event = Object.assign({}, event);
-    Object.assign(event.target, {
-      value: detail.value
-    });
+    if (event.target) {
+      Object.assign(event.target, {
+        value: detail.value
+      });
+    }
 
     handlers.forEach(function (handler) {
       handler($event);
@@ -5242,16 +5251,9 @@ try {
     }
   }
 
-  var eventPrefixes = ['', '!', '~'];
 
   function getHandlers (vm, rawType, hid) {
-    var type = rawType.toLowerCase();
     var res = [];
-
-    var eventTypes = eventTypeMap[type] || [type];
-    if (type !== rawType) {
-      eventTypes.push(rawType);
-    }
 
     /* istanbul ignore if */
     if (!vm) { return res }
@@ -5260,16 +5262,29 @@ try {
 
     if (!vnode) { return res }
 
+
+    /* istanbul ignore if */
+    if (!assertHid(vnode, hid)) { return res }
+
+    res = getHandlersOnVnode(vm, rawType, vnode);
+
+    return res
+  }
+
+  function getHandlersOnVnode(vm, rawType, vnode) {
+    var type = rawType.toLowerCase();
+    var eventTypes = eventTypeMap[type] || [type];
+    if (type !== rawType) {
+      eventTypes.push(rawType);
+    }
+
     var elm = vnode.elm;
     var data = vnode.data; if ( data === void 0 ) data = {};
     var dataOn = data.on || {};
     var on = elm.on; if ( on === void 0 ) on = {};
     var handlerIsUndefined = true;
-
-    /* istanbul ignore if */
-    if (!assertHid(vnode, hid)) { return res }
-
-    res = eventTypes.reduce(function (buf, event) {
+    var eventPrefixes = ['', '!', '~'];
+    var res = eventTypes.reduce(function (buf, event) {
       var handler = on[event];
       /* istanbul ignore if */
 
@@ -5301,6 +5316,47 @@ try {
     }
 
     return res
+  }
+
+  function isAlipayMapEvent(e) {
+    if (
+      !e.target &&
+      (e.type === 'begin' || e.type === 'end')
+    ) {
+      return true
+    }
+    return false
+  }
+
+  function getAlipayMapEventHanlders(vm, event) {
+    var mapVNode = getAlipayMapVNode(vm, event);
+    return getHandlersOnVnode(vm, 'regionChange', mapVNode)
+  }
+
+  function getAlipayMapVNode(vm) {
+    var mapVNode = findVnode(vm._vnode, function (vnode) { return vnode.tag === 'map' && vnode; } );
+    if (!mapVNode) {
+      for(var i = 0; i < vm.$children.length; i++) {
+        mapVNode = getAlipayMapVNode(vm.$children[i]);
+        if (mapVNode) {
+          break
+        }
+      }
+    }
+    return mapVNode
+  }
+
+  function findVnode(vnode, callback) {
+    var res = callback(vnode);
+    if (!res && vnode.children) {
+      for(var i = 0; i < vnode.children.length; i++) {
+        res = findVnode(vnode.children[i], callback);
+        if (res) {
+          break;
+        }
+      }
+    }
+    return res;
   }
 
   /*  */
@@ -6652,7 +6708,17 @@ try {
       old = oldAttrs[key];
 
       // only update daynamic attrs in runtime
-      if ((old !== cur || attrs.h_ !== oldAttrs.h_) && key !== 'slot') {
+      if (
+        key !== 'slot' &&
+        (
+          old !== cur ||
+          attrs.h_ !== oldAttrs.h_ ||
+          // if it's not html tag, attribute can be object
+          // just update it if is changes
+          // TODO: optimize performance, diff the Array or Object first
+          !isHTMLTag(vnode.tag) && typeof cur === 'object'
+        )
+      ) {
         // if using local image file, set path to the root
         if (cur && vnode.tag === 'img' && key === 'src' && !/^\/|:\/\/|data:/.test(cur)) {
           cur = "/" + cur;
@@ -7531,7 +7597,7 @@ try {
 
   /*  */
 
-  Vue.megaloVersion = '0.9.1-0';
+  Vue.megaloVersion = '0.10.0-alipay.0';
 
   return Vue;
 

@@ -5048,7 +5048,9 @@ var alipay = mergePreset(basePrest, {
     for: (prefix$1 + "for"),
     forItem: (prefix$1 + "for-item"),
     forIndex: (prefix$1 + "for-index"),
-    forKey: (prefix$1 + "key"),
+    forKey: function forKey(el) {
+      return ("key=\"{{" + (el.key) + "}}\"")
+    },
     on: "bind",
     onStop: "catch",
     capture: "capture"
@@ -6334,10 +6336,15 @@ TemplateGenerator.prototype.genForKey = function genForKey (el) {
   if (!el.key) {
     return ''
   }
-  var FOR_KEY = this.directive('forKey');
-
+  var forKey = this.directive('forKey');
   var keyName = el.key.replace(/^\w*\./, '').replace(/\./g, '_');
-  return keyName ? (" " + FOR_KEY + "=\"" + keyName + "\"") : /* istanbul ignore next */ ''
+  if (keyName) {
+    if (typeof forKey === 'function') {
+      return (" " + (forKey(el)))
+    } else {
+      return (" " + forKey + "=\"" + keyName + "\"")
+    }
+  }
 };
 
 TemplateGenerator.prototype.genText = function genText (el) {
