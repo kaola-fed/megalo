@@ -52,7 +52,9 @@ export function getTagNamespace () { /* console.log('getTagNamespace') */ }
 export function isUnknownElement () { /* console.log('isUnknownElement') */ }
 
 export const eventTypeMap = {
-  tap: ['tap', 'click']
+  tap: ['tap', 'click'],
+  begin: ['regionchange'],
+  end: ['regionchange']
 }
 
 export function getValue (obj = {}, path = '') {
