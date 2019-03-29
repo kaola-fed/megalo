@@ -49,13 +49,7 @@ function getVnode (vnode = {}, hid) {
 const eventPrefixes = ['', '!', '~']
 
 function getHandlers (vm, rawType, hid) {
-  const type = rawType.toLowerCase()
   let res = []
-
-  const eventTypes = eventTypeMap[type] || [type]
-  if (type !== rawType) {
-    eventTypes.push(rawType)
-  }
 
   /* istanbul ignore if */
   if (!vm) return res
@@ -64,15 +58,26 @@ function getHandlers (vm, rawType, hid) {
 
   if (!vnode) return res
 
+  /* istanbul ignore if */
+  if (!assertHid(vnode, hid)) return res
+  
+  res = getHandlersFromVnode(vm, vnode, rawType)
+
+  return res
+}
+
+function getHandlersFromVnode(vm, vnode, rawType) {
   const { elm, data = {} } = vnode
   const dataOn = data.on || {}
   const { on = {} } = elm
+  const type = rawType.toLowerCase()
+  const eventTypes = eventTypeMap[type] || [type]
   let handlerIsUndefined = true
+  if (type !== rawType) {
+    eventTypes.push(rawType)
+  }
 
-  /* istanbul ignore if */
-  if (!assertHid(vnode, hid)) return res
-
-  res = eventTypes.reduce((buf, event) => {
+  const res = eventTypes.reduce((buf, event) => {
     const handler = on[event]
     /* istanbul ignore if */
 
