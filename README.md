@@ -22,6 +22,7 @@
 
 - [文档](https://megalojs.org)
 - [magalo-aot](https://github.com/kaola-fed/megalo-aot)
+- [cli 工具](http://megalojs.org/#/cli/cli-service)
 - [demo](https://github.com/kaola-fed/megalo-demo)
 - [工程实例](https://github.com/kaola-fed/megalo-examples)
 
