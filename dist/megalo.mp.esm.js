@@ -4931,7 +4931,9 @@ try {
   function isUnknownElement () { /* console.log('isUnknownElement') */ }
 
   var eventTypeMap = {
-    tap: ['tap', 'click']
+    tap: ['tap', 'click'],
+    begin: ['regionchange'],
+    end: ['regionchange']
   };
 
   function getValue (obj, path) {
@@ -4999,11 +5001,15 @@ try {
   function calculateScopeId (vm) {
     var scopeIds = [];
     var cursor = vm;
+    var prev = null;
     while (cursor) {
-      var scopeId = getScopeId(cursor);
-      if (scopeId) {
-        scopeIds.unshift(scopeId);
+      if (prev === null || !isSlotParent(cursor, prev)) {
+        var scopeId = getScopeId(cursor);
+        if (scopeId) {
+          scopeIds.unshift(scopeId);
+        }
       }
+      prev = cursor;
       cursor = cursor.$parent;
     }
     return scopeIds.join(' ') || ''
@@ -5083,11 +5089,12 @@ try {
     return vmId
   }
 
-  // function isSlotParent (parent, child) {
-  //   const { $vnode = {}} = child || {}
-  //   const childSlotParentUId = $vnode._mpSlotParentUId
-  //   return isDef(childSlotParentUId) && childSlotParentUId === parent._uid
-  // }
+  function isSlotParent (parent, child) {
+    var ref = child || {};
+    var $vnode = ref.$vnode; if ( $vnode === void 0 ) $vnode = {};
+    var childSlotParentUId = $vnode._mpSlotParentUId;
+    return isDef(childSlotParentUId) && childSlotParentUId === parent._uid
+  }
 
   // export function getVMParentId (vm) {
   //   if (vm.$parent) {
@@ -5129,10 +5136,11 @@ try {
     var vmId = getVMId(vm);
     var hid = getHid(vm, vnode);
     var camelizedType = camelize(type);
+    var holderVar = (vnode.slotContext && vnode.context !== vnode.slotContext) ? SLOT_HOLDER_VAR : HOLDER_VAR;
     var dataPaths = [
       ROOT_DATA_VAR,
       vmId,
-      vnode.slotContext ? SLOT_HOLDER_VAR : HOLDER_VAR,
+      holderVar,
       hid,
       camelizedType
     ];
@@ -5245,13 +5253,7 @@ try {
   var eventPrefixes = ['', '!', '~'];
 
   function getHandlers (vm, rawType, hid) {
-    var type = rawType.toLowerCase();
     var res = [];
-
-    var eventTypes = eventTypeMap[type] || [type];
-    if (type !== rawType) {
-      eventTypes.push(rawType);
-    }
 
     /* istanbul ignore if */
     if (!vm) { return res }
@@ -5260,16 +5262,27 @@ try {
 
     if (!vnode) { return res }
 
+    /* istanbul ignore if */
+    if (!assertHid(vnode, hid)) { return res }
+    
+    res = getHandlersFromVnode(vm, vnode, rawType);
+
+    return res
+  }
+
+  function getHandlersFromVnode(vm, vnode, rawType) {
     var elm = vnode.elm;
     var data = vnode.data; if ( data === void 0 ) data = {};
     var dataOn = data.on || {};
     var on = elm.on; if ( on === void 0 ) on = {};
+    var type = rawType.toLowerCase();
+    var eventTypes = eventTypeMap[type] || [type];
     var handlerIsUndefined = true;
+    if (type !== rawType) {
+      eventTypes.push(rawType);
+    }
 
-    /* istanbul ignore if */
-    if (!assertHid(vnode, hid)) { return res }
-
-    res = eventTypes.reduce(function (buf, event) {
+    var res = eventTypes.reduce(function (buf, event) {
       var handler = on[event];
       /* istanbul ignore if */
 
@@ -6652,7 +6665,17 @@ try {
       old = oldAttrs[key];
 
       // only update daynamic attrs in runtime
-      if ((old !== cur || attrs.h_ !== oldAttrs.h_) && key !== 'slot') {
+      if (
+        key !== 'slot' &&
+        (
+          old !== cur ||
+          attrs.h_ !== oldAttrs.h_ ||
+          // if it's not html tag, attribute can be object
+          // just update it if is changes
+          // TODO: optimize performance, diff the Array or Object first
+          !isHTMLTag(vnode.tag) && typeof cur === 'object'
+        )
+      ) {
         // if using local image file, set path to the root
         if (cur && vnode.tag === 'img' && key === 'src' && !/^\/|:\/\/|data:/.test(cur)) {
           cur = "/" + cur;
@@ -7155,16 +7178,34 @@ try {
     return result
   }
 
-  var page = {};
+  function installHooks(pageOptions, vueOptions, hooks) {
+    hooks.forEach(function (hook) {
+      if (vueOptions[hook]) {
+        pageOptions[hook] = function hookFn(options) {
+          return callHook$2(this.rootVM, hook, options)
+        };
+      }
+    });
+  }
 
-  page.init = function init (opt) {
+  var page = {};
+  var hooks$2 = [
+    'onPullDownRefresh',
+    'onReachBottom',
+    'onShareAppMessage',
+    'onPageScroll',
+    'onTabItemTap',
+    'onTitleClick'
+  ];
+
+  page.init = function init (vueOptions) {
     var obj;
 
-    Page({
+    var pageOptions = {
       // 生命周期函数--监听页面加载
       data: ( obj = {}, obj[ROOT_DATA_VAR] = {}, obj ),
       onLoad: function onLoad (options) {
-        var rootVM = this.rootVM = initRootVM(this, opt, options);
+        var rootVM = this.rootVM = initRootVM(this, vueOptions, options);
 
         callHook$2(rootVM, 'onLoad', options);
 
@@ -7172,7 +7213,6 @@ try {
 
         rootVM.$mp._instantUpdate();
       },
-      // 生命周期函数--监听页面初次渲染完成
       onReady: function onReady (options) {
         var rootVM = this.rootVM;
         var mp = rootVM.$mp;
@@ -7181,7 +7221,6 @@ try {
 
         callHook$2(rootVM, 'onReady', options);
       },
-      // 生命周期函数--监听页面显示
       onShow: function onShow (options) {
         var rootVM = this.rootVM;
         var mp = rootVM.$mp;
@@ -7189,7 +7228,6 @@ try {
         mp.status = 'show';
         callHook$2(rootVM, 'onShow', options);
       },
-      // 生命周期函数--监听页面隐藏
       onHide: function onHide (options) {
         var rootVM = this.rootVM;
         var mp = rootVM.$mp;
@@ -7197,7 +7235,6 @@ try {
         mp.status = 'hide';
         callHook$2(rootVM, 'onHide', options);
       },
-      // 生命周期函数--监听页面卸载
       onUnload: function onUnload (options) {
         var rootVM = this.rootVM;
         var mp = rootVM.$mp;
@@ -7205,42 +7242,7 @@ try {
         mp.status = 'unload';
         callHook$2(rootVM, 'onUnload', options);
       },
-      // 页面相关事件处理函数--监听用户下拉动作
-      onPullDownRefresh: function onPullDownRefresh (options) {
-        var rootVM = this.rootVM;
 
-        callHook$2(rootVM, 'onPullDownRefresh', options);
-      },
-      // 页面上拉触底事件的处理函数
-      onReachBottom: function onReachBottom (options) {
-        var rootVM = this.rootVM;
-
-        callHook$2(rootVM, 'onReachBottom', options);
-      },
-      // 用户点击右上角转发
-      onShareAppMessage: function onShareAppMessage (options) {
-        var rootVM = this.rootVM;
-
-        return callHook$2(rootVM, 'onShareAppMessage', options)
-      },
-      // 页面滚动触发事件的处理函数
-      onPageScroll: function onPageScroll (options) {
-        var rootVM = this.rootVM;
-
-        callHook$2(rootVM, 'onPageScroll', options);
-      },
-      // 当前是 tab 页时，点击 tab 时触发
-      onTabItemTap: function onTabItemTap (options) {
-        var rootVM = this.rootVM;
-
-        callHook$2(rootVM, 'onTabItemTap', options);
-      },
-      // 支付宝小程序: 标题被点击
-      onTitleClick: function onTitleClick () {
-        var rootVM = this.rootVM;
-
-        callHook$2(rootVM, 'onTitleClick');
-      },
       _pe: function _pe (e) {
         this.proxyEvent(e);
       },
@@ -7248,61 +7250,55 @@ try {
         var rootVM = this.rootVM;
         proxyEvent(rootVM, e);
       }
-    });
+    };
+
+    installHooks(pageOptions, vueOptions.options, hooks$2);
+    Page(pageOptions);
   };
 
   var app$1 = {};
 
-  app$1.init = function (opt) {
-    var obj;
+  var hooks$3 = [
+    'onShow',
+    'onHide',
+    'onError',
+    'onPageNotFound'
+  ];
 
-    var _App;
+  app$1.init = function (vueOptions) {
+    var mpApp;
 
-    try {
-      _App = App;
-    } catch (err) {
+    /* istanbul ignore else */ 
+    if (typeof my === 'undefined') {
+      mpApp = App;
+    } else {
       // 支付宝小程序中 App() 必须在 app.js 里调用，且不能调用多次。
-      _App = my.__megalo.App; // eslint-disable-line
+      mpApp = my.__megalo.App; // eslint-disable-line
     }
-
-    _App({
-      data: ( obj = {}, obj[ROOT_DATA_VAR] = {}, obj ),
-      //	Function	生命周期函数--监听小程序初始化	当小程序初始化完成时，会触发 onLaunch（全局只触发一次）
+    var appOptions = {
+      data: {},
+      globalData: {},
       onLaunch: function onLaunch (options) {
         if ( options === void 0 ) options = {};
 
-        var rootVM = this.rootVM = initRootVM(this, opt, options.query);
+        var rootVM = this.rootVM = initRootVM(this, vueOptions, options.query);
         var ref = rootVM.$options;
-        var globalData = ref.globalData; if ( globalData === void 0 ) globalData = function () {};
-        this.globalData = globalData && (typeof globalData === 'function'
-          ? globalData.call(rootVM, options)
-          : globalData) || {};
+        var globalData = ref.globalData;
+        this.globalData = (
+          globalData && (
+            typeof globalData === 'function'
+              ? globalData.call(rootVM, options)
+              : globalData
+            )
+          || {}
+        );
         rootVM.globalData = this.globalData;
         rootVM.$mount();
         callHook$2(rootVM, 'onLaunch', options);
-      },
-      //	Function	生命周期函数--监听小程序显示	当小程序启动，或从后台进入前台显示，会触发 onShow
-      onShow: function onShow (options) {
-        var rootVM = this.rootVM;
-        callHook$2(rootVM, 'onShow', options);
-      },
-      //	Function	生命周期函数--监听小程序隐藏	当小程序从前台进入后台，会触发 onHide
-      onHide: function onHide () {
-        var rootVM = this.rootVM;
-        callHook$2(rootVM, 'onHide');
-      },
-      //	Function	错误监听函数	当小程序发生脚本错误，或者 api 调用失败时，会触发 onError 并带上错误信息
-      onError: function onError (msg) {
-        var rootVM = this.rootVM;
-        callHook$2(rootVM, 'onError', msg);
-      },
-      //	Function	页面不存在监听函数	当小程序出现要打开的页面不存在的情况，会带上页面信息回调该函数，详见下文
-      onPageNotFound: function onPageNotFound (options) {
-        var rootVM = this.rootVM;
-        callHook$2(rootVM, 'onPageNotFound', options);
-      },
-      globalData: {}
-    });
+      }
+    }; 
+    installHooks(appOptions, vueOptions.options, hooks$3);
+    mpApp(appOptions);
   };
 
   function initMP (vm, options) {
@@ -7531,7 +7527,7 @@ try {
 
   /*  */
 
-  Vue.megaloVersion = '0.9.1-0';
+  Vue.megaloVersion = '0.10.0';
 
   return Vue;
 

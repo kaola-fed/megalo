@@ -1675,6 +1675,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) ; else if (!isIE && typ
 var ROOT_DATA_VAR = '$root';
 var HOLDER_VAR = 'h';
 var SLOT_HOLDER_VAR = 's';
+var SCOPE_ID_VAR = 'd';
 var PARENT_SCOPE_ID_VAR = 'p';
 var FOR_TAIL_VAR = '_t';
 var VM_ID_PREFIX = 'cp';
@@ -2660,6 +2661,9 @@ var escapeText = function (str) {
 function getComponentInfo (name, imports) {
   if ( imports === void 0 ) imports = {};
 
+  if (isHTMLTag(name)) {
+    return null
+  }
   var camelizedName = camelize(name);
   var pascalizedName = pascalize(name);
   return (
@@ -5048,7 +5052,9 @@ var alipay = mergePreset(basePrest, {
     for: (prefix$1 + "for"),
     forItem: (prefix$1 + "for-item"),
     forIndex: (prefix$1 + "for-index"),
-    forKey: (prefix$1 + "key"),
+    forKey: function forKey(el) {
+      return ("key=\"{{" + (el.key) + "}}\"")
+    },
     on: "bind",
     onStop: "catch",
     capture: "capture"
@@ -6166,10 +6172,13 @@ TemplateGenerator.prototype.genClass = function genClass (el) {
   }
   if (h_ === '0') {
     klass.push(("{{ " + (this.genHolder(el, 'rootClass')) + " }}"));
+    // parent scope id class string only affect the root of a component
+    klass.push(("{{" + PARENT_SCOPE_ID_VAR + "}}"));
   }
 
-  // parent scope id class string
-  klass.push(("{{" + PARENT_SCOPE_ID_VAR + "}}"));
+  if (this.isInSlotSnippet()) {
+    klass.push(("{{" + SCOPE_ID_VAR + "}}"));
+  }
 
   // scope id class string
   if (this.scopeId && !this.isInSlotSnippet()) {
@@ -6334,10 +6343,15 @@ TemplateGenerator.prototype.genForKey = function genForKey (el) {
   if (!el.key) {
     return ''
   }
-  var FOR_KEY = this.directive('forKey');
-
+  var forKey = this.directive('forKey');
   var keyName = el.key.replace(/^\w*\./, '').replace(/\./g, '_');
-  return keyName ? (" " + FOR_KEY + "=\"" + keyName + "\"") : /* istanbul ignore next */ ''
+  if (keyName) {
+    if (typeof forKey === 'function') {
+      return (" " + (forKey(el)))
+    } else {
+      return (" " + forKey + "=\"" + keyName + "\"")
+    }
+  }
 };
 
 TemplateGenerator.prototype.genText = function genText (el) {
@@ -6425,7 +6439,7 @@ TemplateGenerator.prototype.genChildren = function genChildren (el) {
 TemplateGenerator.prototype.genHolderVar = function genHolderVar (holder) {
   if (
     isUndef(holder) &&
-    ( this.isInSlotSnippet() || this.isInFallbackSlot() )
+    this.isInSlotSnippet()
   ) {
     return SLOT_HOLDER_VAR
   }
@@ -6610,9 +6624,9 @@ TemplateGenerator.prototype.isInSlotSnippet = function isInSlotSnippet () {
   return this.slotSnippetBuffer.length > 0
 };
 
-TemplateGenerator.prototype.isInFallbackSlot = function isInFallbackSlot () {
-  return this.fallbackSlot > 0
-};
+// isInFallbackSlot () {
+// return this.fallbackSlot > 0
+// }
 
 // isInScopedSlotSnippet () {
 // return this.slotSnippetBuffer.length > 0 && this.getCurrentSlotSnippet().scoped
