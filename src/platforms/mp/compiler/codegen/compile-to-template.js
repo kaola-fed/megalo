@@ -20,7 +20,8 @@ import {
   FOR_TAIL_VAR,
   VM_ID_PREFIX,
   HOLDER_TYPE_VARS,
-  PARENT_SCOPE_ID_VAR
+  PARENT_SCOPE_ID_VAR,
+  SCOPE_ID_VAR
 } from 'mp/util/index'
 
 const vbindReg = /^(v-bind)?:/
@@ -343,10 +344,13 @@ export class TemplateGenerator {
     }
     if (h_ === '0') {
       klass.push(`{{ ${this.genHolder(el, 'rootClass')} }}`)
+      // parent scope id class string only affect the root of a component
+      klass.push(`{{${PARENT_SCOPE_ID_VAR}}}`)
     }
 
-    // parent scope id class string
-    klass.push(`{{${PARENT_SCOPE_ID_VAR}}}`)
+    if (this.isInSlotSnippet()) {
+      klass.push(`{{${SCOPE_ID_VAR}}}`)
+    }
 
     // scope id class string
     if (this.scopeId && !this.isInSlotSnippet()) {

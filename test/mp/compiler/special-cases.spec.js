@@ -65,8 +65,8 @@ describe('special cases', () => {
         `</div>`
       ),
       (
-        `<view class="_div {{p}}">` +
-          `<view wx:for="{{ h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i1" class="_div {{p}}">` +
+        `<view class="_div">` +
+          `<view wx:for="{{ h[ 2 ].li }}" wx:for-item="item" wx:for-index="item_i1" class="_div">` +
             `<template is="${CompA.name}" ` +
               `data="{{ ...$root[ cp + 0 + (_t || '') + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ],` +
                       ` $root, s_default: '${slot2}', _t: (_t || '') + '-' + (item_i2 !== undefined ? item_i2 : item_i1),p:p||'' }}" />` +
@@ -88,7 +88,7 @@ describe('special cases', () => {
           if (i === 1) {
             expect(slot.body).toBe(
               `<template name="${slot2}" parent="App$1234">` +
-                `<view wx:for="{{ s[ 's5' + (_t || '') ].li }}" wx:for-item="ele" wx:for-index="ele_i1" class="_div {{p}}">` +
+                `<view wx:for="{{ s[ 's5' + (_t || '') ].li }}" wx:for-item="ele" wx:for-index="ele_i1" class="_div {{d}}">` +
                   `<template is="CompB$1234" ` +
                     `data="{{ ...$root[ cp + 's1' + (_t || '') + '-' + (ele_i2 !== undefined ? ele_i2 : ele_i1) ], $root, s_default: '${slot1}', _t: (_t || '') + '-' + (ele_i2 !== undefined ? ele_i2 : ele_i1),p:p||'' }}" ` +
                   `/>` +
@@ -98,7 +98,7 @@ describe('special cases', () => {
           } else if (i === 0) {
             expect(slot.body).toBe(
               `<template name="${slot1}" parent="App$1234">` +
-                `<view wx:for="{{ s[ 's8' + (_t || '') ].li }}" wx:for-item="e" wx:for-index="e_i1" class="_div {{p}}">` +
+                `<view wx:for="{{ s[ 's8' + (_t || '') ].li }}" wx:for-item="e" wx:for-index="e_i1" class="_div {{d}}">` +
                   `{{ s[ 's9' + _t + '-' + (e_i2 !== undefined ? e_i2 : e_i1) ].t }}` +
                 `</view>` +
               `</template>`
