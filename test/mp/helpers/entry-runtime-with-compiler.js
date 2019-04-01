@@ -37,6 +37,7 @@ Vue.prototype.$mount = function (
           bar: { name: 'bar' },
           comp: { name: 'comp' }
         },
+        scopeId: options.__scopeId || 'v-page',
         transformAssetUrls: {
           img: 'src'
         }
