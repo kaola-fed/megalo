@@ -29,11 +29,15 @@ export function getScopeId (vm) {
 export function calculateScopeId (vm) {
   const scopeIds = []
   let cursor = vm
+  let prev = null
   while (cursor) {
-    const scopeId = getScopeId(cursor)
-    if (scopeId) {
-      scopeIds.unshift(scopeId)
+    if (prev === null || !isSlotParent(cursor, prev)) {
+      const scopeId = getScopeId(cursor)
+      if (scopeId) {
+        scopeIds.unshift(scopeId)
+      }
     }
+    prev = cursor
     cursor = cursor.$parent
   }
   return scopeIds.join(' ') || ''
@@ -111,11 +115,11 @@ export function getVMId (vm) {
   return vmId
 }
 
-// function isSlotParent (parent, child) {
-//   const { $vnode = {}} = child || {}
-//   const childSlotParentUId = $vnode._mpSlotParentUId
-//   return isDef(childSlotParentUId) && childSlotParentUId === parent._uid
-// }
+function isSlotParent (parent, child) {
+  const { $vnode = {}} = child || {}
+  const childSlotParentUId = $vnode._mpSlotParentUId
+  return isDef(childSlotParentUId) && childSlotParentUId === parent._uid
+}
 
 // export function getVMParentId (vm) {
 //   if (vm.$parent) {

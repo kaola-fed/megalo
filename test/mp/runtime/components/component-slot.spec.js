@@ -853,5 +853,28 @@ describe('Component slot', () => {
     }).then(done)
   })
 
+  it('scopeid calucation', done => {
+    const { page } = createPage({
+      template: '<div><test><test2></test2></test></div>',
+      components: {
+        test: {
+          template: '<div class="test1"><slot></slot></div>',
+          __scopeId: 'v-test1'
+        },
+        test2: {
+          template: '<div class="test2"><slot></slot></div>',
+          __scopeId: 'v-test2'
+        }
+      }
+    })
+
+    const comp1 = getPageData(page, '0,0')
+    const comp2 = getPageData(page, '0,0,s1')
+    waitForUpdate(() => {
+      expect(comp1.d).toBe(' v-page v-test1')
+      expect(comp2.d).toBe(' v-page v-test2')
+    }).then(done)
+  })
+
   // TODO: '<div><test v-for="i in 3" :key="i"><test2><div slot-scope="scope" v-for="ele in scope.list">{{ i }}-{{ ele }}</div></test2></test></div>',
 })
