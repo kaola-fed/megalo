@@ -5,6 +5,7 @@ import {
   capitalize,
   camelize
 } from 'shared/util'
+import { isHTMLTag } from 'mp/util/index'
 
 export const isUnaryTag = makeMap(
   'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
@@ -81,6 +82,9 @@ export const escapeText = (str = '') => {
 }
 
 export function getComponentInfo (name, imports = {}) {
+  if (isHTMLTag(name)) {
+    return null
+  }
   const camelizedName = camelize(name)
   const pascalizedName = pascalize(name)
   return (
