@@ -418,4 +418,107 @@ describe('lifecycle', () => {
 
     resetMPPlatform()
   })
+
+  it('Page lifecycle in typescript (simulate by using extend)', () => {
+    resetVue()
+    setMPPlatform('wechat')
+
+    const pageOptions = {
+      mpType: 'page',
+      template: `<div></div>`,
+      beforeCreate: spyFn('beforeCreate'),
+      created: spyFn('created'),
+      beforeMount: spyFn('beforeMount'),
+      mounted: spyFn('mounted'),
+      destroyed: spyFn('destroyed'),
+      onLoad: spyFn('onLoad'),
+      onUnload: spyFn('onUnload'),
+      onReady: spyFn('onReady'),
+      onShow: spyFn('onShow'),
+      onHide: spyFn('onHide'),
+      onPullDownRefresh: spyFn('onPullDownRefresh'),
+      onReachBottom: spyFn('onReachBottom'),
+      onPageScroll: spyFn('onPageScroll'),
+      onTabItemTap: spyFn('onTabItemTap'),
+      onShareAppMessage: spyFn('onShareAppMessage').and.returnValue({ from: 'megalo' })
+    }
+
+    const BasePage = Vue.extend(pageOptions)
+    Object.assign(BasePage, { mpType: 'page' })
+
+    const vm = new Vue(BasePage)
+    vm.$mount()
+
+    // before page instance created
+    expect(pageOptions.beforeCreate).not.toHaveBeenCalled()
+    expect(pageOptions.created).not.toHaveBeenCalled()
+    expect(pageOptions.beforeMount).not.toHaveBeenCalled()
+    expect(pageOptions.mounted).not.toHaveBeenCalled()
+    expect(pageOptions.destroyed).not.toHaveBeenCalled()
+
+    // page onLoad
+    const page = Page.createInstance()
+    const query = { query: { id: 100 }}
+    page._callHook('onLoad', query)
+    const rootVM = page.rootVM
+    // access $mp
+    expect(rootVM.$mp.page).toBe(page)
+    expect(rootVM.$mp.options).toEqual(query)
+    expect(rootVM.$mp.query).toEqual(query)
+    expect(rootVM.$mp.platform).toBe('wechat')
+    // hook called
+    expect(pageOptions.beforeCreate).toHaveBeenCalledTimes(1)
+    expect(pageOptions.created).toHaveBeenCalledTimes(1)
+    expect(pageOptions.onLoad).toHaveBeenCalledTimes(1)
+    expect(pageOptions.beforeMount).toHaveBeenCalledTimes(1)
+    expect(pageOptions.mounted).toHaveBeenCalledTimes(1)
+    expect(pageOptions.destroyed).not.toHaveBeenCalled()
+
+    // page onReady
+    page._callHook('onReady')
+    expect(pageOptions.beforeCreate).toHaveBeenCalledTimes(1)
+    expect(pageOptions.created).toHaveBeenCalledTimes(1)
+    expect(pageOptions.onReady).toHaveBeenCalledTimes(1)
+    expect(pageOptions.beforeMount).toHaveBeenCalledTimes(1)
+    expect(pageOptions.mounted).toHaveBeenCalledTimes(1)
+    expect(pageOptions.destroyed).not.toHaveBeenCalled()
+
+    // page onShow
+    page._callHook('onShow')
+    expect(pageOptions.onShow).toHaveBeenCalledTimes(1)
+
+    // page onHide
+    page._callHook('onHide')
+    expect(pageOptions.onHide).toHaveBeenCalledTimes(1)
+
+    // page onPullDownRefresh
+    page._callHook('onPullDownRefresh')
+    expect(pageOptions.onPullDownRefresh).toHaveBeenCalledTimes(1)
+
+    // page onReachBottom
+    page._callHook('onReachBottom')
+    expect(pageOptions.onReachBottom).toHaveBeenCalledTimes(1)
+
+    // page onPageScroll
+    page._callHook('onPageScroll', { scrollTop: 100 })
+    expect(pageOptions.onPageScroll).toHaveBeenCalledWith({ scrollTop: 100 })
+    expect(pageOptions.onPageScroll).toHaveBeenCalledTimes(1)
+
+    // page onTabItemTap
+    page._callHook('onTabItemTap', { index: 100 })
+    expect(pageOptions.onTabItemTap).toHaveBeenCalledWith({ index: 100 })
+    expect(pageOptions.onTabItemTap).toHaveBeenCalledTimes(1)
+
+    // page onShareAppMessage
+    const shareConfig = page._callHook('onShareAppMessage')
+    expect(pageOptions.onShareAppMessage).toHaveBeenCalledTimes(1)
+    expect(shareConfig).toEqual({ from: 'megalo' })
+
+    // page onUnload
+    page._callHook('onUnload')
+    expect(pageOptions.onUnload).toHaveBeenCalledTimes(1)
+    expect(pageOptions.destroyed).toHaveBeenCalledTimes(1)
+
+    resetMPPlatform()
+  })
 })
