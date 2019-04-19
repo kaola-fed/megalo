@@ -7180,7 +7180,11 @@ try {
 
   function installHooks(pageOptions, vueOptions, hooks) {
     hooks.forEach(function (hook) {
-      if (vueOptions[hook]) {
+      if (
+        vueOptions[hook] ||
+        // hooks definition is store in options in typescript
+        (vueOptions.options && vueOptions.options[hook])
+      ) {
         pageOptions[hook] = function hookFn(options) {
           return callHook$2(this.rootVM, hook, options)
         };
@@ -7527,7 +7531,7 @@ try {
 
   /*  */
 
-  Vue.megaloVersion = '0.10.0';
+  Vue.megaloVersion = '0.10.1';
 
   return Vue;
 
