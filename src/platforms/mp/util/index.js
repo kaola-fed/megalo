@@ -72,7 +72,7 @@ export function deepEqual (a, b) {
   const aType = typeof a
   const bType = typeof b
   if (aType !== 'object' || bType !== 'object' || aType !== bType) {
-    return a === b || (a === '' && b === undefined) || (a === undefined && b === '')
+    return a === b
   } else {
     if (Array.isArray(a)) {
       if (a.length !== b.length) {
