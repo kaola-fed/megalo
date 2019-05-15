@@ -1,4 +1,5 @@
 import { handleError } from 'core/util/index'
+import config from 'core/config'
 import { getVM } from './helper'
 import { isDef } from 'shared/util'
 import { LIST_TAIL_SEPS, eventTypeMap } from 'mp/util/index'
@@ -29,6 +30,9 @@ export function proxyEvent (rootVM, event) {
     value: detail.value
   })
 
+  if (config.globalEventHandler) {
+    config.globalEventHandler(vm, $event, handlers);
+  }
   handlers.forEach(handler => {
     handler($event)
   })
