@@ -4830,7 +4830,7 @@ try {
   };
   Buffer.prototype.shouldUpdateBuffer = function shouldUpdateBuffer (key, value) {
     if (!this.has(key)) {
-      return true
+      return false
     }
     return !this.isEqual(key, value)
   };
@@ -4954,7 +4954,7 @@ try {
     var aType = typeof a;
     var bType = typeof b;
     if (aType !== 'object' || bType !== 'object' || aType !== bType) {
-      return a === b || (a === '' && b === undefined) || (a === undefined && b === '')
+      return a === b
     } else {
       if (Array.isArray(a)) {
         if (a.length !== b.length) {
@@ -7531,7 +7531,7 @@ try {
 
   /*  */
 
-  Vue.megaloVersion = '0.10.1';
+  Vue.megaloVersion = '0.10.2-1';
 
   return Vue;
 
