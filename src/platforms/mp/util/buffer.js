@@ -14,7 +14,7 @@ export class Buffer {
   }
   shouldUpdateBuffer(key, value) {
     if (!this.has(key)) {
-      return true
+      return false
     }
     return !this.isEqual(key, value)
   }
