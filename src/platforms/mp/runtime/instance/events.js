@@ -24,15 +24,16 @@ export function proxyEvent (rootVM, event) {
   const { cid, hid } = dataset
 
   const vm = getVM(rootVM, cid)
-  const handlers = getHandlers(vm, type, hid)
+  const { vnode, handlers } = getHandlers(vm, type, hid)
   const $event = Object.assign({}, event)
   Object.assign(event.target, {
     value: detail.value
   })
 
   if (config.globalEventHandler) {
-    config.globalEventHandler(vm, $event, handlers);
+    config.globalEventHandler(vm, $event, vnode, handlers);
   }
+
   handlers.forEach(handler => {
     handler($event)
   })
@@ -53,21 +54,21 @@ function getVnode (vnode = {}, hid) {
 const eventPrefixes = ['', '!', '~']
 
 function getHandlers (vm, rawType, hid) {
-  let res = []
+  let handlers = []
 
   /* istanbul ignore if */
-  if (!vm) return res
+  if (!vm) return { handlers }
 
   const vnode = getVnode(vm._vnode, hid)
 
-  if (!vnode) return res
+  if (!vnode) return { vnode, handlers }
 
   /* istanbul ignore if */
-  if (!assertHid(vnode, hid)) return res
+  if (!assertHid(vnode, hid)) return handlers
   
-  res = getHandlersFromVnode(vm, vnode, rawType)
+  handlers = getHandlersFromVnode(vm, vnode, rawType)
 
-  return res
+  return { vnode, handlers }
 }
 
 function getHandlersFromVnode(vm, vnode, rawType) {
