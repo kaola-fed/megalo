@@ -77,6 +77,7 @@ describe('lifecycle', () => {
 
   it('App lifecycle without globalData', () => {
     new Vue({
+      template: `<div></div>`,
       mpType: 'app'
     }).$mount()
     const mpApp = App.createInstance()
@@ -90,6 +91,7 @@ describe('lifecycle', () => {
     }
     const appOptions = {
       mpType: 'app',
+      template: `<div></div>`,
       globalData
     }
 
