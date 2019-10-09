@@ -56,7 +56,7 @@ describe('compilteToTemplate: alipay', () => {
   const baseTagList = Object.keys(tagMap)
     .map(k => ({
       html: k,
-      mp: tagMap[k]
+      mp: k === 'span' ? 'view' : tagMap[k]
     }))
     .filter(tag => tag.html !== 'template' && tag.html !== 'script' && tag.html !== 'br')
 
@@ -557,7 +557,7 @@ describe('slot', () => {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
                 `<view class="_p {{d}}">` +
-                  `<label class="_span {{d}}">{{ s[ 's7' + _t ].t }}</label>` +
+                  `<view class="_span {{d}}">{{ s[ 's7' + _t ].t }}</view>` +
                 `</view>` +
               `</template>`
             )
@@ -719,8 +719,8 @@ describe('slot', () => {
           if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<label class="_span {{d}}"></label>` +
-                `<label class="_span {{d}}"></label>` +
+                `<view class="_span {{d}}"></view>` +
+                `<view class="_span {{d}}"></view>` +
               `</template>`
             )
           } else if (slot.name === 'b') {
@@ -763,7 +763,7 @@ describe('slot', () => {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
                 `<view class="_p {{d}}">` +
-                  `<label class="_span {{d}}">{{ s[ 's7' + _t ].t }}</label>` +
+                  `<view class="_span {{d}}">{{ s[ 's7' + _t ].t }}</view>` +
                 `</view>` +
               `</template>`
             )
@@ -801,7 +801,7 @@ describe('slot', () => {
           if (slot.name === 'foo') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<label class="_span {{d}}">foo</label>` +
+                `<view class="_span {{d}}">foo</view>` +
               `</template>`
             )
           } else if (slot.name === 'default') {
@@ -836,7 +836,7 @@ describe('slot', () => {
           if (slot.name === 'default') {
             expect(slot.body).toEqual(
               `<template name="${slot.slotName}" parent="${options.name}">` +
-                `<label class="_span {{d}}">foo.bar</label>` +
+                `<view class="_span {{d}}">foo.bar</view>` +
               `</template>`
             )
           }
@@ -965,9 +965,9 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label a:for="{{ s[ 's4' + (_t || '') ].li }}" a:for-item="item" a:for-index="item_i1" class="_span {{d}}">` +
+              `<view a:for="{{ s[ 's4' + (_t || '') ].li }}" a:for-item="item" a:for-index="item_i1" class="_span {{d}}">` +
                 `{{ s[ 's5' + _t + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}` +
-              `</label>` +
+              `</view>` +
             `</template>`
           )
         })
@@ -997,9 +997,9 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label a:for="{{ s[ 's4' + (_t || '') ].li }}" a:for-item="item" a:for-index="item_i1" class="_span {{d}}">` +
+              `<view a:for="{{ s[ 's4' + (_t || '') ].li }}" a:for-item="item" a:for-index="item_i1" class="_span {{d}}">` +
                 `{{ s[ 's5' + _t + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}` +
-              `</label>` +
+              `</view>` +
             `</template>`
           )
         })
@@ -1034,9 +1034,9 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label class="_span {{d}}">` +
+              `<view class="_span {{d}}">` +
                 `{{ s[ 's6' + _t ].t }}` +
-              `</label>` +
+              `</view>` +
             `</template>`
           )
         })
@@ -1071,9 +1071,9 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label class="_span {{d}}">` +
+              `<view class="_span {{d}}">` +
                 `{{ s[ 's6' + _t ].t }}` +
-              `</label>` +
+              `</view>` +
             `</template>`
           )
         })
@@ -1108,9 +1108,9 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label a:for="{{ s[ 's5' + (_t || '') ].li }}" a:for-item="item" a:for-index="item_i1" class="_span {{d}}">` +
+              `<view a:for="{{ s[ 's5' + (_t || '') ].li }}" a:for-item="item" a:for-index="item_i1" class="_span {{d}}">` +
                 `{{ s[ 's6' + _t + '-' + (item_i2 !== undefined ? item_i2 : item_i1) ].t }}` +
-              `</label>` +
+              `</view>` +
             `</template>`
           )
         })
@@ -1140,9 +1140,9 @@ describe('slot', () => {
           expect(slot.name).toEqual('default')
           expect(slot.body).toEqual(
             `<template name="${slot.slotName}" parent="${options.name}">` +
-              `<label class="_span {{d}}" data-cid="{{ _c || c }}" data-hid="{{ 's4' + _t }}" onTap="_pe">` +
+              `<view class="_span {{d}}" data-cid="{{ _c || c }}" data-hid="{{ 's4' + _t }}" onTap="_pe">` +
                 `click` +
-              `</label>` +
+              `</view>` +
             `</template>`
           )
         })
@@ -1187,9 +1187,9 @@ describe('slot', () => {
       (
         `<view class="_div">` +
           `<CompA class="_CompA">` +
-            `<label class="_span" slot="{{ h[ 3 ].slot }}">` +
+            `<view class="_span" slot="{{ h[ 3 ].slot }}">` +
               `{{ h[ 4 ].t }}` +
-            `</label>` +
+            `</view>` +
           `</CompA>` +
         `</view>`
       )
