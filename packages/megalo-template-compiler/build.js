@@ -5024,7 +5024,7 @@ var eventTypeMap$2 = {
   CalloutTap: ['callouttap'],
   ControlTap: ['controltap'],
   RegionChange: ['regionchange'],
-  Message: ['message'],
+  Messag: ['message'],
   PlusClick: ['plusclick'],
   TabClick: ['tabclick'],
   CardClick: ['cardclick'],
@@ -5787,7 +5787,9 @@ var TAG_MAP = {
   // 样式 节
   'div': 'view',
   'main': 'view',
-  'span': 'label',
+  span: function span(config) {
+    return config.target === 'alipay' ? 'view' : 'label'
+  },
   'header': 'view',
   'footer': 'view',
   'section': 'view',
@@ -6136,7 +6138,7 @@ TemplateGenerator.prototype.genTag = function genTag (el) {
 
   var tag = el.tag;
     var isSelfCloseTag = el.isSelfCloseTag;
-  var mpTag = TAG_MAP[tag] || tag;
+  var mpTag = this.genTagName(tag);
   var attrs = this.isTemplate(el) ? [] : [
     this.genVShow(el),
     this.genClass(el),
@@ -6488,7 +6490,7 @@ TemplateGenerator.prototype.genVHtml = function genVHtml (el) {
   }
 
   var tag = el.tag;
-  var mpTag = TAG_MAP[tag] || tag;
+  var mpTag = this.genTagName(tag);
   var attrs = this.isTemplate(el) ? [] : [
     this.genVShow(el),
     this.genClass(el),
@@ -6680,6 +6682,16 @@ TemplateGenerator.prototype.genIfHolderForSlotSnippets = function genIfHolderFor
       return res 
     }
   }
+};
+
+TemplateGenerator.prototype.genTagName = function genTagName (tag) {
+  var tagName = '';
+  if (typeof TAG_MAP[tag] === 'function') {
+    tagName = TAG_MAP[tag](this);
+  } else {
+    tagName = TAG_MAP[tag] || tag;
+  }
+  return tagName;
 };
 
 /*  */
