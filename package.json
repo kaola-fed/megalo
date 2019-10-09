@@ -1,6 +1,6 @@
 {
   "name": "megalo",
-  "version": "0.10.2-1",
+  "version": "0.10.3-0",
   "description": "Reactive, component-oriented view layer for modern web interfaces.",
   "main": "dist/megalo.mp.esm.js",
   "module": "dist/megalo.mp.esm.js",
