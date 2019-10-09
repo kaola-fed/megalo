@@ -309,7 +309,7 @@ export class TemplateGenerator {
     }
 
     const { tag, isSelfCloseTag } = el
-    const mpTag = TAG_MAP[tag] || tag
+    const mpTag = this.genTagName(tag)
     const attrs = this.isTemplate(el) ? [] : [
       this.genVShow(el),
       this.genClass(el),
@@ -643,7 +643,7 @@ export class TemplateGenerator {
     }
 
     const { tag } = el
-    const mpTag = TAG_MAP[tag] || tag
+    const mpTag = this.genTagName(tag)
     const attrs = this.isTemplate(el) ? [] : [
       this.genVShow(el),
       this.genClass(el),
@@ -824,5 +824,15 @@ export class TemplateGenerator {
         return res 
       }
     }
+  }
+
+  genTagName(tag) {
+    let tagName = '';
+    if (typeof TAG_MAP[tag] === 'function') {
+      tagName = TAG_MAP[tag](this);
+    } else {
+      tagName = TAG_MAP[tag] || tag;
+    }
+    return tagName;
   }
 }

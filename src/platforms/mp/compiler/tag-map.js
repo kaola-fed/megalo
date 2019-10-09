@@ -97,7 +97,9 @@ export default {
   // 样式 节
   'div': 'view',
   'main': 'view',
-  'span': 'label',
+  span(config) {
+    return config.target === 'alipay' ? 'view' : 'label'
+  },
   'header': 'view',
   'footer': 'view',
   'section': 'view',
