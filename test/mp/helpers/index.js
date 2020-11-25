@@ -12,7 +12,8 @@ initMPEnvironment()
 const platformAPI = {
   wechat: 'wx',
   alipay: 'my',
-  swan: 'swan'
+  swan: 'swan',
+  toutiao: 'tt'
 }
 export function setMPPlatform (platform) {
   if (platformAPI[platform]) {

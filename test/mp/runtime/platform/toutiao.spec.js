@@ -5,10 +5,10 @@ import {
   resetMPPlatform
 } from '../../helpers'
 
-describe('wechat', () => {
+describe('toutiao', () => {
   it('should get platform from $mp', () => {
     resetVue()
-    setMPPlatform('wechat')
+    setMPPlatform('toutiao')
 
     const pageOptions = {
       template: `<div></div>`,
@@ -17,14 +17,14 @@ describe('wechat', () => {
 
     const { vm } = createPage(pageOptions)
 
-    expect(vm.$mp.platform).toBe('wechat')
+    expect(vm.$mp.platform).toBe('toutiao')
 
     resetMPPlatform()
   })
 
-  it('should not set obj convery flag in wechat', () => {
+  it('should set obj convery flag in toutiao', () => {
     resetVue()
-    setMPPlatform('wechat')
+    setMPPlatform('toutiao')
 
     const pageOptions = {
       template: `<div>
@@ -38,8 +38,8 @@ describe('wechat', () => {
 
     const { vm } = createPage(pageOptions)
 
-    expect(vm.$mp.platform).toBe('wechat')
-    expect(vm.$mp.page.data.$root[0].h._obj).toBeUndefined();
+    expect(vm.$mp.platform).toBe('toutiao')
+    expect(vm.$mp.page.data.$root[0].h._obj).toBeTruthy();
 
     resetMPPlatform()
   })
