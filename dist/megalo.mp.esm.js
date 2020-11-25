@@ -7541,7 +7541,7 @@ try {
 
   /*  */
 
-  Vue.megaloVersion = '0.10.2';
+  Vue.megaloVersion = '0.10.3';
 
   return Vue;
 
