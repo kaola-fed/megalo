@@ -61,6 +61,18 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
 
   const curValue = getValue(vm.$mp.page.data, dataPaths)
 
+  // fix: 在设置 a.1 时，头条小程序会把 a 变成数组，导致后续的 a.b 设置失败
+  // 通过强制加一个字符串 key，将 holderVar 变成对象
+  if (vm.$mp.platform === 'toutiao') {
+    const convertObjectPaths = [ROOT_DATA_VAR, vmId, holderVar, '_obj']
+    const convertObjectPathStr = convertObjectPaths.join('.')
+    if (!getValue(vm.$mp.page.data, convertObjectPaths)) {
+      vm.$mp._update({
+        [convertObjectPathStr]: true
+      })
+    }
+  }
+
   /* istanbul ignore else */
   if (isDef(hid)) {
     const isDeepEqual = deepEqual(curValue, data)

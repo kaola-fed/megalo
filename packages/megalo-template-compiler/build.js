@@ -5024,7 +5024,7 @@ var eventTypeMap$2 = {
   CalloutTap: ['callouttap'],
   ControlTap: ['controltap'],
   RegionChange: ['regionchange'],
-  Message: ['message'],
+  Messag: ['message'],
   PlusClick: ['plusclick'],
   TabClick: ['tabclick'],
   CardClick: ['cardclick'],
