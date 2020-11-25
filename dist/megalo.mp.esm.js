@@ -5241,6 +5241,9 @@ try {
       value: detail.value
     });
 
+    if (config.globalEventHandler) {
+      config.globalEventHandler(vm, $event, handlers);
+    }
     handlers.forEach(function (handler) {
       handler($event);
     });

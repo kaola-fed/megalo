@@ -1,4 +1,4 @@
-import { camelize } from 'shared/util'
+import { camelize, isPlainObject } from 'shared/util'
 import { isDef } from 'core/util/index'
 import { getVMId, getHid, calculateScopeId } from './helper'
 import {
@@ -78,8 +78,14 @@ export function updateMPData (type = HOLDER_TYPE_VARS.text, data, vnode) {
     const isDeepEqual = deepEqual(curValue, data)
     /* istanbul ignore else */
     if (!isDeepEqual || vm.$mp._shouldUpdateBuffer(dataPathStr, data)) {
+      let finalData;
+      if (typeof data === 'object') {
+        finalData = deepClone(data)
+      } else {
+        finalData = data;
+      }
       vm.$mp._update({
-        [dataPathStr]: data
+        [dataPathStr]: finalData
       })
     }
   }
@@ -126,3 +132,16 @@ export function updateVnodeToMP (vnode, key = HOLDER_TYPE_VARS.text, value) {
   }
 }
 
+function deepClone (val) {
+  if (isPlainObject(val)) {
+    var res = {};
+    for (var key in val) {
+      res[key] = deepClone(val[key]);
+    }
+    return res
+  } else if (Array.isArray(val)) {
+    return val.slice()
+  } else {
+    return val
+  }
+}
