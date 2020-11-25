@@ -5129,7 +5129,7 @@ try {
   }
 
   function updateMPData (type, data, vnode) {
-    var obj;
+    var obj, obj$1;
 
     if ( type === void 0 ) type = HOLDER_TYPE_VARS.text;
     var vm = this;
@@ -5148,12 +5148,22 @@ try {
 
     var curValue = getValue(vm.$mp.page.data, dataPaths);
 
+    // fix: 在设置 a.1 时，头条小程序会把 a 变成数组，导致后续的 a.b 设置失败
+    // 通过强制加一个字符串 key，将 holderVar 变成对象
+    if (vm.$mp.platform === 'toutiao') {
+      var convertObjectPaths = [ROOT_DATA_VAR, vmId, holderVar, '_obj'];
+      var convertObjectPathStr = convertObjectPaths.join('.');
+      if (!getValue(vm.$mp.page.data, convertObjectPaths)) {
+        vm.$mp._update(( obj = {}, obj[convertObjectPathStr] = true, obj ));
+      }
+    }
+
     /* istanbul ignore else */
     if (isDef(hid)) {
       var isDeepEqual = deepEqual(curValue, data);
       /* istanbul ignore else */
       if (!isDeepEqual || vm.$mp._shouldUpdateBuffer(dataPathStr, data)) {
-        vm.$mp._update(( obj = {}, obj[dataPathStr] = data, obj ));
+        vm.$mp._update(( obj$1 = {}, obj$1[dataPathStr] = data, obj$1 ));
       }
     }
   }
@@ -7531,7 +7541,7 @@ try {
 
   /*  */
 
-  Vue.megaloVersion = '0.10.1';
+  Vue.megaloVersion = '0.10.2';
 
   return Vue;
 
