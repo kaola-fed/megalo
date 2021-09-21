@@ -13,7 +13,7 @@ try {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
   (global = global || self, global.Vue = factory());
-}(this, function () { 'use strict';
+}(this, (function () { 'use strict';
 
   /*  */
 
@@ -539,11 +539,15 @@ try {
 
   // Firefox has a "watch" function on Object.prototype...
   var nativeWatch = ({}).watch;
+
+  var supportsPassive = false;
   if (inBrowser) {
     try {
       var opts = {};
       Object.defineProperty(opts, 'passive', ({
         get: function get () {
+          /* istanbul ignore next */
+          supportsPassive = true;
         }
       })); // https://github.com/facebook/flow/issues/285
       window.addEventListener('test-passive', null, opts);
@@ -841,7 +845,7 @@ try {
   Observer.prototype.walk = function walk (obj) {
     var keys = Object.keys(obj);
     for (var i = 0; i < keys.length; i++) {
-      defineReactive$$1(obj, keys[i]);
+      defineReactive(obj, keys[i]);
     }
   };
 
@@ -908,7 +912,7 @@ try {
   /**
    * Define a reactive property on an Object.
    */
-  function defineReactive$$1 (
+  function defineReactive (
     obj,
     key,
     val,
@@ -988,7 +992,7 @@ try {
       target[key] = val;
       return val
     }
-    defineReactive$$1(ob.value, key, val);
+    defineReactive(ob.value, key, val);
     ob.dep.notify();
     return val
   }
@@ -1233,7 +1237,7 @@ try {
     key
   ) {
     if (childVal && "production" !== 'production') {
-      assertObjectType(key, childVal, vm);
+      assertObjectType(key, childVal);
     }
     if (!parentVal) { return childVal }
     var ret = Object.create(null);
@@ -1310,9 +1314,9 @@ try {
     var dirs = options.directives;
     if (dirs) {
       for (var key in dirs) {
-        var def$$1 = dirs[key];
-        if (typeof def$$1 === 'function') {
-          dirs[key] = { bind: def$$1, update: def$$1 };
+        var def = dirs[key];
+        if (typeof def === 'function') {
+          dirs[key] = { bind: def, update: def };
         }
       }
     }
@@ -1322,9 +1326,7 @@ try {
     if (!isPlainObject(value)) {
       warn(
         "Invalid value for option \"" + name + "\": expected an Object, " +
-        "but got " + (toRawType(value)) + ".",
-        vm
-      );
+        "but got " + (toRawType(value)) + ".");
     }
   }
 
@@ -1342,8 +1344,8 @@ try {
       child = child.options;
     }
 
-    normalizeProps(child, vm);
-    normalizeInject(child, vm);
+    normalizeProps(child);
+    normalizeInject(child);
     normalizeDirectives(child);
 
     // Apply extends and mixins on the child options,
@@ -1544,11 +1546,11 @@ try {
         // if the user intentionally throws the original error in the handler,
         // do not log it twice
         if (e !== err) {
-          logError(e, null, 'config.errorHandler');
+          logError(e);
         }
       }
     }
-    logError(err, vm, info);
+    logError(err);
   }
 
   function logError (err, vm, info) {
@@ -1664,10 +1666,6 @@ try {
 
   /*  */
 
-  /* not type checking this file because flow doesn't play well with Proxy */
-
-  /*  */
-
   var seenObjects = new _Set();
 
   /**
@@ -1708,13 +1706,13 @@ try {
   var normalizeEvent = cached(function (name) {
     var passive = name.charAt(0) === '&';
     name = passive ? name.slice(1) : name;
-    var once$$1 = name.charAt(0) === '~'; // Prefixed last, checked first
-    name = once$$1 ? name.slice(1) : name;
+    var once = name.charAt(0) === '~'; // Prefixed last, checked first
+    name = once ? name.slice(1) : name;
     var capture = name.charAt(0) === '!';
     name = capture ? name.slice(1) : name;
     return {
       name: name,
-      once: once$$1,
+      once: once,
       capture: capture,
       passive: passive
     }
@@ -1743,13 +1741,13 @@ try {
     on,
     oldOn,
     add,
-    remove$$1,
+    remove,
     createOnceHandler,
     vm
   ) {
-    var name, def$$1, cur, old, event;
+    var name, def, cur, old, event;
     for (name in on) {
-      def$$1 = cur = on[name];
+      def = cur = on[name];
       old = oldOn[name];
       event = normalizeEvent(name);
       if (isUndef(cur)) ; else if (isUndef(old)) {
@@ -1768,7 +1766,7 @@ try {
     for (name in oldOn) {
       if (isUndef(on[name])) {
         event = normalizeEvent(name);
-        remove$$1(event.name, oldOn[name], event.capture);
+        remove(event.name, oldOn[name], event.capture);
       }
     }
   }
@@ -1965,7 +1963,7 @@ try {
       Object.keys(result).forEach(function (key) {
         /* istanbul ignore else */
         {
-          defineReactive$$1(vm, key, result[key]);
+          defineReactive(vm, key, result[key]);
         }
       });
       toggleObserving(true);
@@ -2211,7 +2209,7 @@ try {
    * Runtime helper for resolving filters
    */
   function resolveFilter (id) {
-    return resolveAsset(this.$options, 'filters', id, true) || identity
+    return resolveAsset(this.$options, 'filters', id) || identity
   }
 
   /*  */
@@ -2545,12 +2543,12 @@ try {
     var vnode = options.render.call(null, renderContext._c, renderContext);
 
     if (vnode instanceof VNode) {
-      return cloneAndMarkFunctionalResult(vnode, data, renderContext.parent, options, renderContext)
+      return cloneAndMarkFunctionalResult(vnode, data, renderContext.parent, options)
     } else if (Array.isArray(vnode)) {
       var vnodes = normalizeChildren(vnode) || [];
       var res = new Array(vnodes.length);
       for (var i = 0; i < vnodes.length; i++) {
-        res[i] = cloneAndMarkFunctionalResult(vnodes[i], data, renderContext.parent, options, renderContext);
+        res[i] = cloneAndMarkFunctionalResult(vnodes[i], data, renderContext.parent, options);
       }
       return res
     }
@@ -2574,12 +2572,6 @@ try {
       to[camelize(key)] = from[key];
     }
   }
-
-  /*  */
-
-  /*  */
-
-  /*  */
 
   /*  */
 
@@ -2705,7 +2697,7 @@ try {
     }
 
     // extract props
-    var propsData = extractPropsFromVNodeData(data, Ctor, tag);
+    var propsData = extractPropsFromVNodeData(data, Ctor);
 
     // functional component
     if (isTrue(Ctor.options.functional)) {
@@ -2957,8 +2949,8 @@ try {
 
     /* istanbul ignore else */
     {
-      defineReactive$$1(vm, '$attrs', parentData && parentData.attrs || emptyObject, null, true);
-      defineReactive$$1(vm, '$listeners', options._parentListeners || emptyObject, null, true);
+      defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, null, true);
+      defineReactive(vm, '$listeners', options._parentListeners || emptyObject, null, true);
     }
   }
 
@@ -3135,7 +3127,7 @@ try {
             setTimeout(function () {
               if (isUndef(factory.resolved)) {
                 reject(
-                  null
+                   null
                 );
               }
             }, res.timeout);
@@ -3169,8 +3161,6 @@ try {
       }
     }
   }
-
-  /*  */
 
   /*  */
 
@@ -3730,7 +3720,7 @@ try {
 
 
 
-  var uid$2 = 0;
+  var uid$1 = 0;
 
   /**
    * A watcher parses an expression, collects dependencies,
@@ -3760,14 +3750,14 @@ try {
       this.deep = this.user = this.lazy = this.sync = false;
     }
     this.cb = cb;
-    this.id = ++uid$2; // uid for batching
+    this.id = ++uid$1; // uid for batching
     this.active = true;
     this.dirty = this.lazy; // for lazy watchers
     this.deps = [];
     this.newDeps = [];
     this.depIds = new _Set();
     this.newDepIds = new _Set();
-    this.expression = '';
+    this.expression =  '';
     // parse expression for getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn;
@@ -3979,7 +3969,7 @@ try {
       var value = validateProp(key, propsOptions, propsData, vm);
       /* istanbul ignore else */
       {
-        defineReactive$$1(props, key, value);
+        defineReactive(props, key, value);
       }
       // static props are already proxied on the component's prototype
       // during Vue.extend(). We only need to proxy props defined at
@@ -4180,13 +4170,13 @@ try {
 
   /*  */
 
-  var uid$3 = 0;
+  var uid$2 = 0;
 
   function initMixin (Vue) {
     Vue.prototype._init = function (options) {
       var vm = this;
       // a uid
-      vm._uid = uid$3++;
+      vm._uid = uid$2++;
 
       // a flag to avoid this being observed
       vm._isVue = true;
@@ -4479,9 +4469,9 @@ try {
     keys,
     current
   ) {
-    var cached$$1 = cache[key];
-    if (cached$$1 && (!current || cached$$1.tag !== current.tag)) {
-      cached$$1.componentInstance.$destroy();
+    var cached = cache[key];
+    if (cached && (!current || cached.tag !== current.tag)) {
+      cached.componentInstance.$destroy();
     }
     cache[key] = null;
     remove(keys, key);
@@ -4587,7 +4577,7 @@ try {
       warn: warn,
       extend: extend,
       mergeOptions: mergeOptions,
-      defineReactive: defineReactive$$1
+      defineReactive: defineReactive
     };
 
     Vue.set = set;
@@ -5333,7 +5323,7 @@ try {
   /**
    * Runtime helper for rendering <slot>
    */
-  function afterRenderSlot$$1 (
+  function afterRenderSlot (
     nodes,
     name,
     fallback,
@@ -5485,7 +5475,7 @@ try {
     node.slotContext = slotContext;
   }
 
-  function renderIf$$1 (cond, h_, f_) {
+  function renderIf$1 (cond, h_, f_) {
     var cloneVnode = {
       context: this,
       data: {
@@ -5714,6 +5704,7 @@ try {
   }
 
   var nodeOps = /*#__PURE__*/Object.freeze({
+    __proto__: null,
     createElement: createElement$1,
     createElementNS: createElementNS,
     createTextNode: createTextNode,
@@ -5841,13 +5832,13 @@ try {
     }
 
     function createRmCb (childElm, listeners) {
-      function remove$$1 () {
-        if (--remove$$1.listeners === 0) {
+      function remove () {
+        if (--remove.listeners === 0) {
           removeNode(childElm);
         }
       }
-      remove$$1.listeners = listeners;
-      return remove$$1
+      remove.listeners = listeners;
+      return remove
     }
 
     function removeNode (el) {
@@ -5969,11 +5960,11 @@ try {
       insert(parentElm, vnode.elm, refElm);
     }
 
-    function insert (parent, elm, ref$$1) {
+    function insert (parent, elm, ref) {
       if (isDef(parent)) {
-        if (isDef(ref$$1)) {
-          if (nodeOps.parentNode(ref$$1) === parent) {
-            nodeOps.insertBefore(parent, elm, ref$$1);
+        if (isDef(ref)) {
+          if (nodeOps.parentNode(ref) === parent) {
+            nodeOps.insertBefore(parent, elm, ref);
           }
         } else {
           nodeOps.appendChild(parent, elm);
@@ -6456,7 +6447,6 @@ try {
     var childrenIndex = 3;
     if (Array.isArray(data) || isPrimitive(data)) {
       childrenIndex = 2;
-      normalizationType = children;
       children = data;
       data = undefined;
     }
@@ -6616,7 +6606,7 @@ try {
         dir.modifiers = emptyModifiers;
       }
       res[getRawDirName(dir)] = dir;
-      dir.def = resolveAsset(vm.$options, 'directives', dir.name, true);
+      dir.def = resolveAsset(vm.$options, 'directives', dir.name);
     }
     // $flow-disable-line
     return res
@@ -7203,7 +7193,7 @@ try {
   }
 
   var page = {};
-  var hooks$2 = [
+  var hooks$1 = [
     'onPullDownRefresh',
     'onReachBottom',
     'onShareAppMessage',
@@ -7266,13 +7256,13 @@ try {
       }
     };
 
-    installHooks(pageOptions, vueOptions.options, hooks$2);
+    installHooks(pageOptions, vueOptions.options, hooks$1);
     Page(pageOptions);
   };
 
   var app$1 = {};
 
-  var hooks$3 = [
+  var hooks$2 = [
     'onShow',
     'onHide',
     'onError',
@@ -7311,8 +7301,11 @@ try {
         callHook$2(rootVM, 'onLaunch', options);
       }
     }; 
-    installHooks(appOptions, vueOptions.options, hooks$3);
-    mpApp(appOptions);
+    installHooks(appOptions, vueOptions.options, hooks$2);
+    console.log('not init app', Vue.disableInitApp);
+    if(!Vue.disableInitApp) {
+      mpApp(appOptions);
+    }
   };
 
   function initMP (vm, options) {
@@ -7469,7 +7462,7 @@ try {
   // install platform patch function
   Vue.prototype.__patch__ = patch;
   Vue.prototype._v = createTextVNode$1;
-  Vue.prototype._ri = renderIf$$1;
+  Vue.prototype._ri = renderIf$1;
   Vue.prototype.$updateMPData = updateMPData;
 
   Vue.prototype._l = aop(Vue.prototype._l, {
@@ -7496,7 +7489,7 @@ try {
       oInit.call(this, options);
 
       this._t = aop(this._t, {
-        after: afterRenderSlot$$1
+        after: afterRenderSlot
       });
 
       this._c = aop(this._c, {
@@ -7545,4 +7538,4 @@ try {
 
   return Vue;
 
-}));
+})));

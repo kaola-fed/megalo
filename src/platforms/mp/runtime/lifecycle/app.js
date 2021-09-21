@@ -41,7 +41,10 @@ app.init = function (vueOptions) {
     }
   } 
   installHooks(appOptions, vueOptions.options, hooks)
-  mpApp(appOptions)
+
+  if(!(typeof global !== undefined && global.disableInitApp)) {
+    mpApp(appOptions)
+  }
 }
 
 export default app
