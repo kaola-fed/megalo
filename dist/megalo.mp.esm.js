@@ -7302,8 +7302,8 @@ try {
       }
     }; 
     installHooks(appOptions, vueOptions.options, hooks$2);
-    console.log('not init app', Vue.disableInitApp);
-    if(!Vue.disableInitApp) {
+
+    if(!(typeof global !== undefined && global.disableInitApp)) {
       mpApp(appOptions);
     }
   };
