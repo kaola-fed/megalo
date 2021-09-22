@@ -7534,7 +7534,7 @@ try {
 
   /*  */
 
-  Vue.megaloVersion = '0.10.4';
+  Vue.megaloVersion = '0.11.0-beta.0';
 
   return Vue;
 
